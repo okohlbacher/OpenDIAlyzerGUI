@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { loadReport, filterRows } from "../src/report.ts";
+import {
+  loadReport, filterRows, CANONICAL, type ColumnData, type ReportTable,
+} from "../src/report.ts";
 import { byProtein, byRun } from "../src/aggregate.ts";
 
 const REPORT = process.env.ODIA_TEST_REPORT ??
@@ -9,6 +11,41 @@ const REPORT = process.env.ODIA_TEST_REPORT ??
 const have = existsSync(REPORT);
 let cached: Awaited<ReturnType<typeof loadReport>> | null = null;
 const report = async () => (cached ??= await loadReport(REPORT));
+
+test("run counts dedupe precursor rows and preserve modified forms", () => {
+  const columns = new Map<string, ColumnData>([
+    [CANONICAL.strippedSequence, ["PEPTIDE", "PEPTIDE", "PEPTIDE", "PEPTIDE"]],
+    [CANONICAL.modifiedSequence, ["PEP[Phospho]TIDE", "PEP[Phospho]TIDE",
+      "PEPTIDE", "PEP[Phospho]TIDE"]],
+    [CANONICAL.charge, new Int32Array([2, 2, 2, 3])],
+  ]);
+  const t: ReportTable = {
+    rowCount: 4,
+    columns,
+    columnNames: [...columns.keys()],
+    runs: ["run-1"],
+    runOf: new Int32Array([0, 0, 0, 0]),
+    extra: [],
+    missing: [],
+    column: (name) => columns.get(name),
+    cell: (name, row) => {
+      const column = columns.get(name);
+      return Array.isArray(column) ? column[row] ?? null : null;
+    },
+    numeric: (name) => {
+      const column = columns.get(name);
+      return column instanceof Int32Array ? column : null;
+    },
+    text: (name) => {
+      const column = columns.get(name);
+      return Array.isArray(column) ? column : null;
+    },
+  };
+
+  const [run] = byRun(t, new Uint32Array([0, 1, 2, 3]));
+  assert.equal(run!.precursors, 3, "duplicate modified-sequence+charge keys collapse");
+  assert.equal(run!.peptides, 2, "modified and unmodified forms remain separate");
+});
 
 // The design's claim is that grains are the same evidence counted differently.
 // If aggregation read anything other than the filtered set, the FDR slider would

@@ -151,15 +151,17 @@ export function byProtein(t: ReportTable, rows: Uint32Array): ProteinRow[] {
 /** Per-run diagnostics from the filtered set — the Runs grain, which is QC. */
 export function byRun(t: ReportTable, rows: Uint32Array): RunRow[] {
   const seqs = t.text(CANONICAL.strippedSequence);
+  const forms = t.text(CANONICAL.modifiedSequence) ?? seqs;
   const pg = t.text(CANONICAL.proteinGroup);
   const q = t.numeric(CANONICAL.qValue);
   const fwhm = t.numeric(CANONICAL.fwhm);
   const rt = t.numeric(CANONICAL.rt);
   const quant = t.numeric(CANONICAL.quantity);
+  const charge = t.numeric(CANONICAL.charge);
 
   const acc = t.runs.map((name, index) => ({
     name, index,
-    precursors: 0,
+    precursorKeys: new Set<string>(),
     peptides: new Set<string>(),
     proteins: new Set<string>(),
     qs: [] as number[],
@@ -173,9 +175,11 @@ export function byRun(t: ReportTable, rows: Uint32Array): RunRow[] {
   for (const i of rows) {
     const a = acc[t.runOf[i]!];
     if (!a) continue;
-    a.precursors++;
     if (a.exemplar < 0) a.exemplar = i;
-    if (seqs) a.peptides.add(seqs[i]!);
+    if (forms) {
+      a.precursorKeys.add(`${forms[i]}|${charge?.[i] ?? 0}`);
+      a.peptides.add(forms[i]!);
+    }
     if (pg && pg[i]) a.proteins.add(pg[i]!);
     const qv = q?.[i];
     if (qv !== undefined && Number.isFinite(qv)) a.qs.push(qv);
@@ -192,7 +196,7 @@ export function byRun(t: ReportTable, rows: Uint32Array): RunRow[] {
   return acc.map((a) => ({
     name: a.name,
     index: a.index,
-    precursors: a.precursors,
+    precursors: a.precursorKeys.size,
     peptides: a.peptides.size,
     proteins: a.proteins.size,
     medianQ: median(a.qs),
