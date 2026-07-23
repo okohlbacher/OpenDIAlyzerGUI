@@ -19,6 +19,7 @@ import { buildMetadataIndex, framesCovering, type MetadataIndex } from "../src/s
 import { PeakReader, extractXic, coelution, fragmentsFor, extractFramePeaks,
   heatmap, spectrum } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
+import { measuredMs2Ppm, fragmentTolerancePpm } from "../src/stats.ts";
 import { byProtein, byRun, type ProteinRow, type RunRow } from "../src/aggregate.ts";
 import { sortIndices, applyColumnFilters, type Cell } from "../src/table.ts";
 import { buildTree, flatten, idsAtLevel, type TreeNode, type FlatRow } from "../src/tree.ts";
@@ -1064,13 +1065,14 @@ ipcMain.handle("evidence:forRun", async (_e, k: number, runIndex: number) => {
   const measured = reportedFragments(t, row);
   const frags = measured?.slice(0, 6) ?? fragmentsFor(seq, key.charge, src.meta.spectra.ms2MzRange);
   const fragments = frags.map((f) => f.mz);
+  const ppm = fragmentTolerancePpm(await measuredMs2Ppm(dirname(session.reportPath), target));
   const margin = 0.15;
   const t0 = performance.now();
   try {
     const xic = await extractXic(src.archive, src.meta, src.peaks, {
       precursorMz: key.precursorMz,
       rtMin: key.rtStart - margin, rtMax: key.rtStop + margin,
-      fragments, ppm: 20,
+      fragments, ppm,
       imCenter: key.im ?? undefined,
     });
     const verdict = coelution(xic.traces);
@@ -1083,7 +1085,7 @@ ipcMain.handle("evidence:forRun", async (_e, k: number, runIndex: number) => {
         fragments, labels: frags.map((f) => f.label), series: frags.map((f) => f.series),
         frames: xic.frames.length, rowGroups: xic.rowGroupsRead,
         rowsDecoded: xic.rowsDecoded, rowsScanned: xic.rowsScanned,
-        archive: basename(src.path), verdict, ms: performance.now() - t0,
+        archive: basename(src.path), verdict, ppm, ms: performance.now() - t0,
       },
     };
   } catch (e) {
@@ -1162,10 +1164,11 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
   const frags = measured?.slice(0, 6) ??
     fragmentsFor(seq, z, src.meta.spectra.ms2MzRange);
   const fragments = frags.map((f) => f.mz);
+  const ppm = fragmentTolerancePpm(await measuredMs2Ppm(dirname(session.reportPath), target));
   const t0 = performance.now();
   try {
     const xic = await extractXic(src.archive, src.meta, src.peaks, {
-      precursorMz: mz, rtMin: rt - margin, rtMax: rt + margin, fragments, ppm: 20,
+      precursorMz: mz, rtMin: rt - margin, rtMax: rt + margin, fragments, ppm,
       // Borrowed like the RT: the runs that identified it measured the mobility.
       imCenter: donorIm ?? undefined,
     });
@@ -1188,6 +1191,7 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
         imWindow: xic.imWindow,
         rowsOutsideIm: xic.rowsOutsideIm,
         verdict,
+        ppm,
         ms: performance.now() - t0,
       },
     };
@@ -1293,6 +1297,7 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
   const frags = measured?.slice(0, 6) ??
     fragmentsFor(key.sequence, key.charge, src.meta.spectra.ms2MzRange);
   const fragments = frags.map((f) => f.mz);
+  const ppm = fragmentTolerancePpm(await measuredMs2Ppm(dirname(session.reportPath), key.run));
   const margin = 0.15;
   const t0 = performance.now();
   let xic;
@@ -1302,7 +1307,7 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
       rtMin: key.rtStart - margin,
       rtMax: key.rtStop + margin,
       fragments,
-      ppm: 20,
+      ppm,
       // The engine's measured 1/K0 for this precursor. Without it the trace
       // sums the whole mobility ramp, which discards the separating dimension
       // diaPASEF exists to provide — measured at 73 % of the signal on this
@@ -1337,6 +1342,7 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
       archive: basename(src.path),
       imWindow: xic.imWindow,
       rowsOutsideIm: xic.rowsOutsideIm,
+      ppm,
       ms,
     },
   };
@@ -1354,5 +1360,4 @@ function describe(e: unknown): string {
   }
   return msg.split("\n")[0]!.slice(0, 200);
 }
-
 

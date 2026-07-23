@@ -1,0 +1,4 @@
+File.Name	Precursors.Identified	Median.Mass.Acc.MS2.Corrected
+/scratch/raw/sample-one.d	1234	1.6
+C:\vendor\sample-two.raw	987	3.25
+broken.d	12	not-a-number

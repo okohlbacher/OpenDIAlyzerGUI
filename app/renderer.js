@@ -408,7 +408,7 @@ async function showEvidence() {
         <div class="legend">${x.fragments.map((f, i) =>
           `<span><i style="background:${ionColour(i, x.series)}"></i>${esc(x.labels?.[i] ?? "?")} ${f.toFixed(2)}</span>`).join("")}</div>
         <p class="note-inline">
-          Extracted from raw data in <b>${x.ms.toFixed(0)} ms</b> —
+          Extracted from raw data in <b>${x.ms.toFixed(0)} ms</b> at ${x.ppm} ppm —
           ${(x.rowsDecoded / 1e6).toFixed(2)} M rows decoded,
           ${(x.rowsScanned / 1e3).toFixed(0)}k touched${x.imWindow ?
             `, ${((x.rowsOutsideIm ?? 0) / 1e3).toFixed(0)}k dropped as off-mobility ` +
@@ -670,7 +670,7 @@ async function showRunXic(k, runIndex) {
       <p class="note-inline">
         <b>${esc(r.sequence)} ${r.charge}+</b> as identified in this run —
         its own retention time and the fragments the engine scored here, read
-        from raw data in <b>${x.ms.toFixed(0)} ms</b>.
+        from raw data in <b>${x.ms.toFixed(0)} ms</b> at ${x.ppm} ppm.
         <button class="linkish" id="runxicClear">← back to all runs</button></p>`;
   }
   $("presence").closest(".layer").after(box);
@@ -722,7 +722,7 @@ async function interrogate(k, runIndex) {
       <p class="note-inline">
         <b>${esc(r.sequence)} ${r.charge}+</b> was not identified in this run.
         Evidence above was computed from the sequence and read from raw data in
-        <b>${x.ms.toFixed(0)} ms</b> — no engine wrote a chromatogram for it.
+        <b>${x.ms.toFixed(0)} ms</b> at ${x.ppm} ppm — no engine wrote a chromatogram for it.
         Retention time <b>${r.borrowedRt.toFixed(2)} min</b> ±${r.margin.toFixed(2)}
         ${x.measured ? "and the fragment list are" : "is"} borrowed from the
         ${r.donors} run${r.donors === 1 ? "" : "s"} that did find it, so
