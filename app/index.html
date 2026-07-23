@@ -37,8 +37,12 @@
     font:inherit;text-align:left;min-width:112px}
   .prun .pname{font-size:11px;font-weight:560}
   .prun .pdetail{font-size:10px;color:var(--muted)}
-  .prun.hit{border-color:var(--good)}
+  .prun.hit{border-color:var(--good);cursor:pointer}
   .prun.hit .pname{color:var(--good)}
+  .prun.hit:hover{background:color-mix(in srgb,var(--good) 12%,transparent)}
+  /* The cohort default, leading the strip: a neutral button, not a run. */
+  .prun.all{border-color:var(--ink-2);cursor:pointer;min-width:0}
+  .prun.all:hover{background:color-mix(in srgb,var(--ink-2) 10%,transparent)}
   /* A missing run with raw data is the actionable case — question 2. */
   .prun.miss{border-color:var(--warn);border-style:dashed;cursor:pointer}
   .prun.miss .pname{color:var(--warn)}

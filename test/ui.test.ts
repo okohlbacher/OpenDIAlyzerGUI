@@ -23,7 +23,7 @@ const at = (n: number) => trace[n]!.state;
 test("the journey completed without a step failing", { skip: !have }, () => {
   const failed = trace.filter((s) => s.error);
   assert.deepEqual(failed, [], `steps errored: ${failed.map((f) => f.step + ": " + f.error)}`);
-  assert.equal(trace.length, 15, "every scripted step recorded");
+  assert.equal(trace.length, 16, "every scripted step recorded");
 });
 
 test("a session opens with data and evidence", { skip: !have }, () => {
@@ -97,6 +97,15 @@ test("selecting a row reads raw data", { skip: !have }, () => {
   assert.equal(s.presenceRuns.length, 6, "the cohort strip covers every run");
 });
 
+// Run-brushing: clicking an identified run must show that run's own measured
+// chromatogram, labelled as measured — never a borrowed coordinate.
+test("brushing to an identified run renders its measured chromatogram", { skip: !have }, () => {
+  const s = at(15);
+  assert.equal(s.runXicCharts, 1, "a measured-run layer rendered");
+  assert.ok(s.charts >= 2, "the brushed chromatogram adds a chart to the pane");
+  assert.equal(s.presenceRuns.length, 6, "the cohort strip is untouched");
+});
+
 // The review's critical finding: the UI must not call identifications or
 // absences from uncalibrated extraction counts.
 test("no banner claims an identification or an absence", { skip: !have }, () => {
@@ -120,8 +129,12 @@ test("the project journey completed", { skip: !havep }, () => {
   assert.deepEqual(ptrace.filter((s) => s.error), []);
 });
 
+// Step 0 is projectClear — the project persists across app restarts (by
+// design), so a leftover project.json from an earlier session would otherwise
+// pollute this "starts empty" assertion. The journey resets explicitly rather
+// than assuming a pristine machine.
 test("an empty project shows the required SDRF columns and nothing else", { skip: !havep }, () => {
-  const s = pat(0);
+  const s = pat(1);
   assert.equal(s.screen, "project");
   assert.equal(s.sdrfRows, 0);
   assert.equal(s.sdrfCols, 7, "the seven required SDRF-Proteomics columns");
@@ -130,7 +143,7 @@ test("an empty project shows the required SDRF columns and nothing else", { skip
 // Dropping files must produce rows immediately. If Project gated on annotation,
 // people would skip it and the design data would never be entered at all.
 test("dropped files become annotatable rows at once", { skip: !havep }, () => {
-  const s = pat(1);
+  const s = pat(2);
   assert.equal(s.sdrfRows, 6, "one row per run");
   assert.equal(s.sdrfCols, 7, "no columns invented");
   assert.ok(s.sdrfIssues > 0, "and what is missing is reported");
@@ -138,21 +151,21 @@ test("dropped files become annotatable rows at once", { skip: !havep }, () => {
 });
 
 test("adding a factor column resolves the nothing-to-compare note", { skip: !havep }, () => {
-  const before = pat(1), after = pat(2);
+  const before = pat(2), after = pat(3);
   assert.equal(after.sdrfCols, before.sdrfCols + 1);
   assert.ok(after.sdrfIssues < before.sdrfIssues,
     "declaring what is compared removes that note");
 });
 
 test("editing a cell keeps the table intact", { skip: !havep }, () => {
-  assert.equal(pat(3).sdrfRows, 6);
-  assert.equal(pat(3).sdrfCols, 8);
+  assert.equal(pat(4).sdrfRows, 6);
+  assert.equal(pat(4).sdrfCols, 8);
 });
 
 // Three places, not three steps: leaving and returning must lose nothing.
 test("navigating away and back preserves the project", { skip: !havep }, () => {
-  assert.equal(pat(4).screen, "results", "results is reachable mid-annotation");
-  assert.equal(pat(5).screen, "project");
-  assert.equal(pat(5).sdrfRows, pat(3).sdrfRows, "rows survive the round trip");
-  assert.equal(pat(5).sdrfCols, pat(3).sdrfCols, "so do added columns");
+  assert.equal(pat(5).screen, "results", "results is reachable mid-annotation");
+  assert.equal(pat(6).screen, "project");
+  assert.equal(pat(6).sdrfRows, pat(4).sdrfRows, "rows survive the round trip");
+  assert.equal(pat(6).sdrfCols, pat(4).sdrfCols, "so do added columns");
 });

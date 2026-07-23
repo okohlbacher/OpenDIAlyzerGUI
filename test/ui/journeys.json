@@ -13,5 +13,6 @@
   { "do": "expand", "level": "peptide", "settle": 2500 },
   { "do": "expand", "level": "none", "settle": 800 },
   { "do": "grain", "grain": "precursors", "settle": 1500 },
-  { "do": "select", "row": 3, "settle": 6000 }
+  { "do": "select", "row": 3, "settle": 6000 },
+  { "do": "forRunProbe", "settle": 5000 }
 ]

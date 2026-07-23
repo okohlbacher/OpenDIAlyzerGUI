@@ -398,6 +398,12 @@ const STEPS: Record<string, (a: Record<string, unknown>) => string> = {
   toggleFlag: (a) => `(async () => { document.getElementById(${JSON.stringify(a.id)}).checked =
     ${a.on ? "true" : "false"}; await refresh(); })()`,
   interrogate: (a) => `interrogate(state.sel, ${Number(a.run)})`,
+  // Brushes to the first run that identified the selection, through the same
+  // entry point the hit button's click handler uses.
+  forRunProbe: () => `(async () => {
+    const b = document.querySelector("#presence .prun.hit:not([disabled])");
+    if (!b) throw new Error("no identified run in the presence strip to brush to");
+    await showRunXic(state.sel, Number(b.dataset.run)); })()`,
   screen: (a) => `showScreen(${JSON.stringify(a.screen)})`,
   projectFiles: (a) => `(async () => paintProject(
     await window.api.project.addFiles(${JSON.stringify(a.paths)})))()`,
@@ -426,8 +432,10 @@ const PROBE = `JSON.stringify({
   evidenceSource: document.getElementById("evsrc")?.textContent?.trim() ?? null,
   charts: document.querySelectorAll("#ev svg.chart").length,
   hasHeatmap: !!document.getElementById("heat"),
-  presenceRuns: [...document.querySelectorAll("#presence .prun")].map(b =>
+  presenceRuns: [...document.querySelectorAll("#presence .prun:not(.all)")].map(b =>
     b.className.replace("prun ", "")),
+  runXicCharts: [...document.querySelectorAll("#ev .layer h3")]
+    .filter(h => (h.textContent ?? "").trim().startsWith("Measured —")).length,
   banners: [...document.querySelectorAll("#ev .banner")].map(b =>
     b.textContent.replace(/\\s+/g, " ").trim().slice(0, 90)),
   countText: document.getElementById("count")?.textContent?.trim() ?? null,
@@ -1005,6 +1013,86 @@ ipcMain.handle("evidence:presence", (_e, k: number) => {
 });
 
 /**
+ * The measured chromatogram in one specific run where the peptide WAS found.
+ *
+ * The brushing counterpart of `evidence:interrogate`: same extraction, but this
+ * run has its own identification, so nothing is borrowed. Uses that row's real
+ * RT, m/z, IM and — via `reportedFragments` on that very row — the fragments the
+ * engine scored *in this run*. That is the honest "show me this run" the cohort
+ * exemplar cannot give, because the exemplar is whichever run scored best.
+ */
+ipcMain.handle("evidence:forRun", async (_e, k: number, runIndex: number) => {
+  if (!session) return null;
+  const t = session.report;
+  const anchorRow = rowOf(k);
+  if (anchorRow < 0) return null;
+  const seqs = t.text(CANONICAL.modifiedSequence) ?? t.text(CANONICAL.strippedSequence);
+  const zs = t.numeric(CANONICAL.charge);
+  if (!seqs) return null;
+
+  const seq = seqs[anchorRow]!;
+  const z = zs?.[anchorRow] ?? 0;
+  const target = t.runs[runIndex];
+  if (!target) return null;
+
+  // The peptidoform+charge's own row in this run — best q if it somehow repeats.
+  const q = t.numeric(CANONICAL.qValue);
+  let row = -1;
+  let bestQ = Infinity;
+  for (let i = 0; i < t.rowCount; i++) {
+    if (seqs[i] !== seq || (zs && zs[i] !== z) || t.runOf[i] !== runIndex) continue;
+    const qv = q?.[i] ?? Infinity;
+    if (qv < bestQ) { bestQ = qv; row = i; }
+  }
+  if (row < 0) {
+    // Not identified here — that is Interrogate's job, not this one.
+    return { sequence: seq, charge: z, run: target, xic: null, reason: "not-in-this-run" };
+  }
+
+  const key = seekKey(t, row);
+  if (!key) return { sequence: seq, charge: z, run: target, xic: null, reason: "no-seek-key" };
+
+  let src: OpenArchive | null = null;
+  try {
+    src = await archiveFor(target);
+  } catch (e) {
+    return { sequence: seq, charge: z, run: target, xic: null,
+             reason: "archive-failed", detail: describe(e) };
+  }
+  if (!src) return { sequence: seq, charge: z, run: target, xic: null, reason: "no-archive-for-run" };
+
+  const measured = reportedFragments(t, row);
+  const frags = measured?.slice(0, 6) ?? fragmentsFor(seq, key.charge, src.meta.spectra.ms2MzRange);
+  const fragments = frags.map((f) => f.mz);
+  const margin = 0.15;
+  const t0 = performance.now();
+  try {
+    const xic = await extractXic(src.archive, src.meta, src.peaks, {
+      precursorMz: key.precursorMz,
+      rtMin: key.rtStart - margin, rtMax: key.rtStop + margin,
+      fragments, ppm: 20,
+      imCenter: key.im ?? undefined,
+    });
+    const verdict = coelution(xic.traces);
+    return {
+      sequence: seq, charge: z, run: target, reason: null,
+      measured: !!measured, qValue: key.qValue, rt: key.rt, precursorMz: key.precursorMz,
+      xic: {
+        rt: Array.from(xic.rt),
+        traces: xic.traces.map((tr) => Array.from(tr)),
+        fragments, labels: frags.map((f) => f.label), series: frags.map((f) => f.series),
+        frames: xic.frames.length, rowGroups: xic.rowGroupsRead,
+        rowsDecoded: xic.rowsDecoded, rowsScanned: xic.rowsScanned,
+        archive: basename(src.path), verdict, ms: performance.now() - t0,
+      },
+    };
+  } catch (e) {
+    return { sequence: seq, charge: z, run: target, xic: null,
+             reason: "extract-failed", detail: describe(e) };
+  }
+});
+
+/**
  * Extracts evidence for a precursor in a run where it was *not* identified.
  *
  * No engine writes chromatograms for a candidate it rejected, so this cannot be
@@ -1043,6 +1131,15 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
   }
   donors.sort((a, b) => a - b);
   const rt = donors[Math.floor(donors.length / 2)]!;
+  // Borrow the fragment list too, not just the retention time: the runs that
+  // identified it know which ions the engine actually scored, and a theoretical
+  // guess for a long peptide can miss them entirely. Found before first use —
+  // declaring this below its use in `donorIm` was a temporal-dead-zone crash on
+  // every interrogation.
+  let donorRow = -1;
+  for (let i = 0; i < t.rowCount; i++) {
+    if (seqs[i] === seq && (!zs || zs[i] === z) && t.runOf[i] !== runIndex) { donorRow = i; break; }
+  }
   const ims = t.numeric(CANONICAL.im);
   const donorIm = donorRow >= 0 && ims && Number.isFinite(ims[donorRow]!)
     ? ims[donorRow]! : null;
@@ -1061,13 +1158,6 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
     return { sequence: seq, charge: z, run: target, xic: null, reason: "no-archive-for-run" };
   }
 
-  // Borrow the fragment list too, not just the retention time: the runs that
-  // identified it know which ions the engine actually scored, and a theoretical
-  // guess for a long peptide can miss them entirely.
-  let donorRow = -1;
-  for (let i = 0; i < t.rowCount; i++) {
-    if (seqs[i] === seq && (!zs || zs[i] === z) && t.runOf[i] !== runIndex) { donorRow = i; break; }
-  }
   const measured = donorRow >= 0 ? reportedFragments(t, donorRow) : null;
   const frags = measured?.slice(0, 6) ??
     fragmentsFor(seq, z, src.meta.spectra.ms2MzRange);

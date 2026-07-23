@@ -13,7 +13,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 954 ms",
+      "evidenceSource": "from raw · 929 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -24,8 +24,9 @@
         "miss",
         "miss"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "row 1 of 268,166 · filtered in 4.1 ms",
+      "countText": "row 1 of 268,166 · filtered in 3.8 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -47,7 +48,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 954 ms",
+      "evidenceSource": "from raw · 929 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -58,8 +59,9 @@
         "miss",
         "miss"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "row 1 of 210,663 · filtered in 5.1 ms",
+      "countText": "row 1 of 210,663 · filtered in 7.8 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -81,7 +83,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 954 ms",
+      "evidenceSource": "from raw · 929 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -92,6 +94,7 @@
         "miss",
         "miss"
       ],
+      "runXicCharts": 0,
       "banners": [],
       "countText": "row 1 of 314,655 · filtered in 2.8 ms",
       "screen": "results",
@@ -115,7 +118,7 @@
         "AAYLHGR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1308 ms",
+      "evidenceSource": "from raw · 1292 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -126,8 +129,9 @@
         "hit",
         "hit"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "row 1 of 937 · filtered in 20.6 ms",
+      "countText": "row 1 of 937 · filtered in 20.5 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -149,7 +153,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1308 ms",
+      "evidenceSource": "from raw · 1292 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -160,8 +164,9 @@
         "hit",
         "hit"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 4.7 ms",
+      "countText": "row 1 of 314,655 · filtered in 5.8 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -183,7 +188,7 @@
         "AAAGEFADDPCSSVK"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1308 ms",
+      "evidenceSource": "from raw · 1292 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -194,8 +199,9 @@
         "hit",
         "hit"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 63.5 ms",
+      "countText": "row 1 of 314,655 · filtered in 62.9 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -217,7 +223,7 @@
         "ECCHGDLLECADDR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1308 ms",
+      "evidenceSource": "from raw · 1292 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -228,8 +234,9 @@
         "hit",
         "hit"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "row 1 of 597 · filtered in 13.6 ms",
+      "countText": "row 1 of 597 · filtered in 13.4 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -251,7 +258,7 @@
         "AAAGEFADDPCSSVK"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1308 ms",
+      "evidenceSource": "from raw · 1292 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -262,8 +269,9 @@
         "hit",
         "hit"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 64.5 ms",
+      "countText": "row 1 of 314,655 · filtered in 63.0 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -284,20 +292,14 @@
         "Q09666",
         "Q14204"
       ],
-      "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1308 ms",
-      "charts": 2,
+      "evidenceTitle": "AALAHSEEVTASQVAATK",
+      "evidenceSource": "from raw · 1526 ms",
+      "charts": 1,
       "hasHeatmap": true,
-      "presenceRuns": [
-        "hit",
-        "hit",
-        "hit",
-        "hit",
-        "hit",
-        "hit"
-      ],
+      "presenceRuns": [],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "protein 1 of 12,254 · filtered in 79.2 ms",
+      "countText": "protein 1 of 12,254 · filtered in 76.6 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -319,7 +321,7 @@
         "run-06"
       ],
       "evidenceTitle": "AAAAAAAAVPSAGPAGPAPTSAAGR",
-      "evidenceSource": "from raw · 901 ms",
+      "evidenceSource": "from raw · 878 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -330,8 +332,9 @@
         "hit",
         "miss"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "run 1 of 6 · filtered in 144.9 ms",
+      "countText": "run 1 of 6 · filtered in 142.8 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -353,7 +356,7 @@
         "Q14204"
       ],
       "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 744 ms",
+      "evidenceSource": "from raw · 714 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -364,144 +367,9 @@
         "hit",
         "miss"
       ],
+      "runXicCharts": 0,
       "banners": [],
-      "countText": "run 1 of 12,254 · filtered in 385.0 ms",
-      "screen": "results",
-      "sdrfRows": 0,
-      "sdrfCols": 0,
-      "sdrfIssues": 0,
-      "projectCount": ""
-    }
-  },
-  {
-    "step": "expand",
-    "state": {
-      "grain": "tree",
-      "total": 190934,
-      "loaded": 120,
-      "sel": 0,
-      "fdr": 0.05,
-      "firstRows": [
-        "Q15149",
-        "AALAHSEEVTASQVAATK",
-        "595.3110+++"
-      ],
-      "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 744 ms",
-      "charts": 2,
-      "hasHeatmap": true,
-      "presenceRuns": [
-        "hit",
-        "hit",
-        "hit",
-        "hit",
-        "hit",
-        "miss"
-      ],
-      "banners": [],
-      "countText": "run 1 of 190,934 · filtered in 385.0 ms",
-      "screen": "results",
-      "sdrfRows": 0,
-      "sdrfCols": 0,
-      "sdrfIssues": 0,
-      "projectCount": ""
-    }
-  },
-  {
-    "step": "expand",
-    "state": {
-      "grain": "tree",
-      "total": 12254,
-      "loaded": 120,
-      "sel": 0,
-      "fdr": 0.05,
-      "firstRows": [
-        "Q15149",
-        "Q09666",
-        "Q14204"
-      ],
-      "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 744 ms",
-      "charts": 2,
-      "hasHeatmap": true,
-      "presenceRuns": [
-        "hit",
-        "hit",
-        "hit",
-        "hit",
-        "hit",
-        "miss"
-      ],
-      "banners": [],
-      "countText": "run 1 of 12,254 · filtered in 385.0 ms",
-      "screen": "results",
-      "sdrfRows": 0,
-      "sdrfCols": 0,
-      "sdrfIssues": 0,
-      "projectCount": ""
-    }
-  },
-  {
-    "step": "grain",
-    "state": {
-      "grain": "precursors",
-      "total": 314655,
-      "loaded": 120,
-      "sel": 0,
-      "fdr": 0.05,
-      "firstRows": [
-        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-        "AAAAAAAAAVSR"
-      ],
-      "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 900 ms",
-      "charts": 2,
-      "hasHeatmap": true,
-      "presenceRuns": [
-        "miss",
-        "hit",
-        "hit",
-        "miss",
-        "miss",
-        "miss"
-      ],
-      "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 10.4 ms",
-      "screen": "results",
-      "sdrfRows": 0,
-      "sdrfCols": 0,
-      "sdrfIssues": 0,
-      "projectCount": ""
-    }
-  },
-  {
-    "step": "select",
-    "state": {
-      "grain": "precursors",
-      "total": 314655,
-      "loaded": 120,
-      "sel": 3,
-      "fdr": 0.05,
-      "firstRows": [
-        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-        "AAAAAAAAAVSR"
-      ],
-      "evidenceTitle": "AAAAAAAAAVSR",
-      "evidenceSource": "from raw · 827 ms",
-      "charts": 2,
-      "hasHeatmap": true,
-      "presenceRuns": [
-        "miss",
-        "hit",
-        "miss",
-        "hit",
-        "hit",
-        "miss"
-      ],
-      "banners": [],
-      "countText": "row 4 of 314,655",
+      "countText": "run 1 of 12,254 · filtered in 405.2 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,

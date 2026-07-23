@@ -37,6 +37,8 @@ contextBridge.exposeInMainWorld("api", {
   frame: (k: number, mzWindow?: number) => ipcRenderer.invoke("evidence:frame", k, mzWindow),
   interrogate: (k: number, runIndex: number) =>
     ipcRenderer.invoke("evidence:interrogate", k, runIndex),
+  forRun: (k: number, runIndex: number) =>
+    ipcRenderer.invoke("evidence:forRun", k, runIndex),
   /** Fired once at startup when a path was given on the command line. */
   onAutoload: (fn: (report: string) => void) =>
     ipcRenderer.on("session:autoload", (_e, p: string) => fn(p)),

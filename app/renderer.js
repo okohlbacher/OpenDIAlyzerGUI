@@ -320,6 +320,9 @@ async function showEvidence() {
   }
   ev.classList.add("busy");
   const token = (state.pending = Symbol());
+  // A new selection supersedes any in-flight run brush, so its layer cannot
+  // land in the repainted pane belonging to a different row.
+  state.runXicToken = token;
   let e;
   try {
     e = await window.api.evidence(state.sel);
@@ -425,7 +428,7 @@ async function showEvidence() {
   // in others. Rendered after the chart so the panel still leads with evidence.
   body += `<div class="layer" id="presenceLayer">
     <div class="layer-head"><h3>Across runs</h3>
-      <span class="hint">click a missing run to interrogate it</span></div>
+      <span class="hint">click a run for its own chromatogram</span></div>
     <div id="presence" class="presence"><span class="muted">…</span></div>
   </div>`;
 
@@ -591,23 +594,88 @@ async function paintPresence(k) {
   if (head) {
     head.textContent = p.foundIn === p.of
       ? `identified in all ${p.of} runs`
-      : `identified in ${p.foundIn} of ${p.of} — click a missing run`;
+      : `identified in ${p.foundIn} of ${p.of} — click a run`;
   }
-  el.innerHTML = p.runs.map((r) => {
+  // "All runs" leads the strip: the cohort default is a first-class choice,
+  // not just the absence of a click.
+  el.innerHTML = `<button class="prun all" id="allRuns"
+      title="Cohort default — clear any run narrowing">
+      <span class="pname">All runs</span>
+      <span class="pdetail">cohort</span></button>` +
+    p.runs.map((r) => {
     const missing = !r.hit;
     const cls = missing ? (r.archive ? "miss" : "miss noraw") : "hit";
     const label = shortRun(r.name).slice(0, 16);
     const detail = r.hit
       ? `q ${fmtQ(r.hit.q)} · RT ${r.hit.rt.toFixed(2)}`
       : r.archive ? "not identified" : "no raw data";
-    return `<button class="prun ${cls}" data-run="${r.index}"
-        ${missing && r.archive ? "" : "disabled"} title="${esc(r.name)}\n${detail}">
+    // A found run is clickable too — it brushes the evidence to that run's own
+    // measured chromatogram. Only a run with no raw data stays inert.
+    const clickable = r.archive;
+    return `<button class="prun ${cls}" data-run="${r.index}" data-hit="${r.hit ? 1 : 0}"
+        ${clickable ? "" : "disabled"} title="${esc(r.name)}\n${detail}${
+          clickable ? "\n(click to " + (r.hit ? "show this run" : "interrogate") + ")" : ""}">
         <span class="pname mono">${esc(label)}</span>
         <span class="pdetail">${detail}</span></button>`;
   }).join("");
 
-  el.querySelectorAll("button.prun:not([disabled])").forEach((b) =>
-    b.addEventListener("click", () => void interrogate(k, Number(b.dataset.run))));
+  $("allRuns")?.addEventListener("click", clearRunBrush);
+  el.querySelectorAll("button.prun:not(.all):not([disabled])").forEach((b) =>
+    b.addEventListener("click", () =>
+      // A hit run brushes to its measured trace; a miss run interrogates.
+      Number(b.dataset.hit) ? void showRunXic(k, Number(b.dataset.run))
+                            : void interrogate(k, Number(b.dataset.run))));
+}
+
+/** Returns the evidence to the cohort default: drops any run-narrowing layer. */
+function clearRunBrush() {
+  // Supersede any read still in flight, or its layer would land after the clear.
+  state.runXicToken = Symbol();
+  document.querySelectorAll("#ev .runprobe").forEach((n) => n.remove());
+}
+
+/**
+ * Brushes the evidence to one run's own measured chromatogram.
+ *
+ * Distinct from Interrogate: this run identified the peptide, so nothing is
+ * borrowed — its real RT, m/z, IM and the fragments the engine scored *here*.
+ * It answers "show me this run", which the cohort exemplar cannot, because the
+ * exemplar is whichever run scored best.
+ */
+async function showRunXic(k, runIndex) {
+  const token = (state.runXicToken = Symbol());
+  document.getElementById("runxic")?.remove();
+  const el = $("presence");
+  el.insertAdjacentHTML("afterend",
+    `<p class="note-inline" id="runxicMsg">Reading this run…</p>`);
+  const r = await window.api.forRun(k, runIndex);
+  $("runxicMsg")?.remove();
+  if (token !== state.runXicToken) return;   // a newer click or selection won
+  if (!r) return;
+
+  const box = document.createElement("div");
+  box.className = "layer runprobe";
+  box.id = "runxic";
+  if (!r.xic) {
+    box.innerHTML = `<div class="banner"><div><b>Could not read
+      ${esc(shortRun(r.run))}.</b> ${esc(r.detail ?? r.reason ?? "")}</div></div>`;
+  } else {
+    const x = r.xic;
+    box.innerHTML = `
+      <div class="layer-head"><h3>Measured — ${esc(shortRun(r.run))}</h3>
+        <span class="hint">q ${fmtQ(r.qValue)} · RT ${r.rt.toFixed(2)} · ${x.frames} frames</span></div>
+      ${chart(x)}
+      <div class="legend">${x.fragments.map((f, i) =>
+        `<span><i style="background:${ionColour(i, x.series)}"></i>${esc(x.labels?.[i] ?? "?")} ${f.toFixed(2)}</span>`).join("")}</div>
+      <p class="note-inline">
+        <b>${esc(r.sequence)} ${r.charge}+</b> as identified in this run —
+        its own retention time and the fragments the engine scored here, read
+        from raw data in <b>${x.ms.toFixed(0)} ms</b>.
+        <button class="linkish" id="runxicClear">← back to all runs</button></p>`;
+  }
+  $("presence").closest(".layer").after(box);
+  box.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  $("runxicClear")?.addEventListener("click", clearRunBrush);
 }
 
 /** Extracts evidence in a run where the engine found nothing. */
@@ -620,7 +688,7 @@ async function interrogate(k, runIndex) {
   if (!r) return;
 
   const box = document.createElement("div");
-  box.className = "layer";
+  box.className = "layer runprobe";   // "All runs" clears run-narrowing layers
   if (!r.xic) {
     box.innerHTML = `<div class="banner"><div><b>Could not interrogate
       ${esc(shortRun(r.run))}.</b> ${esc(r.detail ?? r.reason ?? "")}</div></div>`;

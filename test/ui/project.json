@@ -1,5 +1,9 @@
 [
   {
+    "do": "projectClear",
+    "settle": 600
+  },
+  {
     "do": "screen",
     "screen": "project",
     "settle": 900
