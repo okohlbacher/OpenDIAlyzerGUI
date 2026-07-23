@@ -347,7 +347,18 @@ async function showEvidence() {
   // In a coarser grain the evidence is still a precursor's — say whose, or the
   // panel silently swaps a protein for a peptide.
   const row = state.rows.find((r) => r.k === state.sel);
-  const context = state.grain === "proteins" && row
+  // A tree node above run level shows its best-q observation, but the glyph
+  // claims n/N consistency. Say which, or the pane pairs best-case evidence
+  // with a mediocre-consistency claim — the "best replicate" dishonesty this
+  // project criticises in Skyline. The presence strip below shows the rest.
+  const treeCohort = state.grain === "tree" && row && row.level !== "run" &&
+    row.seen !== undefined && row.seen < row.runsTotal;
+  const context = treeCohort
+    ? `<p class="note-inline" style="margin:0 0 8px">Showing the <b>best</b> of
+        ${row.seen}/${row.runsTotal} runs${row.level === "protein" ? " for this protein" :
+        row.level === "peptide" ? " for this peptide" : ""} —
+        the others are in <b>Across runs</b> below.</p>`
+    : state.grain === "proteins" && row
     ? `<p class="note-inline" style="margin:0 0 8px">Best precursor of
         <span class="mono">${esc(row.proteinGroup)}</span>${row.gene ? " · " + esc(row.gene) : ""},
         ${row.precursors} precursors across ${row.runs} run${row.runs === 1 ? "" : "s"}</p>`
