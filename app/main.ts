@@ -1007,7 +1007,10 @@ ipcMain.handle("evidence:presence", (_e, k: number) => {
     const r = t.runOf[i]!;
     const prev = found.get(r);
     const qv = q?.[i] ?? NaN;
-    if (!prev || qv < prev.q) {
+    // A real NaN in the q column must not let the first-arriving row stay
+    // locked in forever — see the identical fix in src/tree.ts.
+    const better = !prev || (Number.isFinite(qv) && (!Number.isFinite(prev.q) || qv < prev.q));
+    if (better) {
       found.set(r, { rt: rt?.[i] ?? NaN, q: qv, quant: quant?.[i] ?? 0, mz: mz?.[i] ?? 0 });
     }
   }
@@ -1051,7 +1054,11 @@ ipcMain.handle("evidence:forRun", async (_e, k: number, runIndex: number) => {
   for (let i = 0; i < t.rowCount; i++) {
     if (seqs[i] !== seq || (zs && zs[i] !== z) || t.runOf[i] !== runIndex) continue;
     const qv = q?.[i] ?? Infinity;
-    if (qv < bestQ) { bestQ = qv; row = i; }
+    // A genuinely NaN q must not make an identified row vanish entirely — it
+    // must still be picked as *a* row, just never preferred over a finite one.
+    if (row < 0 || (Number.isFinite(qv) && (!Number.isFinite(bestQ) || qv < bestQ))) {
+      bestQ = qv; row = i;
+    }
   }
   if (row < 0) {
     // Not identified here — that is Interrogate's job, not this one.
