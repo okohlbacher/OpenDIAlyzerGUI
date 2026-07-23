@@ -5,61 +5,57 @@
  * woven through a wordmark, so on a square plate it reads as a thin band — and
  * lifting it wholesale would claim to *be* OpenMS rather than to belong to it.
  *
- * So: a spectrum drawn in the OpenMS idiom — peak sticks under the logo's own
- * gradient, with the stick heights of a real fragment spectrum — over the
- * product wordmark. `DIA` is picked out in the gradient because it is the
- * meaningful middle of the name, and it echoes how the OpenMS mark colours its
- * peaks against a dark wordmark.
+ * Instead, overlapping ion traces use the OpenMS palette to connect the app's
+ * chromatogram analysis with the project it belongs to. The two-line wordmark
+ * keeps the product name readable without turning the icon into a wide strip.
  *
  * The wordmark is legible from about 128 px up, which covers Finder, the About
- * panel and a large dock. Below that the spectrum carries the identity on its
- * own — which is why the sticks stay chunky rather than fine.
+ * panel and a large dock. Below that the traces carry the identity on their
+ * own, so their strokes stay substantial and their peaks remain distinct.
  */
 
-/** The OpenMS logo gradient, left to right. */
-const STOPS = [
-  [0.0, "#ffb401"], [0.05, "#ff9701"], [0.11, "#ff8401"], [0.16, "#ff7901"],
-  [0.22, "#ff7501"], [0.54, "#ff03cb"], [0.77, "#b503ff"], [0.91, "#3157e9"],
-];
-
-// A regular sawtooth reads as a bar chart; this reads as a spectrum.
-const HEIGHTS = [0.30, 0.52, 0.22, 0.71, 0.34, 1.0, 0.44, 0.83, 0.26, 0.58, 0.19, 0.38];
-
 const W = 1000;
-const TOP = 120;        // ceiling for a full-height peak
-const BASE = 640;       // spectrum baseline
-const STICK = 46;
-const GAP = 34;
-const TEXT_Y = 810;     // wordmark baseline
-const FONT = 138;
-
-const span = HEIGHTS.length * STICK + (HEIGHTS.length - 1) * GAP;
-const x0 = (W - span) / 2;
-
-const sticks = HEIGHTS.map((h, i) => {
-  const x = x0 + i * (STICK + GAP);
-  const top = BASE - h * (BASE - TOP);
-  return `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${STICK}" ` +
-    `height="${(BASE - top).toFixed(1)}" rx="${STICK / 2}"/>`;
-}).join("\n    ");
-
+const H = 1040;
+const FONT = 190;
+const OPEN_X = 90;
+// Rendered 190 px glyph probes put p's centre at 186.5 and I's at 137.0.
+// Final-plate rasterisation moved I's ink 7 px right, so compensate by 7.5
+// source pixels after the probe-derived alignment.
+const DIALYZER_X = OPEN_X + 186.5 - 137 - 7.5;
+const OPEN_Y = 760;
+// A 122 px baseline gap puts 50 px of the p descender inside I's 136 px cap.
+const DIALYZER_Y = OPEN_Y + 122;
 const FAMILY = "Helvetica Neue, Helvetica, Arial, sans-serif";
 
-process.stdout.write(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="900" viewBox="0 60 ${W} 840">
+// Each cubic curve is a smooth ion trace with its own retention time and width.
+// Separate OpenMS stop colours preserve the logo's warm-to-cool sweep.
+const TRACES = [
+  ["#ffb401", "M84 554 C205 554 222 530 270 349 C305 216 349 216 383 349 C430 530 453 554 916 554"],
+  ["#ff7901", "M84 554 C235 554 272 520 326 273 C360 116 414 116 448 273 C500 517 548 554 916 554"],
+  ["#ff03cb", "M84 554 C280 554 337 526 395 319 C435 174 491 174 530 319 C588 526 627 554 916 554"],
+  ["#b503ff", "M84 554 C346 554 416 530 474 368 C516 250 573 250 616 368 C674 530 719 554 916 554"],
+  ["#3157e9", "M84 554 C410 554 495 535 553 410 C596 316 655 316 697 410 C753 532 791 554 916 554"],
+];
+
+const traces = TRACES.map(([color, path]) =>
+  `<path d="${path}" stroke="${color}"/>`
+).join("\n    ");
+
+process.stdout.write(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
-    <linearGradient id="g" x1="${x0}" y1="0" x2="${x0 + span}" y2="0" gradientUnits="userSpaceOnUse">
-      ${STOPS.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("\n      ")}
-    </linearGradient>
     <linearGradient id="gt" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#ff03cb"/>
-      <stop offset="1" stop-color="#b503ff"/>
+      <stop offset="0" stop-color="#ff4bd8"/>
+      <stop offset="1" stop-color="#c64dff"/>
     </linearGradient>
   </defs>
-  <g fill="url(#g)">
-    ${sticks}
+  <g fill="none" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    ${traces}
   </g>
-  <text x="${W / 2}" y="${TEXT_Y}" text-anchor="middle"
+  <text x="${OPEN_X}" y="${OPEN_Y}"
         font-family="${FAMILY}" font-size="${FONT}" font-weight="600"
-        letter-spacing="-4" fill="#f2efec">Open<tspan fill="url(#gt)">DIA</tspan>lyzer</text>
+        letter-spacing="-5" fill="#fff">Open</text>
+  <text x="${DIALYZER_X}" y="${DIALYZER_Y}"
+        font-family="${FAMILY}" font-size="${FONT}" font-weight="600"
+        letter-spacing="-5" fill="url(#gt)">DIAlyzer</text>
 </svg>
 `);
