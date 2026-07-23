@@ -261,6 +261,17 @@ $("openBtn").addEventListener("click", async () => {
 $("fdr").addEventListener("input", (e) => {
   state.fdr = FDR_STOPS[Math.round((e.target.value / 100) * (FDR_STOPS.length - 1))];
   $("fdrOut").textContent = state.fdr.toFixed(3);
+
+// A path on the command line opens straight into a session.
+window.api.onAutoload?.((report) => {
+  openSession(report).catch((e) => {
+    $("sessionCtx").textContent = "could not open: " + (e?.message ?? e);
+  });
+});
+window.api.onAutoloadFailed?.((input) => {
+  $("sessionName").textContent = "Nothing to open";
+  $("sessionCtx").textContent = `no report.parquet at ${input}`;
+});
   refresh();
 });
 $("proteotypic").addEventListener("change", refresh);
@@ -309,3 +320,14 @@ document.addEventListener("keydown", (e) => {
 });
 
 $("fdrOut").textContent = state.fdr.toFixed(3);
+
+// A path on the command line opens straight into a session.
+window.api.onAutoload?.((report) => {
+  openSession(report).catch((e) => {
+    $("sessionCtx").textContent = "could not open: " + (e?.message ?? e);
+  });
+});
+window.api.onAutoloadFailed?.((input) => {
+  $("sessionName").textContent = "Nothing to open";
+  $("sessionCtx").textContent = `no report.parquet at ${input}`;
+});

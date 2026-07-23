@@ -55,6 +55,19 @@ Windows-only by policy; DIA-NN's 2.5/2.6 Report Window is .NET 8 and
 Every Linux, HPC, cloud and macOS user is locked out. Cross-platform is the
 largest uncontested opening in this market, not a convenience.
 
+## Running it
+
+```bash
+npm install
+npm run app                      # open empty, then use "Open report…"
+npm run app -- <report.parquet>  # open a report directly
+npm run app -- <directory>       # open the report found in that directory
+```
+
+Matching `.mzpeak` archives are paired automatically by run identity — put them
+beside the report, or in a `raw/` or `mzpeak/` folder next to it. A report opens
+fine without them; the evidence pane says what is missing instead of failing.
+
 ## Documents
 
 | | |

@@ -8,9 +8,9 @@
  * message passing either way, so moving it is a swap rather than a rewrite.
  */
 import { app, BrowserWindow, ipcMain, dialog, nativeImage } from "electron";
-import { join, dirname, basename } from "node:path";
+import { join, dirname, basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { loadReport, filterRows, seekKey, CANONICAL, type ReportTable, type FilterSpec }
   from "../src/report.ts";
 import { MzPeakArchive } from "../src/archive.ts";
@@ -19,6 +19,50 @@ import { PeakReader, extractXic } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+const USAGE = `OpenDIAlyzer — workbench for DIA proteomics results
+
+  npm run app                      open empty, then use "Open report…"
+  npm run app -- <report.parquet>  open a report directly
+  npm run app -- <directory>       open the report found in that directory
+
+The matching .mzpeak archives are paired automatically by run identity; put
+them beside the report, or in a raw/ or mzpeak/ folder next to it.`;
+
+/**
+ * The path given on the command line, if any.
+ *
+ * Electron inserts its own argv entries and adds switches of its own, so take
+ * the first non-flag argument after the entry point rather than a fixed index.
+ */
+function cliArgument(): string | null {
+  const args = process.argv.slice(app.isPackaged ? 1 : 2);
+  for (const a of args) {
+    if (a.startsWith("-")) continue;
+    return a;
+  }
+  return null;
+}
+
+/**
+ * Resolves a user-supplied path to a report file.
+ *
+ * A directory is the friendlier thing to type and the more likely thing to have
+ * on the clipboard, so both are accepted. `report.parquet` wins over any other
+ * `.parquet` in the folder, since a run also leaves libraries and site reports
+ * behind, and those are not what anyone means.
+ */
+function resolveReport(input: string): string | null {
+  const p = resolve(input);
+  if (!existsSync(p)) return null;
+  if (!statSync(p).isDirectory()) return p;
+
+  const names = readdirSync(p).filter((n) => n.endsWith(".parquet"));
+  const preferred = names.find((n) => n === "report.parquet") ??
+    names.find((n) => /(^|[^a-z])report\.parquet$/i.test(n)) ??
+    names.find((n) => !/(lib|speclib|site_report)/i.test(n));
+  return preferred ? join(p, preferred) : null;
+}
 
 /** One run's raw data, opened on first use and kept for the session. */
 interface OpenArchive {
@@ -100,8 +144,25 @@ function createWindow(): void {
     webPreferences: { preload: join(here, "preload.cjs"), sandbox: false },
   });
   win.loadFile(join(here, "index.html"));
-  const target = process.env.ODIA_SMOKE;
-  if (target) win.webContents.once("did-finish-load", () => void smoke(win, target));
+
+  const smokeTarget = process.env.ODIA_SMOKE;
+  if (smokeTarget) {
+    win.webContents.once("did-finish-load", () => void smoke(win, smokeTarget));
+    return;
+  }
+
+  const arg = cliArgument();
+  if (!arg) return;
+  const report = resolveReport(arg);
+  win.webContents.once("did-finish-load", () => {
+    if (report) win.webContents.send("session:autoload", report);
+    else win.webContents.send("session:autoload-failed", arg);
+  });
+}
+
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log(USAGE);
+  process.exit(0);
 }
 
 app.whenReady().then(() => {
