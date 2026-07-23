@@ -161,28 +161,31 @@ states its prerequisite — *"make sure that the mass accuracies and the scan
 window are fixed to specific values"* — which stages 1–2 satisfy by
 construction.
 
-> **Not yet verified, and it is the highest-risk assumption in the whole plan.**
-> The isolation, checkpoint and order-independence claims below rest on the
-> per-run `.quant` files being *discovered and reused* by the aggregate stage
-> exactly as a monolithic run would produce them. Three things are unproven:
+> **Settled for the non-MBR case (spike 0, run 2026-07-23 on spock, 6 real
+> AGXT runs, pinned `--mass-acc 7 --mass-acc-ms1 10 --window 6`, no
+> `--reanalyse`):** a monolithic run and the per-run + `--use-quant` aggregate
+> produced **identical** `report.parquet` output — same 377,775 rows, same
+> 268,166 precursor IDs at q≤0.01 (0 mono-only, 0 split-only), same 8,174
+> protein groups, and **byte-identical** `Precursor.Normalised` on every one
+> of the 268,166 shared rows. `.quant` discovery and library re-prediction —
+> two of the three risks below — are no longer theoretical.
 >
-> - **`.quant` discovery.** `--use-quant` finds files by raw-file name in the
->   temp/output dir. The stage-4 config lists `--f` for every run, so the raw
->   files must still be reachable at aggregation — the checkpoint is not "the
->   `.quant` files alone", contrary to an earlier phrasing here. If the raw
->   files moved, stage 4 needs dummy placeholders (DIA-NN #1909), which the plan
->   does not yet create.
-> - **MBR.** `--reanalyse` re-searches in a second cross-run pass using an
->   empirical library; whether a per-run-then-aggregate split reproduces a
->   monolithic MBR result is untested and plausibly *not* equal.
-> - **Library re-prediction.** If mass accuracies are not pinned, the aggregate
->   stage can re-optimise and diverge from the per-run stages — which is why the
->   pin (stage 2) is mandatory, not optional.
+> **Still unproven: MBR.** This run did not pass `--reanalyse`, which is
+> inherently cross-run and lives entirely in stage 4. Whether a
+> per-run-then-aggregate split reproduces a monolithic **MBR** result is
+> still untested and plausibly *not* equal — re-run this same diff with
+> `--reanalyse` added to stage 4 before relying on split+MBR in production.
 >
-> **The settling experiment (spike 0, before any of Phase 1 ships):** on a
-> platform where DIA-NN runs — not this Mac, which has no DIA-NN build — search
-> two files monolithically, then via this split, and diff the reports. Until
-> that passes, the run plan is a design, not a guarantee.
+> - **`.quant` discovery — settled above.** `--use-quant` finds files by
+>   raw-file name in the temp/output dir; the stage-4 config lists `--f` for
+>   every run, so the raw files must still be reachable at aggregation — the
+>   checkpoint is not "the `.quant` files alone". If the raw files moved,
+>   stage 4 needs dummy placeholders (DIA-NN #1909), which the plan does not
+>   yet create.
+> - **MBR — still open,** see above.
+> - **Library re-prediction — settled above.** Pinning mass accuracy (stage 2)
+>   before the per-run stage is what made the aggregate stage's results
+>   identical rather than merely similar.
 
 What that buys *if the split reproduces the monolith*, mapped to documented
 DIA-NN failures:
