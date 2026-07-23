@@ -11,7 +11,8 @@
     "test": "node --test \"test/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "build:app": "esbuild app/main.ts --bundle --platform=node --format=esm --packages=external --outfile=app/main.mjs && esbuild app/preload.ts --bundle --platform=node --format=cjs --packages=external --outfile=app/preload.cjs && node scripts/inject-logo.mjs",
-    "app": "npm run build:app && electron app/main.mjs"
+    "app": "npm run build:app && electron app/main.mjs",
+    "ui:record": "node test/ui/run-journeys.mjs test/ui/trace.json"
   },
   "dependencies": {
     "apache-arrow": "^21.2.0",

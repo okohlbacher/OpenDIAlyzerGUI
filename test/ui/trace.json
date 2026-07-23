@@ -1,0 +1,437 @@
+[
+  {
+    "step": "open",
+    "state": {
+      "grain": "precursors",
+      "total": 268166,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.01,
+      "firstRows": [
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAVSR"
+      ],
+      "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+      "evidenceSource": "from raw · 936 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "miss",
+        "hit",
+        "hit",
+        "miss",
+        "miss",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "row 1 of 268,166 · filtered in 3.9 ms"
+    }
+  },
+  {
+    "step": "fdr",
+    "state": {
+      "grain": "precursors",
+      "total": 210663,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.001,
+      "firstRows": [
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAVSR"
+      ],
+      "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+      "evidenceSource": "from raw · 936 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "miss",
+        "hit",
+        "hit",
+        "miss",
+        "miss",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "row 1 of 210,663 · filtered in 8.0 ms"
+    }
+  },
+  {
+    "step": "fdr",
+    "state": {
+      "grain": "precursors",
+      "total": 314655,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAVSR"
+      ],
+      "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+      "evidenceSource": "from raw · 936 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "miss",
+        "hit",
+        "hit",
+        "miss",
+        "miss",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "row 1 of 314,655 · filtered in 2.7 ms"
+    }
+  },
+  {
+    "step": "search",
+    "state": {
+      "grain": "precursors",
+      "total": 937,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "AAYLHGR",
+        "AAYLHGR",
+        "AAYLHGR"
+      ],
+      "evidenceTitle": "AAYLHGR",
+      "evidenceSource": "from raw · 1307 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit"
+      ],
+      "banners": [],
+      "countText": "row 1 of 937 · filtered in 20.3 ms"
+    }
+  },
+  {
+    "step": "search",
+    "state": {
+      "grain": "precursors",
+      "total": 314655,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAVSR"
+      ],
+      "evidenceTitle": "AAYLHGR",
+      "evidenceSource": "from raw · 1307 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit"
+      ],
+      "banners": [],
+      "countText": "row 1 of 314,655 · filtered in 5.7 ms"
+    }
+  },
+  {
+    "step": "sort",
+    "state": {
+      "grain": "precursors",
+      "total": 314655,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "AAAAASAAGPGGLVAGK",
+        "AAAFEEQENETVVVK",
+        "AAAGEFADDPCSSVK"
+      ],
+      "evidenceTitle": "AAYLHGR",
+      "evidenceSource": "from raw · 1307 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit"
+      ],
+      "banners": [],
+      "countText": "row 1 of 314,655 · filtered in 61.0 ms"
+    }
+  },
+  {
+    "step": "colFilter",
+    "state": {
+      "grain": "precursors",
+      "total": 597,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "AEEWGVQYVETSAK",
+        "DDPHACYSTVFDK",
+        "ECCHGDLLECADDR"
+      ],
+      "evidenceTitle": "AAYLHGR",
+      "evidenceSource": "from raw · 1307 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit"
+      ],
+      "banners": [],
+      "countText": "row 1 of 597 · filtered in 13.5 ms"
+    }
+  },
+  {
+    "step": "colFilter",
+    "state": {
+      "grain": "precursors",
+      "total": 314655,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "AAAAASAAGPGGLVAGK",
+        "AAAFEEQENETVVVK",
+        "AAAGEFADDPCSSVK"
+      ],
+      "evidenceTitle": "AAYLHGR",
+      "evidenceSource": "from raw · 1307 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit"
+      ],
+      "banners": [],
+      "countText": "row 1 of 314,655 · filtered in 61.9 ms"
+    }
+  },
+  {
+    "step": "grain",
+    "state": {
+      "grain": "proteins",
+      "total": 12254,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "Q15149",
+        "Q09666",
+        "Q14204"
+      ],
+      "evidenceTitle": "AAYLHGR",
+      "evidenceSource": "from raw · 1307 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit"
+      ],
+      "banners": [],
+      "countText": "protein 1 of 12,254 · filtered in 74.9 ms"
+    }
+  },
+  {
+    "step": "grain",
+    "state": {
+      "grain": "runs",
+      "total": 6,
+      "loaded": 6,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "run-01",
+        "run-05",
+        "run-06"
+      ],
+      "evidenceTitle": "AAAAAAAAVPSAGPAGPAPTSAAGR",
+      "evidenceSource": "from raw · 894 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "miss",
+        "miss",
+        "hit",
+        "hit",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "run 1 of 6 · filtered in 137.4 ms"
+    }
+  },
+  {
+    "step": "grain",
+    "state": {
+      "grain": "tree",
+      "total": 12254,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "Q15149",
+        "Q09666",
+        "Q14204"
+      ],
+      "evidenceTitle": "AALAHSEEVTASQVAATK",
+      "evidenceSource": "from raw · 719 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "run 1 of 12,254 · filtered in 479.6 ms"
+    }
+  },
+  {
+    "step": "expand",
+    "state": {
+      "grain": "tree",
+      "total": 190934,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "Q15149",
+        "AALAHSEEVTASQVAATK",
+        "595.3110+++"
+      ],
+      "evidenceTitle": "AALAHSEEVTASQVAATK",
+      "evidenceSource": "from raw · 719 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "run 1 of 190,934 · filtered in 479.6 ms"
+    }
+  },
+  {
+    "step": "expand",
+    "state": {
+      "grain": "tree",
+      "total": 12254,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "Q15149",
+        "Q09666",
+        "Q14204"
+      ],
+      "evidenceTitle": "AALAHSEEVTASQVAATK",
+      "evidenceSource": "from raw · 719 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "hit",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "run 1 of 12,254 · filtered in 479.6 ms"
+    }
+  },
+  {
+    "step": "grain",
+    "state": {
+      "grain": "precursors",
+      "total": 314655,
+      "loaded": 120,
+      "sel": 0,
+      "fdr": 0.05,
+      "firstRows": [
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAVSR"
+      ],
+      "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+      "evidenceSource": "from raw · 901 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "miss",
+        "hit",
+        "hit",
+        "miss",
+        "miss",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "row 1 of 314,655 · filtered in 9.0 ms"
+    }
+  },
+  {
+    "step": "select",
+    "state": {
+      "grain": "precursors",
+      "total": 314655,
+      "loaded": 120,
+      "sel": 3,
+      "fdr": 0.05,
+      "firstRows": [
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAVSR"
+      ],
+      "evidenceTitle": "AAAAAAAAAVSR",
+      "evidenceSource": "from raw · 806 ms",
+      "charts": 2,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "miss",
+        "hit",
+        "miss",
+        "hit",
+        "hit",
+        "miss"
+      ],
+      "banners": [],
+      "countText": "row 4 of 314,655"
+    }
+  }
+]

@@ -43,16 +43,28 @@ test("protein rows are internally consistent", { skip: !have }, async () => {
   const ps = byProtein(t, rows);
   assert.ok(ps.length > 100);
 
+  let observations = 0;
   let precursors = 0;
   for (const p of ps) {
     assert.ok(p.proteinGroup.length > 0, "every group is named");
-    assert.ok(p.peptides <= p.precursors, "a peptide can have several precursors");
+    assert.ok(p.peptides <= p.precursors, "a peptide can have several charge states");
+    // The distinction the review caught: a precursor seen in six runs is six
+    // observations but one precursor. Labelling rows "precursors" overstated
+    // protein evidence by roughly the run count.
+    assert.ok(p.precursors <= p.observations, "precursors never exceed observations");
     assert.ok(p.runs >= 1 && p.runs <= t.runs.length, "run count is in range");
     assert.ok(p.exemplar >= 0 && p.exemplar < t.rowCount, "exemplar is a real row");
+    // Quantity is the engine's MaxLFQ or nothing — never a cross-run sum, which
+    // would conflate abundance with run count and missingness.
+    assert.ok(p.quantity === null || p.quantity > 0);
+    if (p.quantity === null) assert.ok(p.quantityNote, "absence is explained");
+    observations += p.observations;
     precursors += p.precursors;
   }
-  assert.equal(precursors, rows.length, "no precursor counted twice or dropped");
-  console.log(`    ${ps.length} protein groups from ${rows.length} precursors`);
+  assert.equal(observations, rows.length, "observations partition the filtered set");
+  assert.ok(precursors < observations, "a six-run cohort must collapse observations");
+  console.log(`    ${ps.length} protein groups · ${precursors.toLocaleString()} precursors ` +
+    `from ${observations.toLocaleString()} observations`);
 });
 
 test("run rows carry usable QC numbers", { skip: !have }, async () => {

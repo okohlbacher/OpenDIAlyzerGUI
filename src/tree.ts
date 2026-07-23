@@ -120,7 +120,11 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
     // report with several channels or peptidoforms can repeat the pair.
     const prev = pre.runs.get(r);
     const qi = q?.[i] ?? NaN;
-    if (!prev || (Number.isFinite(qi) && qi < (prev.seen || Infinity))) {
+    // Compare against the previous row's q-value, not `prev.seen` — that is 1
+    // on a run leaf, so `qi < 1` accepted almost anything and the *last*
+    // qualifying row won rather than the best.
+    const prevQ = prev ? (q?.[prev.exemplar] ?? Infinity) : Infinity;
+    if (!prev || (Number.isFinite(qi) && qi < prevQ)) {
       const leaf: TreeNode = {
         level: "run", id: `${gk}|${mk}|${zi}|${r}`,
         label: t.runs[r] ?? String(r),

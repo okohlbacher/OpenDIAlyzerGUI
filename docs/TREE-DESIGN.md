@@ -229,3 +229,25 @@ rendered. Anything else re-creates Spectronaut's Box 11.
 | A run-rooted mode | It is the redundancy, restructured |
 | Per-view ordering settings | The defect above, three times over |
 | Counts in a status bar | Not comparable across rows |
+
+
+## External review — what it changed
+
+Reviewed adversarially by an external model with the brief "find what makes a
+scientist draw a wrong conclusion". 28 findings, 4 critical. The ones that
+changed code:
+
+| | Finding | Fix |
+|---|---|---|
+| **critical** | "No signal — absent, not merely unscored" is unsupportable. Absence of signal above an uncalibrated extraction's sensitivity is not absence of analyte | The panel now reports extraction counts and explicitly disclaims an identification call |
+| **critical** | Interrogate matched on the *stripped* sequence, so it would extract for a phosphopeptide and report on its unmodified form | Keyed on `Modified.Sequence`, as the tree already was |
+| **critical** | "N of 6 co-elute → consistent with the peptide" is not a defensible test; the thresholds are uncalibrated | Wording removed; `coelution()` documents that its thresholds carry no error rate |
+| serious | Protein "Precursors" counted precursor×**run** rows — a 3.8× overstatement on six runs (268,166 reported for 70,755 real) | Distinct precursors counted; row count kept separately as `observations` |
+| serious | Fallback protein quantity summed across runs *and* charge states, conflating abundance with run count and missingness | Removed. Shows the engine's MaxLFQ or nothing, with the reason |
+| serious | The tree's duplicate-row "keep best" compared q against `prev.seen`, which is always 1 — so the *last* row won, not the best | Compares against the previous row's q-value |
+| serious | A requested filter whose column is absent silently became a no-op — "hide decoys" could quietly keep them | Inert filters are recorded so the UI can say the filter did nothing |
+| minor | `median()` returned the upper middle value for even counts, shifting every run-QC number | Conventional median |
+
+Still open from that review and not yet addressed: hard-coded 20 ppm tolerance,
+no ion-mobility filtering in XIC extraction, heat maps not comparable across
+selections, and the top-400 spectrum truncation.

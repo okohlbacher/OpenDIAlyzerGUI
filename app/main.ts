@@ -134,7 +134,7 @@ function readers(g: Grain): Record<string, (row: number) => Cell> {
       peptides: (i) => proteins[i]?.peptides,
       runs: (i) => proteins[i]?.runs,
       q: (i) => proteins[i]?.qValue,
-      quant: (i) => proteins[i]?.quantity,
+      quant: (i) => proteins[i]?.quantity ?? undefined,
     };
   }
   if (g === "tree") {
@@ -320,6 +320,109 @@ async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
 }
 
 /**
+ * Drives a scripted journey and records the state after each step.
+ *
+ * The regression harness. Structure and numbers only — never a screenshot
+ * diff, which fails on font rendering and passes when a chart plots the wrong
+ * data.
+ */
+async function uiScript(win: BrowserWindow, script: string): Promise<void> {
+// ODIA_UI_SCRIPT=<file.json> drives a scripted sequence and dumps the
+// resulting state as JSON — the regression harness. Each step is
+// {do, ...args}; the probe after each step is what the test asserts on.
+
+  const steps = JSON.parse(readFileSync(script, "utf8")) as Record<string, unknown>[];
+  const trace: unknown[] = [];
+  const out = process.env.ODIA_UI_OUT ?? "/tmp/odia-ui.json";
+  // Write what we have on the way out whatever happens: a harness that hangs
+  // silently is worse than one that fails, because there is nothing to read.
+  const dump = () => writeFileSync(out, JSON.stringify(trace, null, 2));
+
+  for (const [n, step] of steps.entries()) {
+    const js = STEPS[String(step.do)];
+    if (!js) { trace.push({ step: step.do, error: "unknown step" }); dump(); break; }
+    console.log(`ui step ${n + 1}/${steps.length}: ${step.do}`);
+    try {
+      // A step that never settles must fail the run rather than stall it.
+      await Promise.race([
+        win.webContents.executeJavaScript(js(step)),
+        new Promise((_r, rej) =>
+          setTimeout(() => rej(new Error("step timed out")), Number(step.timeout ?? 60_000))),
+      ]);
+      await new Promise((r) => setTimeout(r, Number(step.settle ?? 900)));
+      trace.push({
+        step: step.do,
+        state: JSON.parse(await win.webContents.executeJavaScript(PROBE)),
+      });
+    } catch (e) {
+      trace.push({ step: step.do, error: describe(e) });
+      dump();
+      console.log(`ui step failed: ${describe(e)}`);
+      app.exit(1);
+      return;
+    }
+    dump();
+  }
+  console.log("ui trace written to", out);
+  app.exit(0);
+
+}
+
+/**
+ * The vocabulary the UI regression harness drives the app with.
+ *
+ * Deliberately expressed as the renderer's own functions rather than synthetic
+ * clicks: a test that stops working because a button moved is testing the
+ * layout, and a test that keeps passing because it clicked the wrong thing is
+ * worse. These drive the same entry points the event handlers call.
+ */
+const STEPS: Record<string, (a: Record<string, unknown>) => string> = {
+  open: (a) => `openSession(${JSON.stringify(a.report)})`,
+  grain: (a) => `(async () => { state.grain = ${JSON.stringify(a.grain)};
+    state.sort = null; state.colFilters = {}; state.sel = 0; await refresh(); })()`,
+  select: (a) => `select(${Number(a.row)})`,
+  fdr: (a) => `(async () => { state.fdr = ${Number(a.q)}; await refresh(); })()`,
+  search: (a) => `(async () => { state.search = ${JSON.stringify(a.text)};
+    state.sel = 0; await refresh(); })()`,
+  run: (a) => `(async () => { state.run = ${a.run === null ? "undefined" : Number(a.run)};
+    state.sel = 0; await refresh(); })()`,
+  sort: (a) => `(async () => { state.sort = ${JSON.stringify(a.sort)}; await refresh(); })()`,
+  colFilter: (a) => `(async () => { state.colFilters[${JSON.stringify(a.key)}] =
+    ${JSON.stringify(a.text)}; state.sel = 0; await refresh(); })()`,
+  expand: (a) => `(async () => { const r = await window.api.expandLevel(${JSON.stringify(a.level)});
+    state.total = r.total; const p = await window.api.page(0, WINDOW);
+    state.rows = p.rows; paint(); })()`,
+  toggleFlag: (a) => `(async () => { document.getElementById(${JSON.stringify(a.id)}).checked =
+    ${a.on ? "true" : "false"}; await refresh(); })()`,
+  interrogate: (a) => `interrogate(state.sel, ${Number(a.run)})`,
+};
+
+/**
+ * What the harness records after each step.
+ *
+ * Structure and numbers only — never a screenshot diff. Pixel comparison fails
+ * on font rendering and theme, and passes when a chart plots the wrong data.
+ */
+const PROBE = `JSON.stringify({
+  grain: state.grain,
+  total: state.total,
+  loaded: state.rows.length,
+  sel: state.sel,
+  fdr: state.fdr,
+  firstRows: state.rows.slice(0, 3).map(r =>
+    r.seq ?? r.proteinGroup ?? r.run ?? r.label ?? null),
+  evidenceTitle: document.querySelector("#ev .ev-title .s")?.textContent?.trim() ?? null,
+  evidenceSource: document.getElementById("evsrc")?.textContent?.trim() ?? null,
+  charts: document.querySelectorAll("#ev svg.chart").length,
+  hasHeatmap: !!document.getElementById("heat"),
+  presenceRuns: [...document.querySelectorAll("#presence .prun")].map(b =>
+    b.className.replace("prun ", "")),
+  banners: [...document.querySelectorAll("#ev .banner")].map(b =>
+    b.textContent.replace(/\\s+/g, " ").trim().slice(0, 90)),
+  countText: document.getElementById("count")?.textContent?.trim() ?? null,
+})`;
+
+/**
  * Our own mark rather than Electron's default.
  *
  * A packaged build takes its icon from the bundle, but an unpackaged run shows
@@ -351,6 +454,12 @@ function createWindow(): void {
       console.log("setup capture written");
       app.exit(0);
     });
+    return;
+  }
+
+  const uiTarget = process.env.ODIA_UI_SCRIPT;
+  if (uiTarget) {
+    win.webContents.once("did-finish-load", () => void uiScript(win, uiTarget));
     return;
   }
 
@@ -640,8 +749,9 @@ function page(offset: number, limit: number) {
     return slice.map((gi, n) => proteins[gi]!).map((p, n) => ({
       k: offset + n, i: p.exemplar,
       proteinGroup: p.proteinGroup, gene: p.genes,
-      precursors: p.precursors, peptides: p.peptides, runs: p.runs,
-      q: p.qValue, quant: p.quantity, quantityIsSum: p.quantityIsSum,
+      precursors: p.precursors, observations: p.observations,
+      peptides: p.peptides, runs: p.runs,
+      q: p.qValue, quant: p.quantity, quantityNote: p.quantityNote,
     }));
   }
   if (grain === "runs") {
@@ -699,7 +809,10 @@ ipcMain.handle("evidence:presence", (_e, k: number) => {
   const t = session.report;
   const row = rowOf(k);
   if (row < 0) return null;
-  const seqs = t.text(CANONICAL.strippedSequence);
+  // The *modified* sequence, as the tree uses. Keying on the stripped sequence
+  // would merge a phosphopeptide with its unmodified form and report presence
+  // for a molecule that was never looked for.
+  const seqs = t.text(CANONICAL.modifiedSequence) ?? t.text(CANONICAL.strippedSequence);
   const zs = t.numeric(CANONICAL.charge);
   if (!seqs) return null;
 
@@ -747,7 +860,7 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
   const t = session.report;
   const row = rowOf(k);
   if (row < 0) return null;
-  const seqs = t.text(CANONICAL.strippedSequence);
+  const seqs = t.text(CANONICAL.modifiedSequence) ?? t.text(CANONICAL.strippedSequence);
   const zs = t.numeric(CANONICAL.charge);
   const rts = t.numeric(CANONICAL.rt);
   const mzs = t.numeric(CANONICAL.precursorMz);

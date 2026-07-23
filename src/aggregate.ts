@@ -16,18 +16,34 @@ import { CANONICAL, type ReportTable } from "./report.ts";
 export interface ProteinRow {
   proteinGroup: string;
   genes: string;
-  /** Filtered precursors supporting it. */
+  /** Distinct precursors — sequence+charge, not precursor×run observations. */
   precursors: number;
+  /** Rows behind it. Distinct from `precursors`: six runs of one precursor is
+   *  six observations but one precursor, and labelling those the same would
+   *  overstate the evidence by roughly the number of runs. */
+  observations: number;
   /** Distinct stripped sequences — the number people quote as "peptides". */
   peptides: number;
   /** Runs it was seen in. */
   runs: number;
-  /** Best (lowest) protein-group q-value across the filtered rows. */
+  /**
+   * Lowest protein-group q-value seen. This is the best single observation, not
+   * a cohort error rate — a combined probability across runs is a different
+   * quantity and we do not compute one. Labelled "best q" in the UI for that
+   * reason.
+   */
   qValue: number;
-  /** MaxLFQ where the engine gave one, else summed precursor quantity. */
-  quantity: number;
-  /** True when `quantity` is a fallback sum rather than the engine's MaxLFQ. */
-  quantityIsSum: boolean;
+  /** The engine's MaxLFQ. Null when it gave none — see `quantityNote`. */
+  quantity: number | null;
+  /**
+   * Why `quantity` is null, when it is.
+   *
+   * The previous fallback summed every precursor quantity across every run and
+   * charge state, which conflates abundance with run count, missingness and
+   * charge distribution — a number that cannot be compared between proteins or
+   * between cohorts. Showing nothing is better than showing that.
+   */
+  quantityNote: string | null;
   /** A representative row, so the evidence pane has something to drill into. */
   exemplar: number;
 }
@@ -49,10 +65,12 @@ export interface RunRow {
   exemplar: number;
 }
 
+/** The conventional median: the mean of the two middle values when even. */
 const median = (xs: number[]): number => {
   if (!xs.length) return NaN;
   xs.sort((a, b) => a - b);
-  return xs[xs.length >> 1]!;
+  const m = xs.length >> 1;
+  return xs.length % 2 ? xs[m]! : (xs[m - 1]! + xs[m]!) / 2;
 };
 
 /** Groups filtered precursor rows by protein group. */
@@ -64,11 +82,13 @@ export function byProtein(t: ReportTable, rows: Uint32Array): ProteinRow[] {
   const q = t.numeric(CANONICAL.pgQValue) ?? t.numeric(CANONICAL.qValue);
   const lfq = t.numeric(CANONICAL.pgMaxLfq);
   const quant = t.numeric(CANONICAL.quantity);
+  const charge = t.numeric(CANONICAL.charge);
 
   interface Acc {
     peptides: Set<string>;
+    precursorKeys: Set<string>;
     runs: Set<number>;
-    precursors: number;
+    observations: number;
     qValue: number;
     lfq: number;
     sum: number;
@@ -82,12 +102,14 @@ export function byProtein(t: ReportTable, rows: Uint32Array): ProteinRow[] {
     if (!key) continue;
     let a = acc.get(key);
     if (!a) {
-      a = { peptides: new Set(), runs: new Set(), precursors: 0, qValue: Infinity,
-            lfq: 0, sum: 0, exemplar: i, genes: genes?.[i] || "" };
+      a = { peptides: new Set(), precursorKeys: new Set(), runs: new Set(),
+            observations: 0, qValue: Infinity, lfq: 0, sum: 0, exemplar: i,
+            genes: genes?.[i] || "" };
       acc.set(key, a);
     }
-    a.precursors++;
+    a.observations++;
     a.peptides.add(seqs[i]!);
+    a.precursorKeys.add(`${seqs[i]}|${charge?.[i] ?? 0}`);
     a.runs.add(t.runOf[i]!);
     a.sum += quant?.[i] ?? 0;
     const qv = q?.[i] ?? NaN;
@@ -103,16 +125,17 @@ export function byProtein(t: ReportTable, rows: Uint32Array): ProteinRow[] {
     out.push({
       proteinGroup: key,
       genes: a.genes,
-      precursors: a.precursors,
+      precursors: a.precursorKeys.size,
+      observations: a.observations,
       peptides: a.peptides.size,
       runs: a.runs.size,
       qValue: Number.isFinite(a.qValue) ? a.qValue : NaN,
-      quantity: a.lfq > 0 ? a.lfq : a.sum,
-      quantityIsSum: !(a.lfq > 0),
+      quantity: a.lfq > 0 ? a.lfq : null,
+      quantityNote: a.lfq > 0 ? null : "no MaxLFQ from the engine",
       exemplar: a.exemplar,
     });
   }
-  return out.sort((x, y) => y.precursors - x.precursors || x.qValue - y.qValue);
+  return out.sort((x, y) => y.peptides - x.peptides || x.qValue - y.qValue);
 }
 
 /** Per-run diagnostics from the filtered set — the Runs grain, which is QC. */

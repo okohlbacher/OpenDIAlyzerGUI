@@ -374,13 +374,20 @@ export interface Coelution {
 }
 
 /**
- * How many fragments actually agree with each other.
+ * How many fragments agree with each other.
  *
- * A single strong trace is not evidence of a peptide — it is the signature of
- * interference, one co-incident ion in a wide isolation window. What
- * distinguishes a real precursor is several fragments rising and falling
- * *together*. This returns the counts and lets the panel say what they support,
- * rather than asserting a conclusion the data does not carry.
+ * A single strong trace is weak evidence — one co-incident ion in a wide
+ * isolation window looks the same. Several fragments rising and falling
+ * together is stronger.
+ *
+ * **These are descriptive counts, not a test.** The thresholds below are
+ * uncalibrated: `max > mean * 3` depends on how much baseline the window
+ * happens to contain, and "within two frames" is a cycle count rather than a
+ * chromatographic tolerance, so it means different things at different cycle
+ * times. No error rate is attached. Callers must report the counts and let the
+ * reader judge — an external review flagged the previous wording, which called
+ * identifications and absences from these numbers, as unsupportable, and it
+ * was right.
  */
 export function coelution(traces: readonly Float64Array[]): Coelution {
   const stats = traces.map((t) => {

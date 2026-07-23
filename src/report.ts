@@ -248,6 +248,9 @@ export function fromArrow(tbl: Table): ReportTable {
   };
 }
 
+/** Columns a requested filter could not act on, from the last `filterRows`. */
+export let lastInertFilters: string[] = [];
+
 /**
  * Applies a filter and returns matching row indices.
  *
@@ -263,6 +266,15 @@ export function filterRows(t: ReportTable, f: FilterSpec): Uint32Array {
   const genes = f.search ? t.text(CANONICAL.genes) : null;
   const prot = f.search ? t.text(CANONICAL.proteinGroup) : null;
   const needle = f.search?.trim().toUpperCase() ?? "";
+
+  // A requested filter whose column is absent must not silently become a no-op:
+  // "hide decoys" that quietly kept them is a wrong answer presented as a right
+  // one. Absent columns are reported so the UI can say the filter did nothing.
+  const inert: string[] = [];
+  if (f.hideDecoys && !decoy) inert.push(CANONICAL.decoy);
+  if (f.proteotypicOnly && !proteo) inert.push(CANONICAL.proteotypic);
+  if (f.maxQValue !== undefined && !q) inert.push(CANONICAL.qValue);
+  lastInertFilters = inert;
 
   const out = new Uint32Array(t.rowCount);
   let n = 0;

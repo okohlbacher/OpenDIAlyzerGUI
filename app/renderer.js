@@ -152,7 +152,7 @@ const COLUMNS = {
     { key: "precursors", label: "Precursors", num: true, hint: ">10" },
     { key: "peptides", label: "Peptides", num: true, hint: "" },
     { key: "runs", label: "Runs", num: true, hint: "6" },
-    { key: "q", label: "q", num: true, hint: "<0.01" },
+    { key: "q", label: "best q", num: true, hint: "<0.01" },
     { key: "quant", label: "Quantity", num: true, hint: "" },
   ],
   runs: [
@@ -246,8 +246,8 @@ function rowHtml(row) {
        <td class="num mono">${row.peptides}</td>
        <td class="num mono">${row.runs}</td>
        <td class="num mono qv ${qcls}">${fmtQ(row.q)}</td>
-       <td class="num mono" title="${row.quantityIsSum ? "summed precursor quantity — no MaxLFQ" : "MaxLFQ"}">${
-         row.quant ? row.quant.toExponential(1) : "—"}${row.quantityIsSum ? "*" : ""}</td></tr>`;
+       <td class="num mono" title="${row.quant ? "MaxLFQ" : esc(row.quantityNote ?? "")}">${
+         row.quant ? row.quant.toExponential(1) : "—"}</td></tr>`;
   }
   if (state.grain === "runs") {
     return open +
@@ -402,7 +402,7 @@ async function showEvidence() {
             : '<span class="err">Fragments are theoretical y-ions from the sequence</span>' +
               " — this report was written without <span class=\"mono\">--export-quant</span>"},
           read from <span class="mono">${esc(x.archive)}</span>.
-          ${sig ? "" : '<span class="err">No signal in this window.</span>'}
+          ${sig ? "" : '<span class="err">No fragment rose above baseline in this window.</span>'}
         </p>
       </div>`;
     $("evsrc").textContent = `from raw · ${x.ms.toFixed(0)} ms`;
@@ -614,18 +614,24 @@ async function interrogate(k, runIndex) {
   } else {
     const x = r.xic;
     const v = x.verdict;
-    // Say what the fragments support, not what we hope they mean. One strong
-    // trace in a wide isolation window is interference, not a peptide.
-    const call = v.coeluting >= 3
-      ? `<b>${v.coeluting} of ${v.total} fragments co-elute</b> at that coordinate —
-         consistent with the peptide being present but unreported.`
-      : v.present === 0
-        ? `<span class="err">No fragment shows signal there — absent, not merely
-           unscored.</span>`
-        : `<b>${v.present} of ${v.total} fragments show signal</b>, but
-           ${v.coeluting < 2 ? "they do not co-elute" : "only " + v.coeluting + " co-elute"} —
-           more consistent with interference in the isolation window than with
-           the peptide.`;
+    // Describe what was extracted; do not call an identification.
+    //
+    // An external review was blunt about this and right: these thresholds are
+    // uncalibrated, there is no FDR attached to them, and a UI that says
+    // "consistent with the peptide" or "absent" is making a claim the numbers
+    // cannot support. Signal below a detection limit is indistinguishable from
+    // no analyte, and this extraction has no detection limit. So the panel
+    // reports counts and leaves the call to the reader.
+    const call =
+      `<b>${v.present} of ${v.total}</b> requested fragments show a peak above
+       their own baseline in this window` +
+      (v.present > 1
+        ? `, <b>${v.coeluting}</b> of them apexing within two frames of the
+           strongest.`
+        : ".") +
+      ` These are extraction counts, not an identification — no error rate is
+        attached to them, and an absence here is an absence of signal above this
+        extraction's own sensitivity, not evidence the peptide is not present.`;
     box.innerHTML = `
       <div class="layer-head"><h3>Interrogated — ${esc(shortRun(r.run))}</h3>
         <span class="hint">${x.frames} frames · ${x.rowGroups} row groups</span></div>

@@ -1,0 +1,17 @@
+[
+  { "do": "open", "report": "REPORT", "settle": 5000 },
+  { "do": "fdr", "q": 0.001, "settle": 600 },
+  { "do": "fdr", "q": 0.05, "settle": 600 },
+  { "do": "search", "text": "AGXT", "settle": 2500 },
+  { "do": "search", "text": "", "settle": 600 },
+  { "do": "sort", "sort": { "key": "q", "dir": "asc" }, "settle": 900 },
+  { "do": "colFilter", "key": "gene", "text": "ALB", "settle": 900 },
+  { "do": "colFilter", "key": "gene", "text": "", "settle": 600 },
+  { "do": "grain", "grain": "proteins", "settle": 1500 },
+  { "do": "grain", "grain": "runs", "settle": 1200 },
+  { "do": "grain", "grain": "tree", "settle": 5000 },
+  { "do": "expand", "level": "peptide", "settle": 2500 },
+  { "do": "expand", "level": "none", "settle": 800 },
+  { "do": "grain", "grain": "precursors", "settle": 1500 },
+  { "do": "select", "row": 3, "settle": 6000 }
+]
