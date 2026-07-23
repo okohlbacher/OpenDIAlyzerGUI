@@ -11,7 +11,7 @@ No milestone is a prerequisite refactor for the next.
 | **M0** ✅ | Range reader + ZIP directory | Opens a 1.53 GB ZIP64 archive in **0.2 ms** | …the archive is not byte-addressable from TS |
 | **M1** ✅ | Spectrum + precursor index | Offset table **exact to the row** (507,184,228); DIA seek path working | …`number_of_peaks` does not predict peak-facet rows |
 | **M2** ✅ | RT-bounded XIC | End-to-end fragment traces in **178 ms** (native: 105 ms) | …`parquet-wasm` cannot meet the drilldown budget |
-| **M3** ◀ | Report loader | A DIA-NN `report.parquet` as a filterable table | …schema drift breaks the drop-in promise |
+| **M3** ✅ | Report loader | A DIA-NN `report.parquet` as a filterable table | …schema drift breaks the drop-in promise |
 | **M4** | Shell | Electron window, three panes, real data in the table | …the mockup does not survive real column counts |
 | **M5** | Drilldown | Selection → evidence panel, end to end | — |
 | **M6** | Engine | Detect, verify, plan, run DIA-NN | …the calibrate→per-run→aggregate plan does not hold |
@@ -56,7 +56,51 @@ contract in `docs/ARCHITECTURE.md` honest.
 
 ## Status
 
-**M0, M1 and M2 are done** — 18 tests green against real files.
+**M0–M3 are done** — 25 tests green against real files, including real DIA-NN
+2.6.1 output.
+
+### The demo dataset
+
+`/ceph/ibmi/abi/data/2026_AGXT_PH1_liver_diaPASEF` on spock: 6 human liver
+diaPASEF runs, 2 primary-hyperoxaluria patients with known AGXT genotypes
+(G170R homozygous; G170R + G362S heterozygous) and 4 controls. Searched with
+DIA-NN 2.6.1 Academia.
+
+It is a better demo than a benchmark corpus would have been, because the
+clinical question *is* question 2: **is the variant peptide present in this
+patient, and if not, what is actually at that coordinate?** The report already
+carries 669 AGXT rows across 211 distinct peptides.
+
+### The column contract was right
+
+`docs/DIANN-COMPAT.md` listed the columns the UI depends on, derived from the
+README before any real output existed. Against a real 268,948-row report:
+**all 33 present, 39 unrecognised columns carried through, `File.Name` absent
+exactly as DIA-NN #1105 documents.** The tolerance design was not theoretical.
+
+| Measurement | |
+|---|---|
+| Load 268,948 × 72 | **576 ms** |
+| Re-filter (the FDR slider) | **1.5 ms** — budget was one 16.7 ms frame |
+| Mean engine-measured RT window | **0.174 min** — every one of 500 sampled under 2 min |
+
+That last number matters more than it looks: the XIC was benchmarked against a
+±0.5 min window, and real reports are three times tighter still.
+
+### Twice now, the same mistake
+
+Both M2 and M3 were first written with a per-row Arrow access in the hot path,
+and both were ~20× too slow until it was removed.
+
+- M2: `.get(i)` over a million peak rows — test exceeded 120 s.
+- M3: a type check matching only `Float64Array | Int32Array`, so **56 of this
+  report's columns were float32** and silently took the per-row fallback. Decode
+  is 275 ms; the loop around it was 9 s.
+
+The rule that would have prevented both: **never touch an Arrow vector
+element-wise in a loop over rows.** `toArray()`, accept every typed-array width,
+and profile the stages before optimising — measuring showed the parquet decode
+was never the problem either time.
 
 ### Decision 2 is settled: parquet-wasm stays, no napi-rs escalation
 
@@ -92,6 +136,8 @@ about that short of a writer-side change (`docs/ARCHITECTURE.md`, request 3).
 
 - `verifyOffsets()` still uses the cheap tier and covers ~18 % of rows on the
   large corpus. Now that `PeakReader` exists it should move over and cover 100 %.
+- No `.mzpeak` yet for the AGXT runs, so report and drilldown are not joined on
+  the same data. Converting one `.d` closes that.
 - Metadata index build is 1.8 s on the 1.5 GB file — hyparquet decoding all ~103
   leaves because it cannot project inside a struct. pyarrow does it in 2 ms with
   projection. Moving this facet to the bulk tier too would remove the largest
