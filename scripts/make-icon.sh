@@ -17,7 +17,7 @@ done
 
 PLATE=1024        # full icon canvas
 INSET=92          # macOS masks to a squircle; leave it room
-ART=720           # longest edge of the artwork inside the plate
+ART=780           # longest edge of the artwork inside the plate
 RADIUS=188
 
 mkdir -p build

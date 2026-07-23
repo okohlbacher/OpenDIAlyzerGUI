@@ -101,9 +101,27 @@ Both themes are first-class. Light is a warm-neutral paper biased toward the
 ink; dark is a warm near-black. The blue lightens to `#6b8cf7` on dark and
 darkens to `#2544c4` for text on light, so the accent stays legible in both.
 
-Attribution: the mark is used as an ecosystem badge — OpenMS is BSD-3, and
-OpenDIAlyzer links against it as a prerequisite (`README.md`, *Relationship to
-other software*). The footer says so explicitly.
+### The product lockup
+
+The OpenMS mark is the *ecosystem badge*; the OpenDIAlyzer wordmark is ours.
+They sit side by side, divided by a rule, so it is clear which is which.
+
+**`DIA` is picked out in the magenta→purple part of the gradient** — the
+meaningful middle of the name, and an echo of how the OpenMS mark colours its
+peaks against a dark wordmark.
+
+The **application icon** is a spectrum in the same idiom over that wordmark. It
+is deliberately *not* the OpenMS logo cropped: that mark is roughly 4:1 because
+its peaks thread through a wordmark, so on a square plate it reads as a thin
+band — and lifting it wholesale would claim to *be* OpenMS rather than to
+belong to it. The wordmark is legible from about 128 px up, which covers Finder,
+the About panel and a large dock; below that the spectrum carries the identity
+alone, which is why the sticks stay chunky rather than fine.
+`scripts/make-icon.sh` regenerates it.
+
+Attribution: the OpenMS mark is used as an ecosystem badge — OpenMS is BSD-3,
+and OpenDIAlyzer links against it as a prerequisite (`README.md`, *Relationship
+to other software*). The footer says so explicitly.
 
 `docs/mockup.html` implements all of the above and is the reference.
 
