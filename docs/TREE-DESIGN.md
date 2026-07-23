@@ -274,6 +274,10 @@ changed code:
 | serious | A requested filter whose column is absent silently became a no-op — "hide decoys" could quietly keep them | Inert filters are recorded so the UI can say the filter did nothing |
 | minor | `median()` returned the upper middle value for even counts, shifting every run-QC number | Conventional median |
 
-Still open from that review and not yet addressed: hard-coded 20 ppm tolerance,
-no ion-mobility filtering in XIC extraction, heat maps not comparable across
-selections, and the top-400 spectrum truncation.
+Since addressed: ion-mobility filtering in XIC extraction (`imCenter`/
+`imTolerance` in `extractXic`), and the fragment-matching tolerance, which
+now derives per-run from `report.stats.tsv`'s measured MS2 accuracy instead
+of a flat 20 ppm (`src/stats.ts`).
+
+Still open from that review: heat maps not comparable across selections,
+and the top-400 spectrum truncation.
