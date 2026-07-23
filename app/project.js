@@ -91,6 +91,12 @@ $("paddFiles").addEventListener("click", async () => {
   const paths = await window.api.pickRuns();
   if (paths.length) paintProject(await window.api.project.addFiles(paths));
 });
+$("pclear").addEventListener("click", async () => {
+  if (!proj?.rows.length ||
+      confirm(`Discard ${proj.rows.length} annotated run(s)? Export first if you need them.`)) {
+    paintProject(await window.api.project.clear());
+  }
+});
 $("pimport").addEventListener("click", async () =>
   paintProject(await window.api.project.import()));
 $("pexport").addEventListener("click", async () => {

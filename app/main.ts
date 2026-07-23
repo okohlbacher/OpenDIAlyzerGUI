@@ -403,6 +403,7 @@ const STEPS: Record<string, (a: Record<string, unknown>) => string> = {
     await window.api.project.addFiles(${JSON.stringify(a.paths)})))()`,
   projectSet: (a) => `(async () => paintProject(await window.api.project.setValue(
     ${Number(a.row)}, ${JSON.stringify(a.column)}, ${JSON.stringify(a.value)})))()`,
+  projectClear: () => `(async () => paintProject(await window.api.project.clear()))()`,
   projectColumn: (a) => `(async () => paintProject(
     await window.api.project.addColumn(${JSON.stringify(a.name)})))()`,
 };
@@ -501,6 +502,7 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
 }
 
 app.whenReady().then(() => {
+  loadProject();
   if (process.platform === "darwin" && app.dock && existsSync(ICON)) {
     app.dock.setIcon(nativeImage.createFromPath(ICON));
   }
@@ -529,6 +531,44 @@ let project: { sdrf: Sdrf; investigation: Investigation; path: string | null } =
   path: null,
 };
 
+/**
+ * The project survives the app closing.
+ *
+ * Annotation is typed by hand and is the one thing here that cannot be
+ * recomputed: a report can be re-read and an archive re-converted, but the
+ * organism someone looked up is gone if the window closes. So every mutation
+ * writes through immediately rather than waiting for an explicit save — a Save
+ * button people have not pressed yet is exactly how this data gets lost.
+ */
+const projectFile = () => join(app.getPath("userData"), "project.json");
+
+function saveProject(): void {
+  try {
+    writeFileSync(projectFile(), JSON.stringify(project, null, 2));
+  } catch (e) {
+    // Never let a failed autosave break editing; the export path still works.
+    console.error("could not autosave project:", describe(e));
+  }
+}
+
+function loadProject(): void {
+  try {
+    const raw = readFileSync(projectFile(), "utf8");
+    const p = JSON.parse(raw) as typeof project;
+    // Tolerate a file written by an older build rather than discarding the
+    // user's annotation because a field was added since.
+    if (p && p.sdrf && Array.isArray(p.sdrf.columns) && Array.isArray(p.sdrf.rows)) {
+      project = {
+        sdrf: p.sdrf,
+        investigation: { ...emptyInvestigation(), ...(p.investigation ?? {}) },
+        path: p.path ?? null,
+      };
+    }
+  } catch {
+    // No project yet, or an unreadable one — start empty rather than fail.
+  }
+}
+
 const projectState = () => ({
   columns: project.sdrf.columns,
   rows: project.sdrf.rows.map((r) => ({ path: r.path, values: r.values })),
@@ -540,23 +580,34 @@ const projectState = () => ({
 
 ipcMain.handle("project:get", () => projectState());
 
+ipcMain.handle("project:clear", () => {
+  project = { sdrf: { columns: [...REQUIRED], rows: [] },
+              investigation: emptyInvestigation(), path: null };
+  saveProject();
+  return projectState();
+});
+
 ipcMain.handle("project:addFiles", (_e, paths: string[]) => {
   project.sdrf = fromFiles(paths, project.sdrf);
+  saveProject();
   return projectState();
 });
 
 ipcMain.handle("project:setValue", (_e, row: number, column: string, value: string) => {
   project.sdrf = setValue(project.sdrf, row, column, value);
+  saveProject();
   return projectState();
 });
 
 ipcMain.handle("project:addColumn", (_e, name: string) => {
   project.sdrf = addColumn(project.sdrf, name);
+  saveProject();
   return projectState();
 });
 
 ipcMain.handle("project:setInvestigation", (_e, inv: Partial<Investigation>) => {
   project.investigation = { ...project.investigation, ...inv };
+  saveProject();
   return projectState();
 });
 
@@ -578,6 +629,7 @@ ipcMain.handle("project:import", async () => {
     return existsSync(local) ? local : df;
   });
   project.path = file;
+  saveProject();
   return projectState();
 });
 
@@ -590,6 +642,7 @@ ipcMain.handle("project:export", async () => {
   if (r.canceled || !r.filePath) return null;
   writeFileSync(r.filePath, toTsv(project.sdrf));
   project.path = r.filePath;
+  saveProject();
   return r.filePath;
 });
 

@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld("api", {
     import: () => ipcRenderer.invoke("project:import"),
     export: () => ipcRenderer.invoke("project:export"),
     forRuns: () => ipcRenderer.invoke("project:forRuns"),
+    clear: () => ipcRenderer.invoke("project:clear"),
   },
   engines: (paths?: string[]) => ipcRenderer.invoke("setup:engines", paths),
   pickRuns: () => ipcRenderer.invoke("setup:pickRuns"),
