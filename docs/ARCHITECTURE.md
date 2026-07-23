@@ -93,26 +93,19 @@ bulk tier. It is a flat schema, so it is the easy case.
 ### The escalation, documented in advance
 
 `parquet-wasm` is the starting point because it is one implementation that runs
-in Electron *and* in a browser, with no native build matrix. If spike 2 shows
-the drilldown budget cannot be met, the documented escalation is a **`napi-rs`
+in Electron *and* in a browser, with no native build matrix. The documented
+escalation, if the drilldown budget were not met, would be a **`napi-rs`
 addon linking `mzpeak_prototyping`** — which additionally brings the TOF
 transform, numpress, and `object_store` async remote reads for free
 (`vendor/mzpeak_prototyping/src/reader/object_store_async.rs`). It costs a
 {macOS, Windows, Linux} × {x64, arm64} × Electron-ABI prebuild matrix, forever.
 
-That trade is genuinely close. It is deliberately *not* being decided from an
-armchair: `RangeReader` and the tier boundary make the swap contained, and
-spike 2 decides it with a number.
-
-**Spike 2's number, for the query that matters:** `test/peaks.test.ts`'s "RT-
-bounded XIC meets the 350 ms budget" runs the exact query the evidence panel
-issues — bounded m/z × RT, real fragments, on the real 1.53 GB / 507 M-peak
-timsTOF archive — against a 350 ms budget and has passed since M0-M2
-(`1f88876`). Current measurement: **147 ms**, close to the 105 ms native
-reference above it in this document. For the app's actual drilldown path,
-the pure-JS tier already meets budget; this does not by itself resolve the
-*random* spectrum fetch case (~500 ms pure JS, cited above), but that
-pattern is not one the evidence panel's bounded queries exercise.
+That trade was genuinely close, which is why it was not decided from an
+armchair: `RangeReader` and the tier boundary made the swap contained, and
+spike 2 (below, under "Spikes — done") decided it with a number — the
+bounded XIC the evidence panel actually issues measured 178 ms against a
+350 ms budget, so parquet-wasm stays. Re-measured tonight on the same real
+archive at 147 ms, same test, still well inside budget.
 
 `// ponytail: WASM first because it is one build and one codebase. Escalate to
 // napi-rs only on a measured miss, not because native sounds faster.`
