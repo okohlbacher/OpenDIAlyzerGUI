@@ -23,7 +23,7 @@ const at = (n: number) => trace[n]!.state;
 test("the journey completed without a step failing", { skip: !have }, () => {
   const failed = trace.filter((s) => s.error);
   assert.deepEqual(failed, [], `steps errored: ${failed.map((f) => f.step + ": " + f.error)}`);
-  assert.equal(trace.length, 16, "every scripted step recorded");
+  assert.equal(trace.length, 17, "every scripted step recorded");
 });
 
 test("a session opens with data and evidence", { skip: !have }, () => {
@@ -104,6 +104,15 @@ test("brushing to an identified run renders its measured chromatogram", { skip: 
   assert.equal(s.runXicCharts, 1, "a measured-run layer rendered");
   assert.ok(s.charts >= 2, "the brushed chromatogram adds a chart to the pane");
   assert.equal(s.presenceRuns.length, 6, "the cohort strip is untouched");
+});
+
+// A truncated spectrum must be recoverable, not just disclosed — the show-all
+// control has to actually fetch the rest, not just relabel what's already there.
+test("show all reveals every truncated spectrum peak", { skip: !have }, () => {
+  const before = at(15), after = at(16);
+  assert.equal(before.specShowAllVisible, true, "this selection's spectrum starts truncated");
+  assert.ok(after.specPeaksShown > before.specPeaksShown, "show-all fetched more peaks");
+  assert.equal(after.specShowAllVisible, false, "the button disappears once everything is shown");
 });
 
 // The review's critical finding: the UI must not call identifications or

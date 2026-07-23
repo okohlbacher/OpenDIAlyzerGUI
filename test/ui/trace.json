@@ -13,7 +13,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 908 ms",
+      "evidenceSource": "from raw · 915 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -25,8 +25,10 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 268,166 · filtered in 4.3 ms",
+      "countText": "row 1 of 268,166 · filtered in 4.0 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -48,7 +50,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 908 ms",
+      "evidenceSource": "from raw · 915 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -60,8 +62,10 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 210,663 · filtered in 8.2 ms",
+      "countText": "row 1 of 210,663 · filtered in 7.5 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -83,7 +87,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 908 ms",
+      "evidenceSource": "from raw · 915 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -95,8 +99,10 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 2.9 ms",
+      "countText": "row 1 of 314,655 · filtered in 2.8 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -118,7 +124,7 @@
         "AAYLHGR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1283 ms",
+      "evidenceSource": "from raw · 1273 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -130,8 +136,10 @@
         "hit"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 937 · filtered in 20.5 ms",
+      "countText": "row 1 of 937 · filtered in 20.1 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -153,7 +161,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1283 ms",
+      "evidenceSource": "from raw · 1273 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -165,8 +173,10 @@
         "hit"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 2.4 ms",
+      "countText": "row 1 of 314,655 · filtered in 5.9 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -188,7 +198,7 @@
         "AAAGEFADDPCSSVK"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1283 ms",
+      "evidenceSource": "from raw · 1273 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -200,8 +210,10 @@
         "hit"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 63.6 ms",
+      "countText": "row 1 of 314,655 · filtered in 61.0 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -223,7 +235,7 @@
         "ECCHGDLLECADDR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1283 ms",
+      "evidenceSource": "from raw · 1273 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -235,8 +247,10 @@
         "hit"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 597 · filtered in 14.1 ms",
+      "countText": "row 1 of 597 · filtered in 13.3 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -258,7 +272,7 @@
         "AAAGEFADDPCSSVK"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1283 ms",
+      "evidenceSource": "from raw · 1273 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -270,8 +284,10 @@
         "hit"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 62.8 ms",
+      "countText": "row 1 of 314,655 · filtered in 61.4 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -292,8 +308,8 @@
         "Q09666",
         "Q14204"
       ],
-      "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1283 ms",
+      "evidenceTitle": "AALAHSEEVTASQVAATK",
+      "evidenceSource": "from raw · 1329 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -302,11 +318,13 @@
         "hit",
         "hit",
         "hit",
-        "hit"
+        "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "protein 1 of 12,254 · filtered in 76.7 ms",
+      "countText": "protein 1 of 12,254 · filtered in 76.8 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -328,7 +346,7 @@
         "run-06"
       ],
       "evidenceTitle": "AAAAAAAAVPSAGPAGPAPTSAAGR",
-      "evidenceSource": "from raw · 885 ms",
+      "evidenceSource": "from raw · 858 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -340,8 +358,10 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "run 1 of 6 · filtered in 220.9 ms",
+      "countText": "run 1 of 6 · filtered in 193.5 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -363,7 +383,7 @@
         "Q14204"
       ],
       "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 711 ms",
+      "evidenceSource": "from raw · 700 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -375,8 +395,10 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "run 1 of 12,254 · filtered in 388.5 ms",
+      "countText": "run 1 of 12,254 · filtered in 400.2 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -398,7 +420,7 @@
         "595.3110+++"
       ],
       "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 711 ms",
+      "evidenceSource": "from raw · 700 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -410,8 +432,10 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "run 1 of 190,934 · filtered in 388.5 ms",
+      "countText": "run 1 of 190,934 · filtered in 400.2 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -433,7 +457,7 @@
         "Q14204"
       ],
       "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 711 ms",
+      "evidenceSource": "from raw · 700 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -445,8 +469,10 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "run 1 of 12,254 · filtered in 388.5 ms",
+      "countText": "run 1 of 12,254 · filtered in 400.2 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -468,7 +494,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 877 ms",
+      "evidenceSource": "from raw · 870 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -480,8 +506,10 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 12.4 ms",
+      "countText": "row 1 of 314,655 · filtered in 11.4 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -503,7 +531,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAVSR",
-      "evidenceSource": "from raw · 800 ms",
+      "evidenceSource": "from raw · 803 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -515,6 +543,8 @@
         "miss"
       ],
       "runXicCharts": 0,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
       "banners": [],
       "countText": "row 4 of 314,655",
       "screen": "results",
@@ -538,7 +568,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAVSR",
-      "evidenceSource": "from raw · 800 ms",
+      "evidenceSource": "from raw · 803 ms",
       "charts": 3,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -550,6 +580,45 @@
         "miss"
       ],
       "runXicCharts": 1,
+      "specPeaksShown": 400,
+      "specShowAllVisible": true,
+      "banners": [],
+      "countText": "row 4 of 314,655",
+      "screen": "results",
+      "sdrfRows": 0,
+      "sdrfCols": 0,
+      "sdrfIssues": 0,
+      "projectCount": ""
+    }
+  },
+  {
+    "step": "showAllSpectrumPeaks",
+    "state": {
+      "grain": "precursors",
+      "total": 314655,
+      "loaded": 120,
+      "sel": 3,
+      "fdr": 0.05,
+      "firstRows": [
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
+        "AAAAAAAAAVSR"
+      ],
+      "evidenceTitle": "AAAAAAAAAVSR",
+      "evidenceSource": "from raw · 803 ms",
+      "charts": 3,
+      "hasHeatmap": true,
+      "presenceRuns": [
+        "miss",
+        "hit",
+        "miss",
+        "hit",
+        "hit",
+        "miss"
+      ],
+      "runXicCharts": 1,
+      "specPeaksShown": 28184,
+      "specShowAllVisible": false,
       "banners": [],
       "countText": "row 4 of 314,655",
       "screen": "results",

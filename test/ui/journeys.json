@@ -14,5 +14,6 @@
   { "do": "expand", "level": "none", "settle": 800 },
   { "do": "grain", "grain": "precursors", "settle": 1500 },
   { "do": "select", "row": 3, "settle": 6000 },
-  { "do": "forRunProbe", "settle": 5000 }
+  { "do": "forRunProbe", "settle": 5000 },
+  { "do": "showAllSpectrumPeaks", "settle": 3000 }
 ]

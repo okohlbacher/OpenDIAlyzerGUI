@@ -468,9 +468,9 @@ async function showEvidence() {
  * touches the heat map and the two share a y scale row-for-row — Skyline's
  * arrangement, and the reason its two panes read as one figure.
  */
-async function paintFrame(k) {
+async function paintFrame(k, specLimit) {
   const hint = $("frameHint");
-  const f = await window.api.frame(k, 6);
+  const f = await window.api.frame(k, 6, specLimit);
   if (!hint || !document.getElementById("heat")) return;   // selection moved on
   if (!f || f.reason) {
     hint.textContent = f?.reason === "no-archive-for-run" ? "no raw data" : "unavailable";
@@ -538,6 +538,8 @@ async function paintFrame(k) {
 
   const sw = $("specWrap");
   if (sw && f.spectrum) sw.innerHTML = spectrumSvg(f.spectrum, f.fragments, f.precursorMz);
+  document.getElementById("specShowAll")?.addEventListener("click",
+    () => paintFrame(k, f.spectrum.total));
 }
 
 /** Stick spectrum with the engine's own fragments annotated. */
@@ -584,7 +586,7 @@ function spectrumSvg(sp, frags, precursorMz) {
     <text x="${W - R}" y="${H - 5}" fill="var(--muted)" font-size="8.5" text-anchor="end"
       font-family="ui-monospace,Menlo,monospace">${hi.toFixed(0)} m/z</text>
   </svg>${sp.total > sp.mz.length
-    ? `<p class="note-inline">${sp.mz.length.toLocaleString()} of ${sp.total.toLocaleString()} peaks shown.</p>`
+    ? `<p class="note-inline">${sp.mz.length.toLocaleString()} of ${sp.total.toLocaleString()} peaks shown. <button class="linkish" id="specShowAll">show all</button></p>`
     : ""}`;
 }
 

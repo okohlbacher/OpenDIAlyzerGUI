@@ -405,6 +405,10 @@ const STEPS: Record<string, (a: Record<string, unknown>) => string> = {
     const b = document.querySelector("#presence .prun.hit:not([disabled])");
     if (!b) throw new Error("no identified run in the presence strip to brush to");
     await showRunXic(state.sel, Number(b.dataset.run)); })()`,
+  showAllSpectrumPeaks: () => `(async () => {
+    const b = document.getElementById("specShowAll");
+    if (!b) throw new Error("no show-all button — spectrum was not truncated for this selection");
+    b.click(); })()`,
   screen: (a) => `showScreen(${JSON.stringify(a.screen)})`,
   projectFiles: (a) => `(async () => paintProject(
     await window.api.project.addFiles(${JSON.stringify(a.paths)})))()`,
@@ -437,6 +441,9 @@ const PROBE = `JSON.stringify({
     b.className.replace("prun ", "")),
   runXicCharts: [...document.querySelectorAll("#ev .layer h3")]
     .filter(h => (h.textContent ?? "").trim().startsWith("Measured —")).length,
+  // One <line> per spectrum peak, plus one for the axis baseline.
+  specPeaksShown: Math.max(0, document.querySelectorAll("#specWrap svg.chart line").length - 1),
+  specShowAllVisible: !!document.getElementById("specShowAll"),
   banners: [...document.querySelectorAll("#ev .banner")].map(b =>
     b.textContent.replace(/\\s+/g, " ").trim().slice(0, 90)),
   countText: document.getElementById("count")?.textContent?.trim() ?? null,
@@ -1220,7 +1227,9 @@ function rowOf(k: number): number {
  * the data layer because a diaPASEF frame is ~200,000 peaks and shipping those
  * to the renderer to bin would cost more than reading them.
  */
-ipcMain.handle("evidence:frame", async (_e, k: number, mzWindow?: number) => {
+ipcMain.handle("evidence:frame", async (
+  _e, k: number, mzWindow?: number, specLimit?: number,
+) => {
   if (!session) return null;
   const row = rowOf(k);
   if (row < 0) return null;
@@ -1241,7 +1250,7 @@ ipcMain.handle("evidence:frame", async (_e, k: number, mzWindow?: number) => {
     const half = mzWindow ?? 0;
     const hm = heatmap(pts, 220, 120,
       half > 0 ? [key.precursorMz - half, key.precursorMz + half] : undefined);
-    const sp = spectrum(pts);
+    const sp = spectrum(pts, 15, specLimit ?? 400);
     const frags = reportedFragments(session.report, row);
     return {
       reason: null,
