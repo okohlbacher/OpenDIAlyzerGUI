@@ -145,7 +145,8 @@ test("bulk tier handles a Thermo-style archive with a direct m/z column", {
 // archive came back as 801,746,959 bytes — and the truncated slice surfaced as
 // "corrupt footer" from inside WASM rather than as a size error. RangeBlob
 // exists because of this, so it needs a test that would have caught it.
-const HUGE = "/path/to/mzpeak-example-data/diann/agxt-2026/" +
+const HUGE = process.env.ODIA_TEST_HUGE_ARCHIVE ??
+  "/path/to/mzpeak-example-data/diann/agxt-2026/" +
   "run-01.mzpeak";
 
 test("reads a peak facet larger than 4 GB", { skip: !have(HUGE) }, async () => {

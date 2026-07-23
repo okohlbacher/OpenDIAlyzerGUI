@@ -7,7 +7,7 @@
  * and `fs` all work with no bundling at all — and the renderer talks to it by
  * message passing either way, so moving it is a swap rather than a rewrite.
  */
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, nativeImage } from "electron";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -80,8 +80,18 @@ async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
   app.exit(0);
 }
 
+/**
+ * Our own mark rather than Electron's default.
+ *
+ * A packaged build takes its icon from the bundle, but an unpackaged run shows
+ * Electron's logo unless the dock icon is set explicitly — and `npm run app` is
+ * how this is used every day.
+ */
+const ICON = join(here, "..", "build", "icon.png");
+
 function createWindow(): void {
   const win = new BrowserWindow({
+    icon: existsSync(ICON) ? ICON : undefined,
     width: 1580,
     height: 940,
     minWidth: 1080,
@@ -95,6 +105,9 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
+  if (process.platform === "darwin" && app.dock && existsSync(ICON)) {
+    app.dock.setIcon(nativeImage.createFromPath(ICON));
+  }
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

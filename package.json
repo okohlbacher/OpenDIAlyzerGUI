@@ -23,5 +23,16 @@
     "electron": "^43.2.0",
     "esbuild": "^0.28.1"
   },
-  "main": "app/main.mjs"
+  "main": "app/main.mjs",
+  "build": {
+    "appId": "org.openms.opendialyzer",
+    "productName": "OpenDIAlyzer",
+    "icon": "build/icon",
+    "files": [
+      "app/**/*",
+      "src/**/*",
+      "build/icon.*",
+      "package.json"
+    ]
+  }
 }

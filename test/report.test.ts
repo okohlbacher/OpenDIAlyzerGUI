@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { loadReport, filterRows, seekKey, CANONICAL } from "../src/report.ts";
 
-// Real DIA-NN 2.6.1 Academia output: 6 human liver diaPASEF runs, AGXT/PH1
-// cohort, run on spock 2026-07-19. Not a synthetic fixture.
-const REPORT = "/path/to/mzpeak-example-data/diann/agxt-2026/report.parquet";
+// Real DIA-NN 2.6.1 Academia output from a six-run liver diaPASEF cohort — not
+// a synthetic fixture. The data is unpublished and lives outside the repo, so
+// these tests skip cleanly when it is absent.
+const REPORT = process.env.ODIA_TEST_REPORT ??
+  "/path/to/mzpeak-example-data/diann/agxt-2026/report.parquet";
 const have = existsSync(REPORT);
 
 let cached: Awaited<ReturnType<typeof loadReport>> | null = null;
@@ -70,10 +72,8 @@ test("proteotypic and per-run filters compose", { skip: !have }, async () => {
   console.log(`    all ${all} · proteotypic ${pt} · run[0] ${one}`);
 });
 
-// The clinical question this cohort exists to answer: 2 PH1 patients carry
-// AGXT variants, 4 controls do not. Searching for the gene is the Interrogate
-// entry point, and it must land on real rows.
-test("finds the AGXT target of the study", { skip: !have }, async () => {
+// Searching by gene is the Interrogate entry point and must land on real rows.
+test("finds the gene of interest", { skip: !have }, async () => {
   const t = await report();
   const hits = filterRows(t, { maxQValue: 0.5, search: "AGXT" });
   assert.ok(hits.length > 0, "AGXT precursors present in the report");

@@ -78,15 +78,13 @@ is ESM-only and a CJS bundle cannot require it. Preload stays CJS.
 
 ### The demo dataset
 
-`/ceph/ibmi/abi/data/2026_AGXT_PH1_liver_diaPASEF` on spock: 6 human liver
-diaPASEF runs, 2 primary-hyperoxaluria patients with known AGXT genotypes
-(G170R homozygous; G170R + G362S heterozygous) and 4 controls. Searched with
-DIA-NN 2.6.1 Academia.
+A six-run human liver diaPASEF cohort searched with DIA-NN 2.6.1 Academia,
+provided by a collaborating group. The data itself is unpublished and is not
+in this repository; only the measurements taken against it are.
 
-It is a better demo than a benchmark corpus would have been, because the
-clinical question *is* question 2: **is the variant peptide present in this
-patient, and if not, what is actually at that coordinate?** The report already
-carries 669 AGXT rows across 211 distinct peptides.
+It is a better exercise than a benchmark corpus would have been, because the
+study's own question *is* question 2: **is a specific variant peptide present
+in this sample, and if not, what is actually at that coordinate?**
 
 ### The column contract was right
 
