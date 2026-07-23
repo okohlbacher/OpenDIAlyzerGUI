@@ -7,6 +7,17 @@ contextBridge.exposeInMainWorld("api", {
   /** Electron removed File.path; this is the supported replacement. Without it
    *  drag-and-drop silently drops every file. */
   pathOf: (f: File) => webUtils.getPathForFile(f),
+  project: {
+    get: () => ipcRenderer.invoke("project:get"),
+    addFiles: (paths: string[]) => ipcRenderer.invoke("project:addFiles", paths),
+    setValue: (row: number, column: string, value: string) =>
+      ipcRenderer.invoke("project:setValue", row, column, value),
+    addColumn: (name: string) => ipcRenderer.invoke("project:addColumn", name),
+    setInvestigation: (inv: unknown) => ipcRenderer.invoke("project:setInvestigation", inv),
+    import: () => ipcRenderer.invoke("project:import"),
+    export: () => ipcRenderer.invoke("project:export"),
+    forRuns: () => ipcRenderer.invoke("project:forRuns"),
+  },
   engines: (paths?: string[]) => ipcRenderer.invoke("setup:engines", paths),
   pickRuns: () => ipcRenderer.invoke("setup:pickRuns"),
   pickFile: (kind: string) => ipcRenderer.invoke("setup:pickFile", kind),

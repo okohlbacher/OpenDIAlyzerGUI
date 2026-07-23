@@ -1,0 +1,41 @@
+[
+  {
+    "do": "screen",
+    "screen": "project",
+    "settle": 900
+  },
+  {
+    "do": "projectFiles",
+    "paths": [
+      "/path/to/raw-data/run-01.d",
+      "/path/to/raw-data/run-02.d",
+      "/path/to/raw-data/run-03.d",
+      "/path/to/raw-data/run-04.d",
+      "/path/to/raw-data/run-05.d",
+      "/path/to/raw-data/run-06.d"
+    ],
+    "settle": 1500
+  },
+  {
+    "do": "projectColumn",
+    "name": "factor value[group]",
+    "settle": 800
+  },
+  {
+    "do": "projectSet",
+    "row": 0,
+    "column": "characteristics[organism]",
+    "value": "Homo sapiens",
+    "settle": 800
+  },
+  {
+    "do": "screen",
+    "screen": "results",
+    "settle": 700
+  },
+  {
+    "do": "screen",
+    "screen": "project",
+    "settle": 900
+  }
+]

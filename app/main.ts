@@ -24,6 +24,9 @@ import { sortIndices, applyColumnFilters, type Cell } from "../src/table.ts";
 import { buildTree, flatten, idsAtLevel, type TreeNode, type FlatRow } from "../src/tree.ts";
 import { detect, verify, plan, PRESETS, countFasta, estimateMemoryGb,
   type Install, type PresetId, type Stage } from "../src/engine.ts";
+import { fromFiles, addColumn, setValue, validate, toTsv, fromTsv, matchRuns,
+  REQUIRED, SUGGESTED, emptyInvestigation, type Sdrf, type Investigation }
+  from "../src/sdrf.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -395,6 +398,13 @@ const STEPS: Record<string, (a: Record<string, unknown>) => string> = {
   toggleFlag: (a) => `(async () => { document.getElementById(${JSON.stringify(a.id)}).checked =
     ${a.on ? "true" : "false"}; await refresh(); })()`,
   interrogate: (a) => `interrogate(state.sel, ${Number(a.run)})`,
+  screen: (a) => `showScreen(${JSON.stringify(a.screen)})`,
+  projectFiles: (a) => `(async () => paintProject(
+    await window.api.project.addFiles(${JSON.stringify(a.paths)})))()`,
+  projectSet: (a) => `(async () => paintProject(await window.api.project.setValue(
+    ${Number(a.row)}, ${JSON.stringify(a.column)}, ${JSON.stringify(a.value)})))()`,
+  projectColumn: (a) => `(async () => paintProject(
+    await window.api.project.addColumn(${JSON.stringify(a.name)})))()`,
 };
 
 /**
@@ -420,6 +430,12 @@ const PROBE = `JSON.stringify({
   banners: [...document.querySelectorAll("#ev .banner")].map(b =>
     b.textContent.replace(/\\s+/g, " ").trim().slice(0, 90)),
   countText: document.getElementById("count")?.textContent?.trim() ?? null,
+  screen: document.getElementById("project")?.hidden === false ? "project"
+        : document.getElementById("setup")?.hidden === false ? "analyse" : "results",
+  sdrfRows: document.querySelectorAll("#ptbody tr").length,
+  sdrfCols: document.querySelectorAll("#pthead th").length,
+  sdrfIssues: document.querySelectorAll("#pissues .issue").length,
+  projectCount: document.getElementById("pcount")?.textContent?.trim() ?? null,
 })`;
 
 /**
@@ -447,7 +463,8 @@ function createWindow(): void {
   if (process.env.ODIA_SMOKE_SETUP) {
     win.webContents.once("did-finish-load", async () => {
       await new Promise((r) => setTimeout(r, 2500));
-      await win.webContents.executeJavaScript("showSetup(true)");
+      await win.webContents.executeJavaScript(
+        `showScreen(${JSON.stringify(process.env.ODIA_SMOKE_SETUP)})`);
       await new Promise((r) => setTimeout(r, 1500));
       writeFileSync(process.env.ODIA_SMOKE_OUT ?? "/tmp/setup.png",
         (await win.webContents.capturePage()).toPNG());
@@ -497,6 +514,94 @@ app.on("window-all-closed", () => {
 });
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
+
+// ── Project (screen 0) ───────────────────────────────────────────────────────
+
+/**
+ * The experiment, held in main so every screen reads one copy.
+ *
+ * `docs/NAVIGATION.md`: nothing is entered twice. The run list *is* the SDRF's
+ * rows, and once a report is open those rows join to it by run identity.
+ */
+let project: { sdrf: Sdrf; investigation: Investigation; path: string | null } = {
+  sdrf: { columns: [...REQUIRED], rows: [] },
+  investigation: emptyInvestigation(),
+  path: null,
+};
+
+const projectState = () => ({
+  columns: project.sdrf.columns,
+  rows: project.sdrf.rows.map((r) => ({ path: r.path, values: r.values })),
+  investigation: project.investigation,
+  issues: validate(project.sdrf),
+  suggested: SUGGESTED.filter((c) => !project.sdrf.columns.includes(c)),
+  path: project.path,
+});
+
+ipcMain.handle("project:get", () => projectState());
+
+ipcMain.handle("project:addFiles", (_e, paths: string[]) => {
+  project.sdrf = fromFiles(paths, project.sdrf);
+  return projectState();
+});
+
+ipcMain.handle("project:setValue", (_e, row: number, column: string, value: string) => {
+  project.sdrf = setValue(project.sdrf, row, column, value);
+  return projectState();
+});
+
+ipcMain.handle("project:addColumn", (_e, name: string) => {
+  project.sdrf = addColumn(project.sdrf, name);
+  return projectState();
+});
+
+ipcMain.handle("project:setInvestigation", (_e, inv: Partial<Investigation>) => {
+  project.investigation = { ...project.investigation, ...inv };
+  return projectState();
+});
+
+ipcMain.handle("project:import", async () => {
+  const r = await dialog.showOpenDialog({
+    title: "Import SDRF",
+    properties: ["openFile"],
+    filters: [{ name: "SDRF", extensions: ["tsv", "sdrf", "txt"] }],
+  });
+  if (r.canceled || !r.filePaths[0]) return projectState();
+  const file = r.filePaths[0];
+  const dir = dirname(file);
+  // Resolve each row's data file relative to the SDRF, which is where it is
+  // most likely to sit; an unresolvable path is kept as written rather than
+  // dropped, so the row survives and can be repointed.
+  project.sdrf = fromTsv(readFileSync(file, "utf8"), (df) => {
+    if (!df) return "";
+    const local = join(dir, df);
+    return existsSync(local) ? local : df;
+  });
+  project.path = file;
+  return projectState();
+});
+
+ipcMain.handle("project:export", async () => {
+  const r = await dialog.showSaveDialog({
+    title: "Export SDRF",
+    defaultPath: project.path ?? "experiment.sdrf.tsv",
+    filters: [{ name: "SDRF", extensions: ["tsv"] }],
+  });
+  if (r.canceled || !r.filePath) return null;
+  writeFileSync(r.filePath, toTsv(project.sdrf));
+  project.path = r.filePath;
+  return r.filePath;
+});
+
+/** SDRF annotation for the runs of the open report, joined by run identity. */
+ipcMain.handle("project:forRuns", () => {
+  if (!session) return null;
+  const m = matchRuns(project.sdrf, session.report.runs);
+  return session.report.runs.map((run) => ({
+    run,
+    values: m.get(run)?.values ?? null,
+  }));
+});
 
 // ── Setup (screen 1) ─────────────────────────────────────────────────────────
 

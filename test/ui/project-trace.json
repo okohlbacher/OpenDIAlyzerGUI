@@ -1,0 +1,140 @@
+[
+  {
+    "step": "screen",
+    "state": {
+      "grain": "precursors",
+      "total": 0,
+      "loaded": 0,
+      "sel": 0,
+      "fdr": 0.01,
+      "firstRows": [],
+      "evidenceTitle": null,
+      "evidenceSource": "",
+      "charts": 0,
+      "hasHeatmap": false,
+      "presenceRuns": [],
+      "banners": [],
+      "countText": "—",
+      "screen": "project",
+      "sdrfRows": 0,
+      "sdrfCols": 7,
+      "sdrfIssues": 0,
+      "projectCount": "no files yet"
+    }
+  },
+  {
+    "step": "projectFiles",
+    "state": {
+      "grain": "precursors",
+      "total": 0,
+      "loaded": 0,
+      "sel": 0,
+      "fdr": 0.01,
+      "firstRows": [],
+      "evidenceTitle": null,
+      "evidenceSource": "",
+      "charts": 0,
+      "hasHeatmap": false,
+      "presenceRuns": [],
+      "banners": [],
+      "countText": "—",
+      "screen": "project",
+      "sdrfRows": 6,
+      "sdrfCols": 7,
+      "sdrfIssues": 2,
+      "projectCount": "6 runs · 7 columns"
+    }
+  },
+  {
+    "step": "projectColumn",
+    "state": {
+      "grain": "precursors",
+      "total": 0,
+      "loaded": 0,
+      "sel": 0,
+      "fdr": 0.01,
+      "firstRows": [],
+      "evidenceTitle": null,
+      "evidenceSource": "",
+      "charts": 0,
+      "hasHeatmap": false,
+      "presenceRuns": [],
+      "banners": [],
+      "countText": "—",
+      "screen": "project",
+      "sdrfRows": 6,
+      "sdrfCols": 8,
+      "sdrfIssues": 1,
+      "projectCount": "6 runs · 8 columns"
+    }
+  },
+  {
+    "step": "projectSet",
+    "state": {
+      "grain": "precursors",
+      "total": 0,
+      "loaded": 0,
+      "sel": 0,
+      "fdr": 0.01,
+      "firstRows": [],
+      "evidenceTitle": null,
+      "evidenceSource": "",
+      "charts": 0,
+      "hasHeatmap": false,
+      "presenceRuns": [],
+      "banners": [],
+      "countText": "—",
+      "screen": "project",
+      "sdrfRows": 6,
+      "sdrfCols": 8,
+      "sdrfIssues": 1,
+      "projectCount": "6 runs · 8 columns"
+    }
+  },
+  {
+    "step": "screen",
+    "state": {
+      "grain": "precursors",
+      "total": 0,
+      "loaded": 0,
+      "sel": 0,
+      "fdr": 0.01,
+      "firstRows": [],
+      "evidenceTitle": null,
+      "evidenceSource": "",
+      "charts": 0,
+      "hasHeatmap": false,
+      "presenceRuns": [],
+      "banners": [],
+      "countText": "—",
+      "screen": "results",
+      "sdrfRows": 6,
+      "sdrfCols": 8,
+      "sdrfIssues": 1,
+      "projectCount": "6 runs · 8 columns"
+    }
+  },
+  {
+    "step": "screen",
+    "state": {
+      "grain": "precursors",
+      "total": 0,
+      "loaded": 0,
+      "sel": 0,
+      "fdr": 0.01,
+      "firstRows": [],
+      "evidenceTitle": null,
+      "evidenceSource": "",
+      "charts": 0,
+      "hasHeatmap": false,
+      "presenceRuns": [],
+      "banners": [],
+      "countText": "—",
+      "screen": "project",
+      "sdrfRows": 6,
+      "sdrfCols": 8,
+      "sdrfIssues": 1,
+      "projectCount": "6 runs · 8 columns"
+    }
+  }
+]

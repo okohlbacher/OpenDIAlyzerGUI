@@ -25,9 +25,9 @@ const setup = {
   cores: 8,
 };
 
+/** Kept for the smoke harness; screens are switched by showScreen(). */
 function showSetup(show) {
-  $("setup").hidden = !show;
-  document.querySelector(".panes").style.display = show ? "none" : "";
+  showScreen(show ? "analyse" : "results");
   $("backToResults").hidden = !state.open;
 }
 
@@ -155,8 +155,7 @@ $("pickOut").addEventListener("click", async () => {
   refreshSetupState();
 });
 $("previewPlan").addEventListener("click", previewPlan);
-$("newBtn").addEventListener("click", () => showSetup(true));
-$("backToResults").addEventListener("click", () => showSetup(false));
+$("backToResults").addEventListener("click", () => showScreen("results"));
 
 const drop = $("drop");
 for (const ev of ["dragenter", "dragover"]) {

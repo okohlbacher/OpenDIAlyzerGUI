@@ -107,3 +107,52 @@ test("no banner claims an identification or an absence", { skip: !have }, () => 
     }
   }
 });
+
+// ── project screen ───────────────────────────────────────────────────────────
+
+const PTRACE = "test/ui/project-trace.json";
+const havep = existsSync(PTRACE);
+const ptrace: { step: string; error?: string; state: any }[] =
+  havep ? JSON.parse(readFileSync(PTRACE, "utf8")) : [];
+const pat = (n: number) => ptrace[n]!.state;
+
+test("the project journey completed", { skip: !havep }, () => {
+  assert.deepEqual(ptrace.filter((s) => s.error), []);
+});
+
+test("an empty project shows the required SDRF columns and nothing else", { skip: !havep }, () => {
+  const s = pat(0);
+  assert.equal(s.screen, "project");
+  assert.equal(s.sdrfRows, 0);
+  assert.equal(s.sdrfCols, 7, "the seven required SDRF-Proteomics columns");
+});
+
+// Dropping files must produce rows immediately. If Project gated on annotation,
+// people would skip it and the design data would never be entered at all.
+test("dropped files become annotatable rows at once", { skip: !havep }, () => {
+  const s = pat(1);
+  assert.equal(s.sdrfRows, 6, "one row per run");
+  assert.equal(s.sdrfCols, 7, "no columns invented");
+  assert.ok(s.sdrfIssues > 0, "and what is missing is reported");
+  assert.match(s.projectCount ?? "", /6 runs/);
+});
+
+test("adding a factor column resolves the nothing-to-compare note", { skip: !havep }, () => {
+  const before = pat(1), after = pat(2);
+  assert.equal(after.sdrfCols, before.sdrfCols + 1);
+  assert.ok(after.sdrfIssues < before.sdrfIssues,
+    "declaring what is compared removes that note");
+});
+
+test("editing a cell keeps the table intact", { skip: !havep }, () => {
+  assert.equal(pat(3).sdrfRows, 6);
+  assert.equal(pat(3).sdrfCols, 8);
+});
+
+// Three places, not three steps: leaving and returning must lose nothing.
+test("navigating away and back preserves the project", { skip: !havep }, () => {
+  assert.equal(pat(4).screen, "results", "results is reachable mid-annotation");
+  assert.equal(pat(5).screen, "project");
+  assert.equal(pat(5).sdrfRows, pat(3).sdrfRows, "rows survive the round trip");
+  assert.equal(pat(5).sdrfCols, pat(3).sdrfCols, "so do added columns");
+});

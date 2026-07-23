@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "build:app": "esbuild app/main.ts --bundle --platform=node --format=esm --packages=external --outfile=app/main.mjs && esbuild app/preload.ts --bundle --platform=node --format=cjs --packages=external --outfile=app/preload.cjs && node scripts/inject-logo.mjs",
     "app": "npm run build:app && electron app/main.mjs",
-    "ui:record": "node test/ui/run-journeys.mjs test/ui/trace.json"
+    "ui:record": "node test/ui/run-journeys.mjs test/ui/trace.json && ODIA_UI_SCRIPT=test/ui/project.json ODIA_UI_OUT=test/ui/project-trace.json npx electron app/main.mjs"
   },
   "dependencies": {
     "apache-arrow": "^21.2.0",
