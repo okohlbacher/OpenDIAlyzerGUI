@@ -288,19 +288,37 @@ limitation itself is removed.
 ## Overnight adversarial review — 2026-07-24
 
 A second pass, same brief, run file-by-file against everything not
-covered by the external review above. 6 confirmed bugs, each verified
+covered by the external review above. 8 confirmed bugs, each verified
 against the real code before a fix was dispatched and independently
-re-tested. Three of them (registry, sdrf, and the byRun/byProtein pair)
-turned out to be the same underlying shape — a lower-authority fallback
-key allowed to silently displace a higher-authority one, order- or
-edit-dependent:
+re-tested. Six of them are two recurring shapes, not eight unrelated
+findings:
+
+**Pattern 1 — a lower-authority key silently displacing a
+higher-authority one**, order- or edit-dependent:
+
+| | Finding | Fix |
+|---|---|---|
+| serious | `scanArchives` registered a run's authoritative `runId` and its least-authoritative filename-stem fallback in the same pass; a later archive's filename could silently overwrite an earlier archive's authoritative key, picking the **wrong run's raw archive** | Authoritative keys registered for every archive first, fallbacks only fill gaps |
+| minor | `matchRuns` had the same shape — a hand-editable assay-name or data-file field could coincidentally collide with another row's real stem and silently steal its match, attaching the wrong run's SDRF annotation | Path stem (never hand-typed) claimed for every row first, same fix shape |
+
+**Pattern 2 — a "keep the best q-value" comparison that reads its
+incumbent back from where it was stored, rather than a value already
+known finite**, so a real `NaN` in the q column — not `null`/`undefined`,
+an actual `NaN` — locks in permanently, since any comparison against
+`NaN` is `false`:
+
+| | Finding | Fix |
+|---|---|---|
+| serious | The tree's keep-best exemplar selection (`q?.[incumbent] ?? Infinity`) | A non-finite incumbent no longer blocks a finite challenger |
+| serious | `evidence:presence`'s per-run best-q tracking, same shape | Same fix |
+| serious | `evidence:forRun`'s best-row search — worse here: a NaN-q row, if it was the *only* match, made the row index stay `-1` forever, so the handler reported a genuinely-identified precursor as **not identified in this run** — a false absence, the one thing this app's design explicitly rules out | Fixed so at least one matching row is always kept; a finite q is preferred but never required to find *a* row |
+| n/a | `byProtein`'s equivalent update, checked for the same risk | Already safe — it only assigns from an already-`isFinite`-checked value, so it can never become `NaN` itself |
+
+**Standalone:**
 
 | | Finding | Fix |
 |---|---|---|
 | serious | `byRun` had the exact bug already fixed in `byProtein` — precursor rows counted directly instead of by distinct (modified sequence, charge), and peptides bucketed by stripped rather than modified sequence | Mirrored `byProtein`'s `precursorKeys` dedup |
-| serious | The tree's keep-best exemplar selection used `q?.[incumbent] ?? Infinity`, which only catches `null`/`undefined` — an actual `NaN` in the q column locked in whichever row arrived first, permanently, since any comparison against `NaN` is `false` | A non-finite incumbent no longer blocks a finite challenger |
-| serious | `scanArchives` registered a run's authoritative `runId` and its least-authoritative filename-stem fallback in the same pass; a later archive's filename could silently overwrite an earlier archive's authoritative key, picking the **wrong run's raw archive**, order-dependent | Authoritative keys registered for every archive first, fallbacks only fill gaps |
-| minor | `matchRuns` had the same shape as the registry bug above — a hand-editable assay-name or data-file field could coincidentally collide with another row's real stem and silently steal its match, attaching the wrong run's SDRF annotation | Path stem (never hand-typed) claimed for every row first, same fix shape |
 | minor | `MzPeakArchive.#openZip` opened a real file handle before validating the zip; every throw path after that leaked it — reachable on any corrupt or mid-copy `.mzpeak` encountered while scanning | Closes the handle on any failure before rethrowing |
 | minor | `extractXic`/`extractFramePeaks` reconstruct m/z as `(ca + cb·tof)²`; a stale calibration going negative at a low tof squares into a plausible-looking but physically impossible positive m/z that could still land inside a real fragment window | Rows with a non-positive calibrated value are skipped |
 
