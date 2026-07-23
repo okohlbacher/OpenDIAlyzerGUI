@@ -101,7 +101,7 @@ export async function scanArchives(roots: readonly string[]): Promise<Registry> 
       continue;
     }
     for (const n of names) {
-      if (!n.endsWith(".mzpeak")) continue;
+      if (!n.toLowerCase().endsWith(".mzpeak")) continue;
       const p = join(root, n);
       if (seen.has(p)) continue;
       seen.add(p);
@@ -115,10 +115,16 @@ export async function scanArchives(roots: readonly string[]): Promise<Registry> 
 
   // Three keys per archive, tried in descending order of authority.
   const byId = new Map<string, string>();
+  // Claim every authoritative identity first, so a later archive's filename
+  // fallback can never displace identity read from inside another archive.
+  for (const e of entries) byId.set(e.runId, e.path);
   for (const e of entries) {
-    byId.set(e.runId, e.path);
-    if (e.sourceName) byId.set(runStem(e.sourceName), e.path);
-    byId.set(runStem(e.path), e.path);
+    if (e.sourceName) {
+      const k = runStem(e.sourceName);
+      if (!byId.has(k)) byId.set(k, e.path);
+    }
+    const k = runStem(e.path);
+    if (!byId.has(k)) byId.set(k, e.path);
   }
 
   return {

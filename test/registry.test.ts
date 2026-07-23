@@ -2,7 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { identify, scanArchives, runStem, searchRoots } from "../src/registry.ts";
 import { BIG, SMALL, have } from "./data.ts";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 
 test("runStem strips directories and one extension", () => {
   assert.equal(runStem("/a/b/x_1305.d"), "x_1305");
@@ -38,9 +40,31 @@ test("a report Run value resolves to its archive", { skip: !have(BIG) }, async (
   console.log(`    ${reg.entries.length} archive(s) indexed from one folder`);
 });
 
+test("authoritative runId outranks another archive's filename", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "registry-authority-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const firstRoot = join(dir, "first");
+  const secondRoot = join(dir, "second");
+  const authoritative = join(firstRoot, "renamed.mzpeak");
+  const collision = join(secondRoot, "bar.mzpeak");
+  await mkdir(authoritative, { recursive: true });
+  await mkdir(collision, { recursive: true });
+  await writeFile(
+    join(authoritative, "mzpeak_index.json"),
+    JSON.stringify({ files: [], metadata: { run: { id: "bar" } } }),
+  );
+  await writeFile(
+    join(collision, "mzpeak_index.json"),
+    JSON.stringify({ files: [], metadata: { run: { id: "different-run" } } }),
+  );
+
+  const reg = await scanArchives([firstRoot, secondRoot]);
+  assert.equal(reg.resolve("bar"), authoritative);
+});
+
 test("identify rejects non-archives without throwing", async () => {
   assert.equal(await identify("/definitely/not/here.mzpeak"), null);
-  assert.equal(await identify(import.meta.filename), null);
+  assert.equal(await identify(dirname(import.meta.filename)), null);
 });
 
 test("scanning a missing directory is not an error", async () => {
