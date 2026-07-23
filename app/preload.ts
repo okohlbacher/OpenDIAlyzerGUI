@@ -9,6 +9,9 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.invoke("rows:filter", spec, offset, limit),
   page: (offset: number, limit: number) => ipcRenderer.invoke("rows:page", offset, limit),
   evidence: (k: number) => ipcRenderer.invoke("evidence:for", k),
+  presence: (k: number) => ipcRenderer.invoke("evidence:presence", k),
+  interrogate: (k: number, runIndex: number) =>
+    ipcRenderer.invoke("evidence:interrogate", k, runIndex),
   /** Fired once at startup when a path was given on the command line. */
   onAutoload: (fn: (report: string) => void) =>
     ipcRenderer.on("session:autoload", (_e, p: string) => fn(p)),

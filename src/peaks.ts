@@ -362,3 +362,41 @@ export async function extractXic(
     rowGroupsRead: groups.length,
   };
 }
+
+export interface Coelution {
+  /** Fragments with an apex clearly above their own baseline. */
+  present: number;
+  total: number;
+  /** Of those, how many peak within a couple of frames of the strongest. */
+  coeluting: number;
+  /** Frame index of the strongest fragment's apex. */
+  apex: number;
+}
+
+/**
+ * How many fragments actually agree with each other.
+ *
+ * A single strong trace is not evidence of a peptide — it is the signature of
+ * interference, one co-incident ion in a wide isolation window. What
+ * distinguishes a real precursor is several fragments rising and falling
+ * *together*. This returns the counts and lets the panel say what they support,
+ * rather than asserting a conclusion the data does not carry.
+ */
+export function coelution(traces: readonly Float64Array[]): Coelution {
+  const stats = traces.map((t) => {
+    let max = 0, at = 0, sum = 0;
+    for (let i = 0; i < t.length; i++) {
+      sum += t[i]!;
+      if (t[i]! > max) { max = t[i]!; at = i; }
+    }
+    const mean = t.length ? sum / t.length : 0;
+    return { max, at, mean };
+  });
+
+  const strongest = stats.reduce((a, b) => (b.max > a.max ? b : a), { max: 0, at: 0, mean: 0 });
+  // "Present" means the apex stands clearly above that trace's own average, so
+  // a flat trace with a high baseline does not count.
+  const present = stats.filter((s) => s.max > 0 && s.max > s.mean * 3);
+  const coeluting = present.filter((s) => Math.abs(s.at - strongest.at) <= 2).length;
+  return { present: present.length, total: traces.length, coeluting, apex: strongest.at };
+}

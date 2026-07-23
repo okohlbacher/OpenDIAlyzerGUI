@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, framesCovering } from "../src/spectra.ts";
-import { PeakReader, extractXic } from "../src/peaks.ts";
+import { PeakReader, extractXic, coelution } from "../src/peaks.ts";
 import { BIG, SMALL, have } from "./data.ts";
 
 // The decisive test for the tier split. hyparquet silently returns undefined
@@ -168,4 +168,32 @@ test("reads a peak facet larger than 4 GB", { skip: !have(HUGE) }, async () => {
   );
   r.free();
   await a.close();
+});
+
+// Interrogate's whole value is telling you whether the thing at a coordinate is
+// your peptide or something else sharing the window. One strong trace is the
+// signature of interference; several rising together is a precursor. Getting
+// this backwards would make the feature actively misleading.
+test("co-elution distinguishes a precursor from interference", () => {
+  const peak = (apex, height, n = 20) =>
+    Float64Array.from({ length: n }, (_, i) => height * Math.exp(-((i - apex) ** 2) / 4));
+  const flat = (n = 20) => new Float64Array(n);
+
+  const real = coelution([peak(10, 100), peak(10, 80), peak(11, 60), peak(10, 40), flat(), flat()]);
+  assert.equal(real.coeluting, 4, "four fragments agree on the apex");
+  assert.ok(real.coeluting >= 3, "reads as a precursor");
+
+  // One dominant ion, everything else silent — a co-incident fragment.
+  const interference = coelution([peak(10, 100), flat(), flat(), flat(), flat(), flat()]);
+  assert.equal(interference.present, 1);
+  assert.equal(interference.coeluting, 1, "nothing to agree with");
+
+  // Strong fragments that peak at different times are not one species.
+  const scattered = coelution([peak(3, 100), peak(11, 90), peak(18, 80)]);
+  assert.equal(scattered.present, 3, "all three have signal");
+  assert.equal(scattered.coeluting, 1, "but none share an apex");
+
+  const empty = coelution([flat(), flat()]);
+  assert.equal(empty.present, 0, "absent is absent");
+  assert.equal(empty.coeluting, 0);
 });

@@ -15,7 +15,7 @@ import { loadReport, filterRows, seekKey, CANONICAL, type ReportTable, type Filt
   from "../src/report.ts";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, type MetadataIndex } from "../src/spectra.ts";
-import { PeakReader, extractXic } from "../src/peaks.ts";
+import { PeakReader, extractXic, coelution } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -126,6 +126,12 @@ async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
     console.log(`stepped ${step} rows in ${Date.now() - t0} ms`);
   }
   await new Promise((r) => setTimeout(r, 5000));
+  // ODIA_SMOKE_INTERROGATE=<runIndex> clicks through to question 2.
+  const grill = process.env.ODIA_SMOKE_INTERROGATE;
+  if (grill) {
+    await win.webContents.executeJavaScript(`interrogate(state.sel, ${Number(grill)})`);
+    await new Promise((r) => setTimeout(r, 6000));
+  }
   const probe = await win.webContents.executeJavaScript(
     `JSON.stringify({ scrollHeight: document.getElementById("scroller").scrollHeight,
                       clientHeight: document.getElementById("scroller").clientHeight,
@@ -304,6 +310,135 @@ function page(offset: number, limit: number) {
   return rows;
 }
 
+/**
+ * Which runs contain a given precursor, and which do not.
+ *
+ * This is the shape question 2 actually takes in practice: a peptide is
+ * identified in four runs of six, and the interesting question is what is
+ * sitting at that coordinate in the other two. Answering it needs no prediction
+ * — the runs that *did* find it supply the retention time, which is also what
+ * keeps the query RT-bounded and therefore cheap.
+ */
+ipcMain.handle("evidence:presence", (_e, k: number) => {
+  if (!session || k < 0 || k >= visible.length) return null;
+  const t = session.report;
+  const row = visible[k]!;
+  const seqs = t.text(CANONICAL.strippedSequence);
+  const zs = t.numeric(CANONICAL.charge);
+  if (!seqs) return null;
+
+  const seq = seqs[row]!;
+  const z = zs?.[row] ?? 0;
+  const rt = t.numeric(CANONICAL.rt);
+  const q = t.numeric(CANONICAL.qValue);
+  const quant = t.numeric(CANONICAL.quantity);
+  const mz = t.numeric(CANONICAL.precursorMz);
+
+  // Scan rather than index: one linear pass over 378k rows is ~2 ms, and an
+  // index would have to be invalidated on every filter change.
+  const found = new Map<number, { rt: number; q: number; quant: number; mz: number }>();
+  for (let i = 0; i < t.rowCount; i++) {
+    if (seqs[i] !== seq) continue;
+    if (zs && zs[i] !== z) continue;
+    const r = t.runOf[i]!;
+    const prev = found.get(r);
+    const qv = q?.[i] ?? NaN;
+    if (!prev || qv < prev.q) {
+      found.set(r, { rt: rt?.[i] ?? NaN, q: qv, quant: quant?.[i] ?? 0, mz: mz?.[i] ?? 0 });
+    }
+  }
+
+  const runs = t.runs.map((name, i) => ({
+    name,
+    index: i,
+    hit: found.get(i) ?? null,
+    archive: !!session!.resolved.get(name),
+  }));
+  return { sequence: seq, charge: z, runs, foundIn: found.size, of: t.runs.length };
+});
+
+/**
+ * Extracts evidence for a precursor in a run where it was *not* identified.
+ *
+ * No engine writes chromatograms for a candidate it rejected, so this cannot be
+ * a lookup — it is computed from the sequence against raw data. The retention
+ * time is borrowed from the runs that did find it, and the panel says so,
+ * because a borrowed coordinate is an assumption and the user is entitled to
+ * see which one was made.
+ */
+ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) => {
+  if (!session || k < 0 || k >= visible.length) return null;
+  const t = session.report;
+  const row = visible[k]!;
+  const seqs = t.text(CANONICAL.strippedSequence);
+  const zs = t.numeric(CANONICAL.charge);
+  const rts = t.numeric(CANONICAL.rt);
+  const mzs = t.numeric(CANONICAL.precursorMz);
+  if (!seqs || !rts || !mzs) return null;
+
+  const seq = seqs[row]!;
+  const z = zs?.[row] ?? 2;
+  const target = t.runs[runIndex];
+  if (!target) return null;
+
+  // Borrow the coordinate from every run that identified it.
+  const donors: number[] = [];
+  let mz = mzs[row]!;
+  for (let i = 0; i < t.rowCount; i++) {
+    if (seqs[i] !== seq || (zs && zs[i] !== z)) continue;
+    if (t.runOf[i] === runIndex) continue;
+    const v = rts[i]!;
+    if (Number.isFinite(v)) { donors.push(v); mz = mzs[i]!; }
+  }
+  if (!donors.length) {
+    return { sequence: seq, charge: z, run: target, xic: null, reason: "no-donor-rt" };
+  }
+  donors.sort((a, b) => a - b);
+  const rt = donors[Math.floor(donors.length / 2)]!;
+  const spread = donors.length > 1 ? donors.at(-1)! - donors[0]! : 0;
+  // Widen for the disagreement between donors plus normal run-to-run RT drift.
+  const margin = Math.max(0.25, spread / 2 + 0.15);
+
+  let src: OpenArchive | null = null;
+  try {
+    src = await archiveFor(target);
+  } catch (e) {
+    return { sequence: seq, charge: z, run: target, xic: null,
+             reason: "archive-failed", detail: describe(e) };
+  }
+  if (!src) {
+    return { sequence: seq, charge: z, run: target, xic: null, reason: "no-archive-for-run" };
+  }
+
+  const fragments = yIons(seq).slice(0, 6);
+  const t0 = performance.now();
+  try {
+    const xic = await extractXic(src.archive, src.meta, src.peaks, {
+      precursorMz: mz, rtMin: rt - margin, rtMax: rt + margin, fragments, ppm: 20,
+    });
+    const verdict = coelution(xic.traces);
+    return {
+      sequence: seq, charge: z, run: target, reason: null,
+      borrowedRt: rt, donors: donors.length, margin, precursorMz: mz,
+      xic: {
+        rt: Array.from(xic.rt),
+        traces: xic.traces.map((tr) => Array.from(tr)),
+        fragments,
+        frames: xic.frames.length,
+        rowGroups: xic.rowGroupsRead,
+        rowsDecoded: xic.rowsDecoded,
+        rowsScanned: xic.rowsScanned,
+        archive: basename(src.path),
+        verdict,
+        ms: performance.now() - t0,
+      },
+    };
+  } catch (e) {
+    return { sequence: seq, charge: z, run: target, xic: null,
+             reason: "extract-failed", detail: describe(e) };
+  }
+});
+
 ipcMain.handle("evidence:for", async (_e, k: number) => {
   if (!session || k < 0 || k >= visible.length) return null;
   const row = visible[k]!;
@@ -386,6 +521,7 @@ function describe(e: unknown): string {
   }
   return msg.split("\n")[0]!.slice(0, 200);
 }
+
 
 /** Monoisotopic residue masses, in Da. */
 const AA: Record<string, number> = {

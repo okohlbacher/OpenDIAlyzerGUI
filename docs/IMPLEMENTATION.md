@@ -86,6 +86,39 @@ It is a better exercise than a benchmark corpus would have been, because the
 study's own question *is* question 2: **is a specific variant peptide present
 in this sample, and if not, what is actually at that coordinate?**
 
+### M5 — Interrogate
+
+Question 2 — *why is my peptide missing?* — in the form it actually takes: a
+precursor identified in some runs of a cohort and absent from others. In this
+report **7,084 precursors are found in exactly four runs of six**, and 17,773 in
+only one, so this is the common case rather than a corner.
+
+Selecting a precursor shows a per-run strip: green where the engine identified
+it with its q-value and RT, dashed amber where it did not. Clicking a missing
+run extracts evidence there **from raw data**, computed from the sequence —
+which is precisely what no engine can do, because none writes a chromatogram for
+a candidate it rejected.
+
+The retention time is **borrowed** from the runs that did find it, which is what
+keeps the query RT-bounded and therefore ~900 ms rather than seconds. The panel
+says so: a borrowed coordinate is an assumption, and the reader is entitled to
+know which one was made.
+
+**What the first working version got wrong, and why it mattered.** It reported
+"signal is present — the peptide is there but went unreported" whenever any
+trace was non-zero. The very first real case showed one strong fragment and five
+flat ones — the signature of a co-incident ion in a wide isolation window, not a
+peptide. The panel now counts how many fragments rise *together*:
+
+| | |
+|---|---|
+| ≥3 co-eluting | consistent with the peptide being present but unreported |
+| some present, not co-eluting | more consistent with interference |
+| none | absent, not merely unscored |
+
+`coelution()` lives in `src/peaks.ts` with a unit test, rather than in the UI,
+because a tool that overstates its evidence is worse than one that shows less.
+
 ### The FDR slider, demonstrated
 
 The same cohort searched twice — once at DIA-NN's default `--qvalue 0.01`, once

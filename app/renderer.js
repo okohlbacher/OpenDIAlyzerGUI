@@ -236,6 +236,14 @@ async function showEvidence() {
     $("evsrc").textContent = `from raw · ${x.ms.toFixed(0)} ms`;
   }
 
+  // Question 2, in the form it actually takes: identified in some runs, absent
+  // in others. Rendered after the chart so the panel still leads with evidence.
+  body += `<div class="layer" id="presenceLayer">
+    <div class="layer-head"><h3>Across runs</h3>
+      <span class="hint">click a missing run to interrogate it</span></div>
+    <div id="presence" class="presence"><span class="muted">…</span></div>
+  </div>`;
+
   const rows = Object.entries(e.extras).filter(([, v]) => Number.isFinite(v));
   if (rows.length) {
     body += `<div class="layer"><div class="layer-head"><h3>Reported by the engine</h3></div>
@@ -244,6 +252,84 @@ async function showEvidence() {
           Math.abs(v) >= 1e4 ? v.toExponential(1) : v.toFixed(3)}</div></div>`).join("")}</div></div>`;
   }
   ev.innerHTML = body;
+  void paintPresence(state.sel);
+}
+
+/** The per-run found/missing strip. */
+async function paintPresence(k) {
+  const p = await window.api.presence(k);
+  const el = $("presence");
+  if (!p || !el) return;
+  const head = $("presenceLayer")?.querySelector(".hint");
+  if (head) {
+    head.textContent = p.foundIn === p.of
+      ? `identified in all ${p.of} runs`
+      : `identified in ${p.foundIn} of ${p.of} — click a missing run`;
+  }
+  el.innerHTML = p.runs.map((r) => {
+    const missing = !r.hit;
+    const cls = missing ? (r.archive ? "miss" : "miss noraw") : "hit";
+    const label = shortRun(r.name).slice(0, 16);
+    const detail = r.hit
+      ? `q ${fmtQ(r.hit.q)} · RT ${r.hit.rt.toFixed(2)}`
+      : r.archive ? "not identified" : "no raw data";
+    return `<button class="prun ${cls}" data-run="${r.index}"
+        ${missing && r.archive ? "" : "disabled"} title="${esc(r.name)}\n${detail}">
+        <span class="pname mono">${esc(label)}</span>
+        <span class="pdetail">${detail}</span></button>`;
+  }).join("");
+
+  el.querySelectorAll("button.prun:not([disabled])").forEach((b) =>
+    b.addEventListener("click", () => void interrogate(k, Number(b.dataset.run))));
+}
+
+/** Extracts evidence in a run where the engine found nothing. */
+async function interrogate(k, runIndex) {
+  const el = $("presence");
+  el.insertAdjacentHTML("afterend",
+    `<p class="note-inline" id="interrogating">Extracting from raw data…</p>`);
+  const r = await window.api.interrogate(k, runIndex);
+  $("interrogating")?.remove();
+  if (!r) return;
+
+  const box = document.createElement("div");
+  box.className = "layer";
+  if (!r.xic) {
+    box.innerHTML = `<div class="banner"><div><b>Could not interrogate
+      ${esc(shortRun(r.run))}.</b> ${esc(r.detail ?? r.reason ?? "")}</div></div>`;
+  } else {
+    const x = r.xic;
+    const v = x.verdict;
+    // Say what the fragments support, not what we hope they mean. One strong
+    // trace in a wide isolation window is interference, not a peptide.
+    const call = v.coeluting >= 3
+      ? `<b>${v.coeluting} of ${v.total} fragments co-elute</b> at that coordinate —
+         consistent with the peptide being present but unreported.`
+      : v.present === 0
+        ? `<span class="err">No fragment shows signal there — absent, not merely
+           unscored.</span>`
+        : `<b>${v.present} of ${v.total} fragments show signal</b>, but
+           ${v.coeluting < 2 ? "they do not co-elute" : "only " + v.coeluting + " co-elute"} —
+           more consistent with interference in the isolation window than with
+           the peptide.`;
+    box.innerHTML = `
+      <div class="layer-head"><h3>Interrogated — ${esc(shortRun(r.run))}</h3>
+        <span class="hint">${x.frames} frames · ${x.rowGroups} row groups</span></div>
+      ${chart(x)}
+      <div class="legend">${x.fragments.map((f, i) =>
+        `<span><i style="background:${ionColour(i)}"></i>y${x.fragments.length - i} ${f.toFixed(2)}</span>`).join("")}</div>
+      <p class="note-inline">
+        <b>${esc(r.sequence)} ${r.charge}+</b> was not identified in this run.
+        Evidence above was computed from the sequence and read from raw data in
+        <b>${x.ms.toFixed(0)} ms</b> — no engine wrote a chromatogram for it.
+        Retention time <b>${r.borrowedRt.toFixed(2)} min</b> ±${r.margin.toFixed(2)}
+        is borrowed from the ${r.donors} run${r.donors === 1 ? "" : "s"} that did
+        find it, so it is an assumption, not a measurement here.
+        ${call}
+      </p>`;
+  }
+  $("presenceLayer").after(box);
+  box.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
 const ionColour = (i) => [

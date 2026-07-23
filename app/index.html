@@ -31,6 +31,21 @@
   .note-inline{font-size:11.5px;color:var(--muted);margin:10px 0 0}
   .err{color:var(--crit)}
   .busy{opacity:.5;transition:opacity .12s}
+  .presence{display:flex;flex-wrap:wrap;gap:6px}
+  .prun{display:flex;flex-direction:column;gap:1px;align-items:flex-start;
+    border:1px solid var(--line);border-radius:7px;padding:5px 9px;background:var(--panel);
+    font:inherit;text-align:left;min-width:112px}
+  .prun .pname{font-size:11px;font-weight:560}
+  .prun .pdetail{font-size:10px;color:var(--muted)}
+  .prun.hit{border-color:var(--good)}
+  .prun.hit .pname{color:var(--good)}
+  /* A missing run with raw data is the actionable case — question 2. */
+  .prun.miss{border-color:var(--warn);border-style:dashed;cursor:pointer}
+  .prun.miss .pname{color:var(--warn)}
+  .prun.miss:hover{background:color-mix(in srgb,var(--warn) 12%,transparent)}
+  .prun.noraw{border-color:var(--line);opacity:.5;cursor:default}
+  .prun.noraw .pname{color:var(--muted)}
+  .muted{color:var(--muted);font-size:11.5px}
   /* Product lockup: the OpenMS mark is the ecosystem badge, the wordmark is
      ours. DIA is picked out in the gradient, matching the application icon. */
   .product{font-size:13px;font-weight:640;letter-spacing:-.015em;white-space:nowrap}
