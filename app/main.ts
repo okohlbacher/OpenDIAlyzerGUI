@@ -112,10 +112,19 @@ let visible: Uint32Array = new Uint32Array(0);
  */
 async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
   const jump = Number(process.env.ODIA_SMOKE_ROW ?? "3");
+  // ODIA_SMOKE_STEP=N simulates holding an arrow key: N selections in quick
+  // succession, which is what floods the extractor.
+  const step = Number(process.env.ODIA_SMOKE_STEP ?? "0");
   await win.webContents.executeJavaScript(
     `openSession(${JSON.stringify(reportPath)}).then(() => select(${jump}))`);
   // select() is async — it may have to load the window the row lives in — so
   // give it time to settle before probing, or the probe races it.
+  if (step > 0) {
+    const t0 = Date.now();
+    await win.webContents.executeJavaScript(
+      `(async () => { for (let i = 1; i <= ${step}; i++) { select(${jump} + i); await new Promise(r => setTimeout(r, 25)); } })()`);
+    console.log(`stepped ${step} rows in ${Date.now() - t0} ms`);
+  }
   await new Promise((r) => setTimeout(r, 5000));
   const probe = await win.webContents.executeJavaScript(
     `JSON.stringify({ scrollHeight: document.getElementById("scroller").scrollHeight,

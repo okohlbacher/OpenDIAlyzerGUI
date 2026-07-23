@@ -114,7 +114,7 @@ async function refresh() {
       <th class="num">Quantity</th><th>Gene</th></tr>`;
 
   paint();
-  await showEvidence();
+  scheduleEvidence();
 }
 
 /** Renders the current window, padded above and below to the full scroll height. */
@@ -367,7 +367,31 @@ async function select(k) {
   }
   $("count").textContent =
     `row ${(k + 1).toLocaleString()} of ${state.total.toLocaleString()}`;
-  showEvidence();
+  scheduleEvidence();
+}
+
+/**
+ * Defers extraction while the cursor is still moving.
+ *
+ * Extraction reads raw data and takes the better part of a second on a dense
+ * run, so holding an arrow key queues work far faster than it completes. The
+ * in-flight token already stops a stale response overwriting a newer one, but
+ * without this the panel still trails the cursor by every row passed through.
+ * The first move is immediate; only a fast run of them waits.
+ */
+let evTimer = null;
+let evIdle = true;
+function scheduleEvidence() {
+  clearTimeout(evTimer);
+  if (evIdle) {
+    evIdle = false;
+    void showEvidence().finally(() => { evIdle = true; });
+    return;
+  }
+  evTimer = setTimeout(() => {
+    evIdle = false;
+    void showEvidence().finally(() => { evIdle = true; });
+  }, 130);
 }
 
 // Scroll drives which window is loaded. rAF-coalesced: a flung scrollbar fires
