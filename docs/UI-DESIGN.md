@@ -323,7 +323,13 @@ Non-negotiable. Each is a documented failure in an incumbent — see
 19. **No I/O in a hover handler.** Skyline's tree tooltip reads the chromatogram
     cache, which is why it stalls — and one tracker entry is literally a tooltip
     hanging the tree. Hover shows what is already in memory.
-20. **No magic ceilings.** Skyline caps chromatogram extraction at 12 files
+20. **The list is the whole result set.** A cohort report is hundreds of
+    thousands of rows and the FDR slider exists to move through them, so the
+    table virtualises: a window of ~120 rows padded by spacers to the full
+    scroll height, with `↑`/`↓` and the scrollbar addressing every row. Paging
+    is a separate call from filtering — scrolling must never re-run a predicate,
+    and re-filtering must never depend on scroll position.
+21. **No magic ceilings.** Skyline caps chromatogram extraction at 12 files
     whatever the hardware, and its format has hard limits at 2 billion candidate
     peaks and .NET's 2 GB single allocation. Concurrency scales with the machine;
     every on-disk offset is 64-bit from day one.

@@ -73,7 +73,7 @@ fine without them; the evidence pane says what is missing instead of failing.
 | | |
 |---|---|
 | [docs/mockup.html](docs/mockup.html) | **Start here.** Working interaction mockup — grain switching, FDR slider, the Interrogate flow, the provenance panel. Open it in a browser |
-| [docs/UI-DESIGN.md](docs/UI-DESIGN.md) | Two screens, three panes, the drilldown layers, visual identity, 20 interaction rules |
+| [docs/UI-DESIGN.md](docs/UI-DESIGN.md) | Two screens, three panes, the drilldown layers, visual identity, 21 interaction rules |
 | [docs/WORKFLOW.md](docs/WORKFLOW.md) | The minimal DIA workflow — four questions, Thermo and Bruker handled not exposed |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Electron + TS 7.0, the `RangeReader` interface, the two-tier Parquet stack, and what mzPeak measurably does and does not index |
 | [docs/DIANN-COMPAT.md](docs/DIANN-COMPAT.md) | **Running** DIA-NN — setup, flag mapping, the calibrate→per-run→aggregate plan — and **reading** it: `report.parquet` alone must produce a navigable session |

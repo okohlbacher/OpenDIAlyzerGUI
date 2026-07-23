@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld("api", {
   open: (report: string, archive?: string) => ipcRenderer.invoke("session:open", report, archive),
   filter: (spec: unknown, offset?: number, limit?: number) =>
     ipcRenderer.invoke("rows:filter", spec, offset, limit),
+  page: (offset: number, limit: number) => ipcRenderer.invoke("rows:page", offset, limit),
   evidence: (k: number) => ipcRenderer.invoke("evidence:for", k),
   /** Fired once at startup when a path was given on the command line. */
   onAutoload: (fn: (report: string) => void) =>

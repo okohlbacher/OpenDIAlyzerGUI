@@ -111,12 +111,22 @@ let visible: Uint32Array = new Uint32Array(0);
  * cheapest way to do that without a human at the keyboard.
  */
 async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
+  const jump = Number(process.env.ODIA_SMOKE_ROW ?? "3");
   await win.webContents.executeJavaScript(
-    `openSession(${JSON.stringify(reportPath)}).then(() => {
-       const k = Math.min(3, state.rows.length - 1);
-       if (k >= 0) select(k);
-     })`);
-  await new Promise((r) => setTimeout(r, 4000));
+    `openSession(${JSON.stringify(reportPath)}).then(() => select(${jump}))`);
+  // select() is async — it may have to load the window the row lives in — so
+  // give it time to settle before probing, or the probe races it.
+  await new Promise((r) => setTimeout(r, 5000));
+  const probe = await win.webContents.executeJavaScript(
+    `JSON.stringify({ scrollHeight: document.getElementById("scroller").scrollHeight,
+                      clientHeight: document.getElementById("scroller").clientHeight,
+                      wantHeight: state.total * 29,
+                      spacerH: document.querySelector("tr.spacer")?.getBoundingClientRect().height ?? null,
+                      total: state.total, first: state.first,
+                      loaded: state.rows.length, sel: state.sel,
+                      seq: state.rows.find(r => r.k === state.sel)?.seq ?? null,
+                      scrollTop: document.getElementById("scroller").scrollTop })`);
+  console.log("smoke state:", probe);
   const img = await win.webContents.capturePage();
   const out = process.env.ODIA_SMOKE_OUT ?? "/tmp/odia-smoke.png";
   writeFileSync(out, img.toPNG());
@@ -230,12 +240,28 @@ function statsPaths(reportPath: string): string[] {
   }
 }
 
-ipcMain.handle("rows:filter", (_e, spec: FilterSpec, offset = 0, limit = 300) => {
-  if (!session) return { total: 0, rows: [] };
+/**
+ * Applies a filter and returns the first page.
+ *
+ * Filtering and paging are separate calls: scrolling a 377,000-row result must
+ * not re-run the predicate, and re-filtering must not depend on scroll position.
+ */
+ipcMain.handle("rows:filter", (_e, spec: FilterSpec, offset = 0, limit = 200) => {
+  if (!session) return { total: 0, rows: [], filterMs: 0 };
   const t0 = performance.now();
   visible = filterRows(session.report, spec);
   const ms = performance.now() - t0;
+  return { total: visible.length, rows: page(offset, limit), filterMs: ms };
+});
 
+/** A window of the current filtered set. Pure paging — no predicate re-run. */
+ipcMain.handle("rows:page", (_e, offset: number, limit: number) => {
+  if (!session) return { total: 0, rows: [] };
+  return { total: visible.length, rows: page(offset, limit) };
+});
+
+function page(offset: number, limit: number) {
+  if (!session) return [];
   const t = session.report;
   const seq = t.text(CANONICAL.strippedSequence);
   const genes = t.text(CANONICAL.genes);
@@ -248,7 +274,9 @@ ipcMain.handle("rows:filter", (_e, spec: FilterSpec, offset = 0, limit = 300) =>
   const im = t.numeric(CANONICAL.im);
 
   const rows = [];
-  for (let k = offset; k < Math.min(offset + limit, visible.length); k++) {
+  const from = Math.max(0, Math.min(offset, visible.length));
+  const to = Math.min(from + limit, visible.length);
+  for (let k = from; k < to; k++) {
     const i = visible[k]!;
     rows.push({
       k,
@@ -264,8 +292,8 @@ ipcMain.handle("rows:filter", (_e, spec: FilterSpec, offset = 0, limit = 300) =>
       run: t.runs[t.runOf[i]!] ?? "",
     });
   }
-  return { total: visible.length, rows, filterMs: ms };
-});
+  return rows;
+}
 
 ipcMain.handle("evidence:for", async (_e, k: number) => {
   if (!session || k < 0 || k >= visible.length) return null;

@@ -7,15 +7,24 @@
 const $ = (id) => document.getElementById(id);
 const FDR_STOPS = [0.001, 0.002, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.5];
 
+// Virtualised list. A cohort report is hundreds of thousands of rows and the
+// whole point of the FDR slider is to move through them, so the table renders a
+// window and pads it with two spacer rows rather than materialising the set.
+const ROW_H = 29;      // must match the CSS; the maths depends on it
+const WINDOW = 120;    // rows rendered
+const OVERSCAN = 40;   // rows kept beyond the viewport, so a nudge never blanks
+
 const state = {
   open: false,
   fdr: 0.01,
   run: undefined,
   search: "",
-  sel: 0,
+  sel: 0,          // absolute index into the filtered set
   total: 0,
-  rows: [],
+  rows: [],        // the rendered window
+  first: 0,        // absolute index of rows[0]
   pending: null,
+  paging: false,
 };
 
 // ── session ──────────────────────────────────────────────────────────────────
@@ -80,26 +89,42 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
 
 // ── table ────────────────────────────────────────────────────────────────────
 
+const currentFilter = () => ({
+  maxQValue: state.fdr,
+  hideDecoys: $("hidedecoy").checked,
+  proteotypicOnly: $("proteotypic").checked,
+  run: state.run,
+  search: state.search || undefined,
+});
+
 async function refresh() {
   if (!state.open) return;
-  const r = await window.api.filter({
-    maxQValue: state.fdr,
-    hideDecoys: $("hidedecoy").checked,
-    proteotypicOnly: $("proteotypic").checked,
-    run: state.run,
-    search: state.search || undefined,
-  }, 0, 400);
+  const r = await window.api.filter(currentFilter(), 0, WINDOW);
 
   state.total = r.total;
   state.rows = r.rows;
-  if (state.sel >= r.rows.length) state.sel = Math.max(0, r.rows.length - 1);
+  state.first = 0;
+  state.filterMs = r.filterMs;
+  if (state.sel >= state.total) state.sel = Math.max(0, state.total - 1);
+  $("scroller").scrollTop = 0;
 
   $("thead").innerHTML =
     `<tr><th>Peptide</th><th class="num">z</th><th class="num">m/z</th>
       <th class="num">RT</th><th class="num">1/K0</th><th class="num">q</th>
       <th class="num">Quantity</th><th>Gene</th></tr>`;
 
-  $("tbody").innerHTML = r.rows.map((row) => {
+  paint();
+  await showEvidence();
+}
+
+/** Renders the current window, padded above and below to the full scroll height. */
+function paint() {
+  const before = state.first * ROW_H;
+  const after = Math.max(0, (state.total - state.first - state.rows.length) * ROW_H);
+
+  $("tbody").innerHTML =
+    (before ? `<tr class="spacer" style="height:${before}px"><td colspan="8"></td></tr>` : "") +
+    state.rows.map((row) => {
     const cls = row.q <= 0.001 ? "ok" : row.q <= 0.01 ? "mid" : "bad";
     return `<tr data-k="${row.k}" class="${row.k === state.sel ? "sel" : ""}"
         aria-selected="${row.k === state.sel}">
@@ -111,13 +136,30 @@ async function refresh() {
       <td class="num mono qv ${cls}">${fmtQ(row.q)}</td>
       <td class="num mono">${row.quant ? row.quant.toExponential(1) : "—"}</td>
       <td>${esc(row.gene)}</td></tr>`;
-  }).join("");
+    }).join("") +
+    (after ? `<tr class="spacer" style="height:${after}px"><td colspan="8"></td></tr>` : "");
 
-  const shown = Math.min(r.rows.length, r.total);
-  $("count").textContent =
-    `${shown.toLocaleString()} of ${r.total.toLocaleString()} · re-filtered in ${r.filterMs.toFixed(1)} ms`;
+  $("count").textContent = state.total
+    ? `row ${(state.sel + 1).toLocaleString()} of ${state.total.toLocaleString()}` +
+      (state.filterMs !== undefined ? ` · filtered in ${state.filterMs.toFixed(1)} ms` : "")
+    : "nothing matches this filter";
+}
 
-  await showEvidence();
+/** Loads the window covering `first`, if it is not already loaded. */
+async function ensureWindow(first) {
+  const want = Math.max(0, Math.min(first, Math.max(0, state.total - WINDOW)));
+  if (want === state.first && state.rows.length) return;
+  if (state.paging) return;
+  state.paging = true;
+  try {
+    const r = await window.api.page(want, WINDOW);
+    state.total = r.total;
+    state.rows = r.rows;
+    state.first = want;
+    paint();
+  } finally {
+    state.paging = false;
+  }
 }
 
 const fmtQ = (q) =>
@@ -300,17 +342,49 @@ $("tbody").addEventListener("click", (e) => {
   select(Number(tr.dataset.k));
 });
 
-function select(k) {
-  if (k < 0 || k >= state.rows.length) return;
+async function select(k) {
+  if (k < 0 || k >= state.total) return;
   state.sel = k;
+
+  // Load the window first, *then* move the scrollbar. Repainting replaces the
+  // tbody, and the browser resets scrollTop when it does — so setting the
+  // position first leaves the viewport parked on a spacer, showing nothing.
+  if (k < state.first || k >= state.first + state.rows.length) {
+    await ensureWindow(k - Math.floor(WINDOW / 3));
+  }
+
+  const sc = $("scroller");
+  const top = k * ROW_H;
+  const viewTop = sc.scrollTop;
+  const viewBottom = viewTop + sc.clientHeight - ROW_H;
+  if (top < viewTop || top > viewBottom) {
+    sc.scrollTop = Math.max(0, top - Math.floor(sc.clientHeight / 2));
+  }
   for (const tr of $("tbody").children) {
     const on = Number(tr.dataset.k) === k;
     tr.classList.toggle("sel", on);
     tr.setAttribute("aria-selected", String(on));
-    if (on) tr.scrollIntoView({ block: "nearest" });
   }
+  $("count").textContent =
+    `row ${(k + 1).toLocaleString()} of ${state.total.toLocaleString()}`;
   showEvidence();
 }
+
+// Scroll drives which window is loaded. rAF-coalesced: a flung scrollbar fires
+// far more events than there are frames, and each one would be an IPC round trip.
+let scrollQueued = false;
+$("scroller").addEventListener("scroll", () => {
+  if (scrollQueued || !state.open) return;
+  scrollQueued = true;
+  requestAnimationFrame(() => {
+    scrollQueued = false;
+    const firstVisible = Math.floor($("scroller").scrollTop / ROW_H);
+    if (firstVisible < state.first + OVERSCAN ||
+        firstVisible + OVERSCAN > state.first + state.rows.length) {
+      ensureWindow(firstVisible - OVERSCAN);
+    }
+  });
+});
 
 document.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); $("q").focus(); return; }
