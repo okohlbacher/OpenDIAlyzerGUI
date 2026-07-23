@@ -190,7 +190,7 @@ test("reads a peak facet larger than 4 GB", { skip: !have(HUGE) }, async () => {
 // signature of interference; several rising together is a precursor. Getting
 // this backwards would make the feature actively misleading.
 test("co-elution distinguishes a precursor from interference", () => {
-  const peak = (apex, height, n = 20) =>
+  const peak = (apex: number, height: number, n = 20) =>
     Float64Array.from({ length: n }, (_, i) => height * Math.exp(-((i - apex) ** 2) / 4));
   const flat = (n = 20) => new Float64Array(n);
 

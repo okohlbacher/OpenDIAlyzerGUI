@@ -376,7 +376,7 @@ export async function extractXic(
         }
         for (let g = 0; g < nF; g++) {
           if (mz >= lo[g]! && mz <= hi[g]!) {
-            traces[g]![k] += intensity[i]!;
+            traces[g]![k] = traces[g]![k]! + intensity[i]!;
             break;
           }
         }

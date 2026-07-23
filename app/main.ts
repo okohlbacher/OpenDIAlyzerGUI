@@ -896,6 +896,7 @@ ipcMain.handle("rows:page", (_e, offset: number, limit: number) => {
 function page(offset: number, limit: number) {
   if (!session) return [];
   const t = session.report;
+  const resolved = session.resolved;
 
   const slice = Array.from(order.subarray(offset, offset + limit));
 
@@ -928,7 +929,7 @@ function page(offset: number, limit: number) {
       precursors: r.precursors, peptides: r.peptides, proteins: r.proteins,
       q: r.medianQ, fwhm: r.medianFwhmSec, quant: r.totalQuantity,
       rtRange: r.rtRange,
-      archive: !!session.resolved.get(r.name),
+      archive: !!resolved.get(r.name),
     }));
   }
   const seq = t.text(CANONICAL.strippedSequence);

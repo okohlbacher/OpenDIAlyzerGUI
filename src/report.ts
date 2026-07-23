@@ -258,7 +258,7 @@ export let lastInertFilters: string[] = [];
  * instant: the columns never move, and a re-filter is one linear pass over
  * 269k rows — well under a frame.
  */
-export function filterRows(t: ReportTable, f: FilterSpec): Uint32Array {
+export function filterRows(t: ReportTable, f: FilterSpec): Uint32Array<ArrayBuffer> {
   const q = f.maxQValue !== undefined ? t.numeric(CANONICAL.qValue) : null;
   const decoy = f.hideDecoys ? t.numeric(CANONICAL.decoy) : null;
   const proteo = f.proteotypicOnly ? t.numeric(CANONICAL.proteotypic) : null;

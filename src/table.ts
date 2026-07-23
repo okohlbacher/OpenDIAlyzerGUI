@@ -64,10 +64,10 @@ export type CellReader = (row: number) => Cell;
  * q-values in gene order, which is how people actually build a view.
  */
 export function sortIndices(
-  indices: Uint32Array,
+  indices: Uint32Array<ArrayBuffer>,
   read: CellReader,
   dir: "asc" | "desc",
-): Uint32Array {
+): Uint32Array<ArrayBuffer> {
   const n = indices.length;
   const order = new Uint32Array(n);
   for (let i = 0; i < n; i++) order[i] = i;
@@ -105,9 +105,9 @@ export interface ColumnFilter {
 
 /** Applies per-column filters, all of which must match. */
 export function applyColumnFilters(
-  indices: Uint32Array,
+  indices: Uint32Array<ArrayBuffer>,
   filters: readonly ColumnFilter[],
-): Uint32Array {
+): Uint32Array<ArrayBuffer> {
   const active = filters.filter((f) => f.text.trim() !== "");
   if (!active.length) return indices;
 
