@@ -370,6 +370,10 @@ export async function extractXic(
         let mz: number;
         if (useTof) {
           const v = ca + cb * tof[i]!;
+          // A stale or malformed calibration can make this go negative for a
+          // low-tof row; squaring would then silently produce a plausible but
+          // wrong positive m/z instead of the impossible value it actually is.
+          if (v <= 0) continue;
           mz = v * v;
         } else {
           mz = mzCol[i]!;
@@ -582,7 +586,15 @@ export async function extractFramePeaks(
       scanned += e - b;
       for (let i = b; i < e; i++) {
         let m: number;
-        if (useTof) { const v = ca + cb * tof[i]!; m = v * v; } else { m = mzCol[i]!; }
+        // See extractXic: a negative calibrated value must not be squared into
+        // a spurious positive m/z that could pass the window check below.
+        if (useTof) {
+          const v = ca + cb * tof[i]!;
+          if (v <= 0) continue;
+          m = v * v;
+        } else {
+          m = mzCol[i]!;
+        }
         if (m < lo || m > hi) continue;
         outMz.push(m);
         outInt.push(intensity[i]!);
