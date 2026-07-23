@@ -15,7 +15,7 @@ import { loadReport, filterRows, seekKey, CANONICAL, type ReportTable, type Filt
   from "../src/report.ts";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, type MetadataIndex } from "../src/spectra.ts";
-import { PeakReader, extractXic, coelution } from "../src/peaks.ts";
+import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -112,11 +112,16 @@ let visible: Uint32Array = new Uint32Array(0);
  */
 async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
   const jump = Number(process.env.ODIA_SMOKE_ROW ?? "3");
+  const search = process.env.ODIA_SMOKE_SEARCH;
   // ODIA_SMOKE_STEP=N simulates holding an arrow key: N selections in quick
   // succession, which is what floods the extractor.
   const step = Number(process.env.ODIA_SMOKE_STEP ?? "0");
   await win.webContents.executeJavaScript(
-    `openSession(${JSON.stringify(reportPath)}).then(() => select(${jump}))`);
+    `openSession(${JSON.stringify(reportPath)}).then(async () => {
+       ${search ? `state.search = ${JSON.stringify(search)};
+                   state.fdr = 0.5; await refresh();` : ""}
+       select(${search ? 0 : jump});
+     })`);
   // select() is async — it may have to load the window the row lives in — so
   // give it time to settle before probing, or the probe races it.
   if (step > 0) {
@@ -410,7 +415,8 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
     return { sequence: seq, charge: z, run: target, xic: null, reason: "no-archive-for-run" };
   }
 
-  const fragments = yIons(seq).slice(0, 6);
+  const frags = fragmentsFor(seq, z, src.meta.spectra.ms2MzRange);
+  const fragments = frags.map((f) => f.mz);
   const t0 = performance.now();
   try {
     const xic = await extractXic(src.archive, src.meta, src.peaks, {
@@ -424,6 +430,7 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
         rt: Array.from(xic.rt),
         traces: xic.traces.map((tr) => Array.from(tr)),
         fragments,
+        labels: frags.map((f) => f.label),
         frames: xic.frames.length,
         rowGroups: xic.rowGroupsRead,
         rowsDecoded: xic.rowsDecoded,
@@ -466,10 +473,10 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
   }
   if (!src) return { key, extras, xic: null, reason: "no-archive-for-run" };
 
-  // Theoretical singly-charged y-ions from the sequence. A real library gives
-  // measured fragments; this is the fallback the UI flags as such, and it is
-  // also exactly what Interrogate has to do for a peptide nobody identified.
-  const fragments = yIons(key.sequence).slice(0, 6);
+  // Theoretical y-ions, restricted to what the instrument actually recorded.
+  // A real library would give measured fragments; this is the flagged fallback.
+  const frags = fragmentsFor(key.sequence, key.charge, src.meta.spectra.ms2MzRange);
+  const fragments = frags.map((f) => f.mz);
   const margin = 0.15;
   const t0 = performance.now();
   let xic;
@@ -499,6 +506,7 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
       rt: Array.from(xic.rt),
       traces: xic.traces.map((t) => Array.from(t)),
       fragments,
+      labels: frags.map((f) => f.label),
       frames: xic.frames.length,
       rowGroups: xic.rowGroupsRead,
       rowsDecoded: xic.rowsDecoded,
@@ -523,25 +531,3 @@ function describe(e: unknown): string {
 }
 
 
-/** Monoisotopic residue masses, in Da. */
-const AA: Record<string, number> = {
-  G: 57.02146, A: 71.03711, S: 87.03203, P: 97.05276, V: 99.06841,
-  T: 101.04768, C: 160.03065, L: 113.08406, I: 113.08406, N: 114.04293,
-  D: 115.02694, Q: 128.05858, K: 128.09496, E: 129.04259, M: 131.04049,
-  H: 137.05891, F: 147.06841, R: 156.10111, Y: 163.06333, W: 186.07931,
-};
-const H2O = 18.010565;
-const PROTON = 1.007276;
-
-/** Singly-charged y-ion m/z values, longest first. */
-function yIons(seq: string): number[] {
-  const out: number[] = [];
-  let sum = H2O;
-  for (let i = seq.length - 1; i >= 1; i--) {
-    const m = AA[seq[i]!];
-    if (m === undefined) return out.reverse();
-    sum += m;
-    out.push(sum + PROTON);
-  }
-  return out.reverse();
-}

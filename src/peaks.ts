@@ -400,3 +400,77 @@ export function coelution(traces: readonly Float64Array[]): Coelution {
   const coeluting = present.filter((s) => Math.abs(s.at - strongest.at) <= 2).length;
   return { present: present.length, total: traces.length, coeluting, apex: strongest.at };
 }
+
+/** Monoisotopic residue masses, in Da. */
+const AA: Record<string, number> = {
+  G: 57.02146, A: 71.03711, S: 87.03203, P: 97.05276, V: 99.06841,
+  T: 101.04768, C: 160.03065, L: 113.08406, I: 113.08406, N: 114.04293,
+  D: 115.02694, Q: 128.05858, K: 128.09496, E: 129.04259, M: 131.04049,
+  H: 137.05891, F: 147.06841, R: 156.10111, Y: 163.06333, W: 186.07931,
+};
+const H2O = 18.010565;
+const PROTON = 1.007276;
+
+export interface Fragment {
+  /** Display label, e.g. `y7` or `y12²⁺`. */
+  label: string;
+  mz: number;
+  series: "y";
+  ordinal: number;
+  charge: number;
+}
+
+/**
+ * Chooses fragment ions worth extracting for a peptide.
+ *
+ * Two things make this more than a formula.
+ *
+ * **The acquired range is a hard limit.** A fragment above it returns a flat
+ * trace indistinguishable from a real absence. A 23-mer's longest y-ions sit at
+ * 1800–2386 Th against a diaPASEF acquisition ending at 1700, so asking for
+ * "the first six y-ions" reported a confidently wrong "no signal" for a peptide
+ * the engine had identified.
+ *
+ * **Fragment charge follows precursor charge.** A 3+ precursor yields plenty of
+ * 2+ fragments, and for a long peptide those are often the only way to reach
+ * the sequence-informative middle of the series while staying in range.
+ *
+ * Preference goes to the highest ordinals that fit, since those carry the most
+ * sequence information; singly-charged wins a tie because it is the cleaner
+ * measurement.
+ */
+export function fragmentsFor(
+  sequence: string,
+  precursorCharge: number,
+  mzRange: readonly [number, number] = [0, Infinity],
+  want = 6,
+): Fragment[] {
+  const [lo, hi] = mzRange;
+  const maxCharge = Math.max(1, Math.min(2, precursorCharge - 1));
+  const out: Fragment[] = [];
+
+  let sum = H2O;
+  for (let i = sequence.length - 1; i >= 1; i--) {
+    const m = AA[sequence[i]!];
+    if (m === undefined) break; // unknown residue — stop rather than guess
+    sum += m;
+    const ordinal = sequence.length - i;
+    for (let z = 1; z <= maxCharge; z++) {
+      const mz = (sum + z * PROTON) / z;
+      if (mz < lo || mz > hi) continue;
+      out.push({
+        label: z === 1 ? `y${ordinal}` : `y${ordinal}${"²⁺"}`,
+        mz, series: "y", ordinal, charge: z,
+      });
+    }
+  }
+
+  // y1 and y2 are shared by too many peptides to be diagnostic; drop them when
+  // there is anything better to show.
+  const useful = out.filter((f) => f.ordinal >= 3);
+  const pool = useful.length >= want ? useful : out;
+  return pool
+    .sort((a, b) => b.ordinal - a.ordinal || a.charge - b.charge)
+    .slice(0, want)
+    .sort((a, b) => a.mz - b.mz);
+}

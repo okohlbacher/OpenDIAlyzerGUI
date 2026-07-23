@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, framesCovering } from "../src/spectra.ts";
-import { PeakReader, extractXic, coelution } from "../src/peaks.ts";
+import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts";
 import { BIG, SMALL, have } from "./data.ts";
 
 // The decisive test for the tier split. hyparquet silently returns undefined
@@ -196,4 +196,38 @@ test("co-elution distinguishes a precursor from interference", () => {
   const empty = coelution([flat(), flat()]);
   assert.equal(empty.present, 0, "absent is absent");
   assert.equal(empty.coeluting, 0);
+});
+
+// The bug this exists to prevent: a fragment above the acquired range returns a
+// flat trace that is indistinguishable from a real absence. A 23-mer's longest
+// y-ions sit at 1800-2386 Th against a diaPASEF acquisition ending at 1700, so
+// "the first six y-ions" reported a confident "no signal" for a peptide the
+// engine had identified with q = 1e-4.
+test("fragment selection stays inside the acquired m/z range", () => {
+  const LONG = "PVLLFLTHGESSTGVLQPLDGFR";  // the AGXT G170R variant peptide
+  const RANGE = [100, 1700] as const;
+
+  const f = fragmentsFor(LONG, 3, RANGE);
+  assert.ok(f.length > 0, "found usable fragments for a long peptide");
+  for (const x of f) {
+    assert.ok(x.mz >= RANGE[0] && x.mz <= RANGE[1],
+      `${x.label} at ${x.mz.toFixed(2)} is outside ${RANGE[0]}-${RANGE[1]}`);
+  }
+  // Reaching the informative end of a long series requires 2+ fragments.
+  assert.ok(f.some((x) => x.charge === 2), "uses doubly-charged fragments");
+
+  // A short tryptic peptide needs no such help.
+  const short = fragmentsFor("AAAAADLANR", 2, RANGE);
+  assert.ok(short.every((x) => x.charge === 1), "1+ suffices for a 2+ precursor");
+  assert.ok(short.every((x) => x.ordinal >= 3), "y1/y2 are not diagnostic");
+
+  // Labels must describe the ion, not its position in the list.
+  assert.ok(f.every((x) => /^y\d+(²⁺)?$/.test(x.label)), `bad label: ${f.map(x => x.label)}`);
+
+  // An unknown residue must truncate rather than silently mis-mass the rest.
+  const modified = fragmentsFor("PEPTXDE", 2, RANGE);
+  assert.ok(modified.every((x) => x.ordinal <= 2), "stops at the unknown residue");
+
+  // Ascending m/z, so the legend reads in order.
+  for (let i = 1; i < f.length; i++) assert.ok(f[i]!.mz > f[i - 1]!.mz);
 });

@@ -49,6 +49,14 @@ export interface SpectrumIndex {
   readonly totalPeaks: number;
   /** True when ids are not unique — a latent crash in the reference reader. */
   readonly duplicateIds: boolean;
+  /**
+   * The m/z range the instrument actually recorded for MS2, across the run.
+   *
+   * Requesting a fragment outside it returns a flat trace that looks exactly
+   * like a real absence — which is how a 23-mer's longest y-ions, at 1800–2386
+   * Th against an acquisition ending at 1700, were mistaken for "no signal".
+   */
+  readonly ms2MzRange: readonly [number, number];
 }
 
 export interface PrecursorIndex {
@@ -73,6 +81,8 @@ interface MetaRow {
     id?: string | null;
     time?: number | null;
     MS_1000511_ms_level?: number | null;
+    MS_1000528_lowest_observed_mz_unit_MS_1000040?: number | null;
+    MS_1000527_highest_observed_mz_unit_MS_1000040?: number | null;
     MS_1003059_number_of_peaks?: bigint | number | null;
   } | null;
   precursor?: {
@@ -112,6 +122,8 @@ export async function buildMetadataIndex(a: MzPeakArchive): Promise<MetadataInde
 
   const time = new Float64Array(nSpectra);
   const msLevel = new Uint8Array(nSpectra);
+  let ms2Lo = Infinity;
+  let ms2Hi = -Infinity;
   const peakCount = new Uint32Array(nSpectra);
   const rowStart = new Float64Array(nSpectra + 1);
   const ids = new Set<string>();
@@ -133,6 +145,12 @@ export async function buildMetadataIndex(a: MzPeakArchive): Promise<MetadataInde
       }
       time[si] = s.time ?? 0;
       msLevel[si] = s.MS_1000511_ms_level ?? 0;
+      if ((s.MS_1000511_ms_level ?? 0) >= 2) {
+        const lo = s.MS_1000528_lowest_observed_mz_unit_MS_1000040;
+        const hi = s.MS_1000527_highest_observed_mz_unit_MS_1000040;
+        if (typeof lo === "number" && lo > 0 && lo < ms2Lo) ms2Lo = lo;
+        if (typeof hi === "number" && hi > ms2Hi) ms2Hi = hi;
+      }
       // number_of_peaks indexes spectra_peaks; number_of_data_points is the
       // profile array length and is a different number for profile data.
       peakCount[si] = num(s.MS_1003059_number_of_peaks) ?? 0;
@@ -166,6 +184,8 @@ export async function buildMetadataIndex(a: MzPeakArchive): Promise<MetadataInde
       rowStart,
       totalPeaks: rowStart[nSpectra]!,
       duplicateIds: sawId > 0 && ids.size !== sawId,
+      ms2MzRange: [Number.isFinite(ms2Lo) ? ms2Lo : 0,
+                   Number.isFinite(ms2Hi) ? ms2Hi : Infinity] as const,
     },
     precursors: { count: nPrecursors, spectrumIndex, targetMz, lowerOffset, upperOffset },
   };

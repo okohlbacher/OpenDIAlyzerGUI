@@ -223,7 +223,7 @@ async function showEvidence() {
           <span class="hint">${x.frames} frames · ${x.rowGroups} row groups</span></div>
         ${chart(x)}
         <div class="legend">${x.fragments.map((f, i) =>
-          `<span><i style="background:${ionColour(i)}"></i>y${x.fragments.length - i} ${f.toFixed(2)}</span>`).join("")}</div>
+          `<span><i style="background:${ionColour(i)}"></i>${esc(x.labels?.[i] ?? "y?")} ${f.toFixed(2)}</span>`).join("")}</div>
         <p class="note-inline">
           Extracted from raw data in <b>${x.ms.toFixed(0)} ms</b> —
           ${(x.rowsDecoded / 1e6).toFixed(2)} M rows decoded,
@@ -317,7 +317,7 @@ async function interrogate(k, runIndex) {
         <span class="hint">${x.frames} frames · ${x.rowGroups} row groups</span></div>
       ${chart(x)}
       <div class="legend">${x.fragments.map((f, i) =>
-        `<span><i style="background:${ionColour(i)}"></i>y${x.fragments.length - i} ${f.toFixed(2)}</span>`).join("")}</div>
+        `<span><i style="background:${ionColour(i)}"></i>${esc(x.labels?.[i] ?? "y?")} ${f.toFixed(2)}</span>`).join("")}</div>
       <p class="note-inline">
         <b>${esc(r.sequence)} ${r.charge}+</b> was not identified in this run.
         Evidence above was computed from the sequence and read from raw data in
