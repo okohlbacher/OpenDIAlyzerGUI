@@ -139,3 +139,32 @@ test("bulk tier handles a Thermo-style archive with a direct m/z column", {
   r.free();
   await a.close();
 });
+
+// Archives past 4 GB are the normal case for diaPASEF, not an edge case.
+// Node's openAsBlob reports `size mod 2**32` above that boundary — a 13.7 GB
+// archive came back as 801,746,959 bytes — and the truncated slice surfaced as
+// "corrupt footer" from inside WASM rather than as a size error. RangeBlob
+// exists because of this, so it needs a test that would have caught it.
+const HUGE = "/path/to/mzpeak-example-data/diann/agxt-2026/" +
+  "run-01.mzpeak";
+
+test("reads a peak facet larger than 4 GB", { skip: !have(HUGE) }, async () => {
+  const a = await MzPeakArchive.open(HUGE);
+  const { size } = await a.memberRange("spectra_peaks.parquet");
+  assert.ok(size > 2 ** 32, `facet is ${(size / 2 ** 30).toFixed(1)} GB, past the 32-bit boundary`);
+
+  const r = await PeakReader.open(a);
+  assert.ok(r.totalRows > 0, "footer parsed from a >4 GB member");
+  assert.ok(r.rowGroupCount > 0);
+
+  // Decode a real row group, not just the footer: a truncated view can still
+  // yield a plausible footer if the tail happens to land inside the file.
+  const cols = await r.readRowGroups([r.rowGroupCount - 1]);
+  assert.ok(cols.rowCount > 0, "last row group decodes");
+  console.log(
+    `    ${(size / 2 ** 30).toFixed(1)} GB facet · ${r.totalRows.toLocaleString()} rows · ` +
+      `${r.rowGroupCount} row groups`,
+  );
+  r.free();
+  await a.close();
+});

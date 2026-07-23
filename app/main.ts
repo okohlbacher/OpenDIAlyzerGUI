@@ -212,10 +212,13 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
     if (c) extras[label] = c[row]!;
   }
 
-  const src = await archiveFor(key.run).catch(() => null);
-  if (!src) {
-    return { key, extras, xic: null, reason: "no-archive-for-run" };
+  let src: OpenArchive | null = null;
+  try {
+    src = await archiveFor(key.run);
+  } catch (e) {
+    return { key, extras, xic: null, reason: "archive-failed", detail: describe(e) };
   }
+  if (!src) return { key, extras, xic: null, reason: "no-archive-for-run" };
 
   // Theoretical singly-charged y-ions from the sequence. A real library gives
   // measured fragments; this is the fallback the UI flags as such, and it is
@@ -223,19 +226,29 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
   const fragments = yIons(key.sequence).slice(0, 6);
   const margin = 0.15;
   const t0 = performance.now();
-  const xic = await extractXic(src.archive, src.meta, src.peaks, {
-    precursorMz: key.precursorMz,
-    rtMin: key.rtStart - margin,
-    rtMax: key.rtStop + margin,
-    fragments,
-    ppm: 20,
-  });
+  let xic;
+  try {
+    xic = await extractXic(src.archive, src.meta, src.peaks, {
+      precursorMz: key.precursorMz,
+      rtMin: key.rtStart - margin,
+      rtMax: key.rtStop + margin,
+      fragments,
+      ppm: 20,
+    });
+  } catch (e) {
+    // A decode failure must not take the window with it. WASM runs out of
+    // memory as a Rust panic surfacing as `RuntimeError: unreachable`, which
+    // an unguarded handler turns into a fatal main-process exception and a
+    // dead application.
+    return { key, extras, xic: null, reason: "extract-failed", detail: describe(e) };
+  }
   const ms = performance.now() - t0;
 
   return {
     key,
     extras,
     reason: null,
+    detail: null,
     xic: {
       rt: Array.from(xic.rt),
       traces: xic.traces.map((t) => Array.from(t)),
@@ -249,6 +262,19 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
     },
   };
 });
+
+/** A short, human-usable description of a failure — never a raw WASM trace. */
+function describe(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/unreachable|out of memory|allocation failed|Cannot enlarge memory/i.test(msg)) {
+    return "The raw-data reader ran out of memory decoding this region. " +
+      "This run is unusually dense; try a narrower retention-time window.";
+  }
+  if (/corrupt footer|Invalid Parquet/i.test(msg)) {
+    return "The archive's peak facet could not be read — it may be truncated or still being written.";
+  }
+  return msg.split("\n")[0]!.slice(0, 200);
+}
 
 /** Monoisotopic residue masses, in Da. */
 const AA: Record<string, number> = {

@@ -156,7 +156,12 @@ async function showEvidence() {
       `<div><div class="k">${a}</div><div class="v mono">${b}</div></div>`).join("")}</div>`;
 
   if (!e.xic) {
-    body += `<div class="banner" style="margin-top:14px"><div>
+    body += e.reason !== "no-archive-for-run"
+      ? `<div class="banner" style="margin-top:14px"><div>
+          <b>Could not read the raw data for this row.</b> ${esc(e.detail ?? "")}
+          The table and every other row are unaffected.
+         </div></div>`
+      : `<div class="banner" style="margin-top:14px"><div>
       <b>No raw data found for this run.</b>
       Runs pair with archives by the identity both sides already carry — the
       report's <span class="mono">Run</span>, here
@@ -166,7 +171,7 @@ async function showEvidence() {
       filename is irrelevant: identity is read from inside the archive, so
       renaming or reorganising raw data cannot break the link.
       </div></div>`;
-    $("evsrc").textContent = "table only";
+    $("evsrc").textContent = e.reason === "no-archive-for-run" ? "table only" : "read failed";
   } else {
     const x = e.xic;
     const sig = x.traces.some((t) => t.some((v) => v > 0));

@@ -15,7 +15,8 @@
  * truth is the bug; we derive protein-level numbers from the report itself.
  */
 import { ParquetFile } from "parquet-wasm";
-import { openAsBlob } from "node:fs";
+import { FileRangeReader } from "./range.ts";
+import { RangeBlob } from "./peaks.ts";
 import { tableFromIPC, type Table, type Vector } from "apache-arrow";
 
 /** Columns the UI depends on, and the names it knows them by. */
@@ -118,13 +119,16 @@ export interface FilterSpec {
 
 /** Loads a report from a plain `.parquet` file. */
 export async function loadReport(path: string): Promise<ReportTable> {
-  const blob = await openAsBlob(path);
-  const pf = await ParquetFile.fromFile(blob);
+  const reader = await FileRangeReader.open(path);
+  const pf = await ParquetFile.fromFile(
+    new RangeBlob(reader, 0, reader.size) as unknown as File,
+  );
   try {
     const wasm = await pf.read();
     return fromArrow(tableFromIPC(wasm.intoIPCStream()));
   } finally {
     pf.free();
+    await reader.close();
   }
 }
 
