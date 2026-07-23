@@ -280,4 +280,26 @@ now derives per-run from `report.stats.tsv`'s measured MS2 accuracy instead
 of a flat 20 ppm (`src/stats.ts`).
 
 Still open from that review: heat maps not comparable across selections,
-and the top-400 spectrum truncation.
+and the top-400 spectrum truncation — both now at least disclosed in the
+UI (the raw intensity value is captioned next to the heat map, and the
+spectrum panel says "N of M peaks shown" when truncated), but neither
+limitation itself is removed.
+
+## Overnight adversarial review — 2026-07-24
+
+A second pass, same brief, run file-by-file against everything not
+covered by the external review above. 5 confirmed bugs, each verified
+against the real code before a fix was dispatched and independently
+re-tested:
+
+| | Finding | Fix |
+|---|---|---|
+| serious | `byRun` had the exact bug already fixed in `byProtein` — precursor rows counted directly instead of by distinct (modified sequence, charge), and peptides bucketed by stripped rather than modified sequence | Mirrored `byProtein`'s `precursorKeys` dedup |
+| serious | The tree's keep-best exemplar selection used `q?.[incumbent] ?? Infinity`, which only catches `null`/`undefined` — an actual `NaN` in the q column locked in whichever row arrived first, permanently, since any comparison against `NaN` is `false` | A non-finite incumbent no longer blocks a finite challenger |
+| serious | `scanArchives` registered a run's authoritative `runId` and its least-authoritative filename-stem fallback in the same pass; a later archive's filename could silently overwrite an earlier archive's authoritative key, picking the **wrong run's raw archive**, order-dependent | Authoritative keys registered for every archive first, fallbacks only fill gaps |
+| minor | `MzPeakArchive.#openZip` opened a real file handle before validating the zip; every throw path after that leaked it — reachable on any corrupt or mid-copy `.mzpeak` encountered while scanning | Closes the handle on any failure before rethrowing |
+| minor | `extractXic`/`extractFramePeaks` reconstruct m/z as `(ca + cb·tof)²`; a stale calibration going negative at a low tof squares into a plausible-looking but physically impossible positive m/z that could still land inside a real fragment window | Rows with a non-positive calibrated value are skipped |
+
+Reviewed and found solid, no changes needed: `src/spectra.ts` (offset
+table, RT-window/precursor-coverage search), `src/report.ts`'s `seekKey`
+and `reportedFragments`, and `src/table.ts`'s `parseNumericFilter`.
