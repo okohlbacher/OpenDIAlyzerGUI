@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { loadReport, filterRows, CANONICAL } from "../src/report.ts";
+import {
+  loadReport, filterRows, CANONICAL, type ColumnData, type ReportTable,
+} from "../src/report.ts";
 import { buildTree, flatten, idsAtLevel, pathTo, chargeLabel } from "../src/tree.ts";
 
 const REPORT = process.env.ODIA_TEST_REPORT ??
@@ -16,6 +18,49 @@ test("charge renders the way this field reads it", () => {
   assert.equal(chargeLabel(3), "+++");
   assert.equal(chargeLabel(5), ", +5", "beyond 4 the repeated plus stops being readable");
   assert.equal(chargeLabel(0), "");
+});
+
+test("a finite q replaces a NaN incumbent for exemplars and run leaves", () => {
+  const columns = new Map<string, ColumnData>([
+    [CANONICAL.modifiedSequence, ["PEPTIDE", "PEPTIDE"]],
+    [CANONICAL.strippedSequence, ["PEPTIDE", "PEPTIDE"]],
+    [CANONICAL.proteinGroup, ["P1", "P1"]],
+    [CANONICAL.genes, ["GENE1", "GENE1"]],
+    [CANONICAL.charge, new Float64Array([2, 2])],
+    [CANONICAL.precursorMz, new Float64Array([500, 500])],
+    [CANONICAL.qValue, new Float64Array([NaN, 0.001])],
+    [CANONICAL.rt, new Float64Array([10, 11])],
+  ]);
+  const t: ReportTable = {
+    rowCount: 2,
+    columns,
+    columnNames: [...columns.keys()],
+    runs: ["run-1"],
+    runOf: new Int32Array([0, 0]),
+    extra: [],
+    missing: [],
+    column: (name) => columns.get(name),
+    cell: (name, row) => {
+      const value = columns.get(name);
+      return Array.isArray(value) ? (value[row] ?? null) : null;
+    },
+    numeric: (name) => {
+      const value = columns.get(name);
+      return value && !Array.isArray(value) ? value : null;
+    },
+    text: (name) => {
+      const value = columns.get(name);
+      return Array.isArray(value) ? value : null;
+    },
+  };
+
+  const protein = buildTree(t, new Uint32Array([0, 1]))[0]!;
+  const peptide = protein.children[0]!;
+  const precursor = peptide.children[0]!;
+  assert.equal(protein.exemplar, 1);
+  assert.equal(peptide.exemplar, 1);
+  assert.equal(precursor.exemplar, 1);
+  assert.equal(precursor.children[0]!.exemplar, 1);
 });
 
 // The point of the tree. If this ratio is ~1 the tree is doing nothing.

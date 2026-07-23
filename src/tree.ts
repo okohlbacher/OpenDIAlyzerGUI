@@ -124,7 +124,9 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
     // on a run leaf, so `qi < 1` accepted almost anything and the *last*
     // qualifying row won rather than the best.
     const prevQ = prev ? (q?.[prev.exemplar] ?? Infinity) : Infinity;
-    if (!prev || (Number.isFinite(qi) && qi < prevQ)) {
+    // A real NaN in the q column must not let the first-arriving row stay locked in.
+    const beatsPrev = Number.isFinite(prevQ) ? qi < prevQ : true;
+    if (!prev || (Number.isFinite(qi) && beatsPrev)) {
       const leaf: TreeNode = {
         level: "run", id: `${gk}|${mk}|${zi}|${r}`,
         label: t.runs[r] ?? String(r),
@@ -144,7 +146,8 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
     if (Number.isFinite(qi)) {
       for (const n of [p.node, pep.node, pre.node]) {
         const cur = q?.[n.exemplar] ?? Infinity;
-        if (qi < cur) n.exemplar = i;
+        // A real NaN in the q column must not let the first-arriving row stay locked in.
+        if (!Number.isFinite(cur) || qi < cur) n.exemplar = i;
       }
     }
   }
