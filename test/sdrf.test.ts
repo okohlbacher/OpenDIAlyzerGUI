@@ -88,6 +88,17 @@ test("rows match report runs by stem, not by path", () => {
   assert.equal(m.get("/nope/other.d"), null, "an unknown run resolves to null, not a guess");
 });
 
+test("an edited assay name cannot steal another row's authoritative match", () => {
+  let s = fromFiles(["/scratch/S08_1305.d", "/scratch/S23_1320.d"]);
+  // Retype S23's assay name to literally collide with S08's real stem.
+  s = setValue(s, 1, "assay name", "S08_1305");
+  const m = matchRuns(s, ["S08_1305", "S23_1320"]);
+  assert.equal(m.get("S08_1305")!.path, "/scratch/S08_1305.d",
+    "the path-authoritative row still wins its own stem");
+  assert.equal(m.get("S23_1320")!.path, "/scratch/S23_1320.d",
+    "the other row is still found by its own path stem");
+});
+
 test("an imported file with no data-file column still parses", () => {
   const tsv = "source name\tcharacteristics[organism]\nS1\tHomo sapiens\n";
   const s = fromTsv(tsv);

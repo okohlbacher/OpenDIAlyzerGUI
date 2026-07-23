@@ -196,13 +196,18 @@ export function fromTsv(text: string, resolvePath?: (dataFile: string) => string
  * by stem, so a path that has gone stale still resolves.
  */
 export function matchRuns(s: Sdrf, runs: readonly string[]): Map<string, SdrfRow | null> {
+  // Path stem is derived from the actual file, so it is the authoritative
+  // key; data-file/assay-name are free text a person can edit to anything,
+  // including — by coincidence or copy-paste — another row's real stem. A
+  // user-edited field must never be allowed to steal another row's
+  // authoritative match, so every row's path stem is claimed first.
   const byStem = new Map<string, SdrfRow>();
+  for (const r of s.rows) byStem.set(stem(r.path), r);
   for (const r of s.rows) {
-    byStem.set(stem(r.path), r);
     const df = r.values["comment[data file]"];
-    if (df) byStem.set(stem(df), r);
+    if (df && !byStem.has(stem(df))) byStem.set(stem(df), r);
     const an = r.values["assay name"];
-    if (an) byStem.set(stem(an), r);
+    if (an && !byStem.has(stem(an))) byStem.set(stem(an), r);
   }
   const out = new Map<string, SdrfRow | null>();
   for (const run of runs) out.set(run, byStem.get(stem(run)) ?? null);
