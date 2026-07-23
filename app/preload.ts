@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld("api", {
   expandLevel: (level: string) => ipcRenderer.invoke("tree:level", level),
   evidence: (k: number) => ipcRenderer.invoke("evidence:for", k),
   presence: (k: number) => ipcRenderer.invoke("evidence:presence", k),
+  frame: (k: number, mzWindow?: number) => ipcRenderer.invoke("evidence:frame", k, mzWindow),
   interrogate: (k: number, runIndex: number) =>
     ipcRenderer.invoke("evidence:interrogate", k, runIndex),
   /** Fired once at startup when a path was given on the command line. */

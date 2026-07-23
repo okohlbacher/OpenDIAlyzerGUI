@@ -474,3 +474,206 @@ export function fragmentsFor(
     .slice(0, want)
     .sort((a, b) => a.mz - b.mz);
 }
+
+export interface FramePeaks {
+  mz: Float64Array;
+  intensity: Float64Array;
+  /** 1/K0, when the archive carries ion mobility. */
+  mobility: Float64Array | null;
+  /** Frames actually read. */
+  frames: number[];
+  rowsScanned: number;
+  rowsDecoded: number;
+  rowGroupsRead: number;
+}
+
+/**
+ * Reads the peaks of specific frames, m/z-reconstructed and optionally masked.
+ *
+ * Both new viewers are this same read: a spectrum is one frame's peaks plotted
+ * against m/z, and an ion-mobility heat map is the same points binned over
+ * (m/z, 1/K0). Extracting once and letting the caller shape it avoids two
+ * near-identical passes over 3.7 billion peaks.
+ *
+ * As everywhere, m/z is reconstructed here rather than pushed down: the
+ * reference reader's m/z predicate is silently inert on timsTOF archives.
+ */
+export async function extractFramePeaks(
+  a: MzPeakArchive,
+  meta: MetadataIndex,
+  reader: PeakReader,
+  frames: readonly number[],
+  mzRange?: readonly [number, number],
+): Promise<FramePeaks> {
+  const empty: FramePeaks = {
+    mz: new Float64Array(0), intensity: new Float64Array(0), mobility: null,
+    frames: [...frames], rowsScanned: 0, rowsDecoded: 0, rowGroupsRead: 0,
+  };
+  if (!frames.length) return empty;
+
+  const { rowStart } = meta.spectra;
+  const ranges = frames.map((f) => [rowStart[f]!, rowStart[f + 1]!] as const);
+  const groups = reader.rowGroupsForRanges(ranges);
+
+  const cal = a.imsCalibration;
+  const lo = mzRange?.[0] ?? -Infinity;
+  const hi = mzRange?.[1] ?? Infinity;
+
+  const outMz: number[] = [];
+  const outInt: number[] = [];
+  const outMob: number[] = [];
+  let decoded = 0;
+  let scanned = 0;
+
+  for await (const cols of reader.scan(groups)) {
+    decoded += cols.rowCount;
+    const { tof, mz: mzCol, intensity, mobility } = cols;
+    const useTof = mzCol === null;
+    if (useTof && !cal) throw new Error("archive has neither an mz column nor ims_calibration");
+    const ca = cal?.a ?? 0;
+    const cb = cal?.b ?? 0;
+
+    for (const f of frames) {
+      const begin = rowStart[f]! - cols.firstRow;
+      const end = rowStart[f + 1]! - cols.firstRow;
+      if (end <= 0 || begin >= cols.rowCount) continue;
+      const b = Math.max(0, begin);
+      const e = Math.min(cols.rowCount, end);
+      scanned += e - b;
+      for (let i = b; i < e; i++) {
+        let m: number;
+        if (useTof) { const v = ca + cb * tof[i]!; m = v * v; } else { m = mzCol[i]!; }
+        if (m < lo || m > hi) continue;
+        outMz.push(m);
+        outInt.push(intensity[i]!);
+        if (mobility) outMob.push(mobility[i]!);
+      }
+    }
+  }
+
+  return {
+    mz: Float64Array.from(outMz),
+    intensity: Float64Array.from(outInt),
+    mobility: outMob.length ? Float64Array.from(outMob) : null,
+    frames: [...frames],
+    rowsScanned: scanned,
+    rowsDecoded: decoded,
+    rowGroupsRead: groups.length,
+  };
+}
+
+export interface Heatmap {
+  /** Column-major bins, `nx * ny`, already log-scaled to [0,1]. */
+  cells: Float32Array;
+  nx: number;
+  ny: number;
+  mzRange: [number, number];
+  mobilityRange: [number, number];
+  /** Marginal over m/z — the mobilogram, one value per y bin, scaled to [0,1]. */
+  mobilogram: Float32Array;
+  maxIntensity: number;
+}
+
+/**
+ * Bins peaks into an m/z × 1/K0 heat map plus its mobility marginal.
+ *
+ * Binning happens here rather than in the renderer so the IPC payload is a
+ * fixed-size grid instead of millions of points — a frame of diaPASEF data is
+ * ~200,000 peaks, and shipping those to the UI to bin would dominate the cost.
+ *
+ * The mobilogram is the row sum, which is what Skyline draws beside its heat map
+ * with the intensity axis reversed so zero touches the map.
+ */
+export function heatmap(
+  p: FramePeaks,
+  nx = 220,
+  ny = 120,
+  mzRange?: readonly [number, number],
+): Heatmap | null {
+  if (!p.mobility || !p.mz.length) return null;
+
+  let mzLo = mzRange?.[0] ?? Infinity;
+  let mzHi = mzRange?.[1] ?? -Infinity;
+  let imLo = Infinity;
+  let imHi = -Infinity;
+  for (let i = 0; i < p.mz.length; i++) {
+    if (!mzRange) { if (p.mz[i]! < mzLo) mzLo = p.mz[i]!; if (p.mz[i]! > mzHi) mzHi = p.mz[i]!; }
+    const m = p.mobility[i]!;
+    if (m < imLo) imLo = m;
+    if (m > imHi) imHi = m;
+  }
+  if (!(mzHi > mzLo) || !(imHi > imLo)) return null;
+
+  const cells = new Float32Array(nx * ny);
+  const marg = new Float32Array(ny);
+  const sx = nx / (mzHi - mzLo);
+  const sy = ny / (imHi - imLo);
+  let max = 0;
+
+  for (let i = 0; i < p.mz.length; i++) {
+    const m = p.mz[i]!;
+    if (m < mzLo || m > mzHi) continue;
+    const x = Math.min(nx - 1, Math.max(0, ((m - mzLo) * sx) | 0));
+    const y = Math.min(ny - 1, Math.max(0, ((p.mobility[i]! - imLo) * sy) | 0));
+    const v = p.intensity[i]!;
+    const k = x * ny + y;
+    cells[k]! += v;
+    marg[y]! += v;
+    if (cells[k]! > max) max = cells[k]!;
+  }
+
+  // Log scaling: DIA intensities span several orders of magnitude, so a linear
+  // ramp shows the base peak and nothing else.
+  const norm = max > 0 ? 1 / Math.log1p(max) : 0;
+  for (let i = 0; i < cells.length; i++) cells[i] = Math.log1p(cells[i]!) * norm;
+  let mMax = 0;
+  for (const v of marg) if (v > mMax) mMax = v;
+  if (mMax > 0) for (let i = 0; i < marg.length; i++) marg[i]! /= mMax;
+
+  return {
+    cells, nx, ny,
+    mzRange: [mzLo, mzHi],
+    mobilityRange: [imLo, imHi],
+    mobilogram: marg,
+    maxIntensity: max,
+  };
+}
+
+/**
+ * Centroids a frame's peaks into a spectrum, keeping the strongest.
+ *
+ * A diaPASEF frame is the whole mobility ramp, so the same fragment appears at
+ * many 1/K0 values; summing over mobility is what turns it back into a spectrum.
+ */
+export function spectrum(p: FramePeaks, tolerancePpm = 15, keep = 400):
+    { mz: Float64Array; intensity: Float64Array } {
+  if (!p.mz.length) return { mz: new Float64Array(0), intensity: new Float64Array(0) };
+
+  const order = Array.from(p.mz.keys()).sort((a, b) => p.mz[a]! - p.mz[b]!);
+  const mz: number[] = [];
+  const inten: number[] = [];
+  let curMz = p.mz[order[0]!]!;
+  let curW = 0;
+  let curI = 0;
+
+  const flush = () => { if (curI > 0) { mz.push(curW / curI); inten.push(curI); } };
+  for (const i of order) {
+    const m = p.mz[i]!;
+    if (curI > 0 && (m - curMz) / curMz * 1e6 > tolerancePpm) {
+      flush();
+      curW = 0; curI = 0;
+    }
+    if (curI === 0) curMz = m;
+    curW += m * p.intensity[i]!;
+    curI += p.intensity[i]!;
+  }
+  flush();
+
+  // Keep the strongest, then restore m/z order for drawing.
+  const idx = Array.from(inten.keys()).sort((a, b) => inten[b]! - inten[a]!).slice(0, keep);
+  idx.sort((a, b) => mz[a]! - mz[b]!);
+  return {
+    mz: Float64Array.from(idx, (i) => mz[i]!),
+    intensity: Float64Array.from(idx, (i) => inten[i]!),
+  };
+}

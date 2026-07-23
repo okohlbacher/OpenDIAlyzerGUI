@@ -120,6 +120,12 @@
   .cohort.some .seg.on{background:var(--warn);border-color:var(--warn)}
   .cohort .frac{margin-left:6px;font-size:10.5px;color:var(--muted)}
   .lvl{margin-left:7px;font-size:11px}
+  /* Mobilogram left, heat map right, sharing a y scale row-for-row. */
+  .imwrap{display:flex;align-items:stretch;gap:0}
+  .imwrap canvas{display:block;border-radius:0}
+  #mobilogram{flex:none;border-right:1px solid var(--line-soft)}
+  #heat{flex:1;min-width:0}
+  .axhint{font-size:10.5px;color:var(--muted);margin-top:5px}
 </style>
 
 <div class="app">

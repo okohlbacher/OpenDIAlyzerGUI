@@ -416,6 +416,23 @@ async function showEvidence() {
     <div id="presence" class="presence"><span class="muted">…</span></div>
   </div>`;
 
+  // Ion mobility and spectrum, both from the apex frame. Rendered after the
+  // chromatograms so the panel still leads with the identification evidence.
+  body += `<div class="layer" id="frameLayer">
+    <div class="layer-head"><h3>Ion mobility · apex frame</h3>
+      <span class="hint" id="frameHint">reading…</span></div>
+    <div class="imwrap">
+      <canvas id="mobilogram" title="1/K0 marginal — intensity increases leftward"></canvas>
+      <canvas id="heat" title="m/z × 1/K0, log intensity"></canvas>
+    </div>
+    <div class="axhint mono" id="imAxes"></div>
+  </div>
+  <div class="layer">
+    <div class="layer-head"><h3>Spectrum · apex frame</h3>
+      <span class="hint">engine fragments annotated</span></div>
+    <div id="specWrap"></div>
+  </div>`;
+
   const rows = Object.entries(e.extras).filter(([, v]) => Number.isFinite(v));
   if (rows.length) {
     body += `<div class="layer"><div class="layer-head"><h3>Reported by the engine</h3></div>
@@ -425,6 +442,131 @@ async function showEvidence() {
   }
   ev.innerHTML = body;
   void paintPresence(state.sel);
+  void paintFrame(state.sel);
+}
+
+/**
+ * Draws the mobility heat map, its mobilogram, and the apex spectrum.
+ *
+ * The mobilogram sits to the *left* with its intensity axis reversed, so zero
+ * touches the heat map and the two share a y scale row-for-row — Skyline's
+ * arrangement, and the reason its two panes read as one figure.
+ */
+async function paintFrame(k) {
+  const hint = $("frameHint");
+  const f = await window.api.frame(k, 6);
+  if (!hint || !document.getElementById("heat")) return;   // selection moved on
+  if (!f || f.reason) {
+    hint.textContent = f?.reason === "no-archive-for-run" ? "no raw data" : "unavailable";
+    return;
+  }
+  hint.textContent = `${f.peaks.toLocaleString()} peaks · ${f.ms.toFixed(0)} ms`;
+
+  const heat = $("heat");
+  const mob = $("mobilogram");
+  if (f.heat && heat) {
+    const H = 150, MW = 46;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = heat.clientWidth || 360;
+    heat.width = w * dpr; heat.height = H * dpr; heat.style.height = H + "px";
+    const c = heat.getContext("2d"); c.scale(dpr, dpr);
+    const { cells, nx, ny, mzRange, mobilityRange, mobilogram } = f.heat;
+    const cs = getComputedStyle(document.documentElement);
+    const stops = ["--h0", "--h1", "--h2", "--h3", "--h4"]
+      .map((v) => cs.getPropertyValue(v).trim());
+    const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const ramp = stops.map(rgb);
+    const bw = w / nx, bh = H / ny;
+    for (let x = 0; x < nx; x++) {
+      for (let y = 0; y < ny; y++) {
+        const v = cells[x * ny + y];
+        if (v <= 0.001) continue;
+        const t = Math.min(1, v) * (ramp.length - 1);
+        const i = Math.min(ramp.length - 2, Math.floor(t)), fr = t - i;
+        const a = ramp[i], b = ramp[i + 1];
+        c.fillStyle = `rgb(${Math.round(a[0] + (b[0] - a[0]) * fr)},${
+          Math.round(a[1] + (b[1] - a[1]) * fr)},${Math.round(a[2] + (b[2] - a[2]) * fr)})`;
+        // y is drawn top-down but 1/K0 increases upward.
+        c.fillRect(x * bw, H - (y + 1) * bh, bw + 0.6, bh + 0.6);
+      }
+    }
+    // Where the engine says this precursor sits.
+    if (f.im) {
+      const y = H - ((f.im - mobilityRange[0]) / (mobilityRange[1] - mobilityRange[0])) * H;
+      c.strokeStyle = cs.getPropertyValue("--accent-line").trim();
+      c.setLineDash([4, 3]); c.lineWidth = 1;
+      c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); c.setLineDash([]);
+    }
+
+    mob.width = MW * dpr; mob.height = H * dpr;
+    mob.style.width = MW + "px"; mob.style.height = H + "px";
+    const m = mob.getContext("2d"); m.scale(dpr, dpr);
+    m.strokeStyle = cs.getPropertyValue("--ink-2").trim();
+    m.lineWidth = 1; m.beginPath();
+    for (let y = 0; y < ny; y++) {
+      const px = MW - mobilogram[y] * (MW - 2);   // reversed: zero at the right
+      const py = H - (y + 0.5) * bh;
+      y === 0 ? m.moveTo(px, py) : m.lineTo(px, py);
+    }
+    m.stroke();
+
+    $("imAxes").textContent =
+      `m/z ${mzRange[0].toFixed(1)}–${mzRange[1].toFixed(1)} · ` +
+      `1/K0 ${mobilityRange[0].toFixed(3)}–${mobilityRange[1].toFixed(3)}` +
+      (f.im ? ` · reported ${f.im.toFixed(4)}` : "");
+  } else if (heat) {
+    $("frameLayer").innerHTML =
+      `<p class="note-inline">This archive carries no ion mobility.</p>`;
+  }
+
+  const sw = $("specWrap");
+  if (sw && f.spectrum) sw.innerHTML = spectrumSvg(f.spectrum, f.fragments, f.precursorMz);
+}
+
+/** Stick spectrum with the engine's own fragments annotated. */
+function spectrumSvg(sp, frags, precursorMz) {
+  const W = 420, H = 150, L = 34, B = 20, T = 10, R = 6;
+  if (!sp.mz.length) return `<p class="note-inline">No peaks in this frame.</p>`;
+  const lo = Math.min(...sp.mz), hi = Math.max(...sp.mz);
+  const max = Math.max(...sp.intensity);
+  const px = (m) => L + ((m - lo) / (hi - lo || 1)) * (W - L - R);
+  const py = (v) => T + (1 - v / max) * (H - T - B);
+
+  // Match each annotated fragment to the nearest stick within 20 ppm.
+  const hits = new Map();
+  for (const fr of frags ?? []) {
+    let best = -1, bestD = Infinity;
+    for (let i = 0; i < sp.mz.length; i++) {
+      const d = Math.abs(sp.mz[i] - fr.mz);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    if (best >= 0 && bestD / fr.mz * 1e6 < 20) hits.set(best, fr);
+  }
+
+  let sticks = "";
+  for (let i = 0; i < sp.mz.length; i++) {
+    const fr = hits.get(i);
+    const col = fr ? ionColour(0, [fr.series]) : "var(--line)";
+    sticks += `<line x1="${px(sp.mz[i]).toFixed(1)}" y1="${H - B}" ` +
+      `x2="${px(sp.mz[i]).toFixed(1)}" y2="${py(sp.intensity[i]).toFixed(1)}" ` +
+      `stroke="${col}" stroke-width="${fr ? 1.6 : 0.8}"/>`;
+  }
+  let labels = "";
+  for (const [i, fr] of hits) {
+    labels += `<text x="${px(sp.mz[i]).toFixed(1)}" y="${(py(sp.intensity[i]) - 4).toFixed(1)}"
+      fill="${ionColour(0, [fr.series])}" font-size="8.5" text-anchor="middle"
+      font-family="ui-monospace,Menlo,monospace">${esc(fr.label)}</text>`;
+  }
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Spectrum at apex">
+    <line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--line)"/>
+    ${sticks}${labels}
+    <text x="2" y="${T + 8}" fill="var(--muted)" font-size="8.5"
+      font-family="ui-monospace,Menlo,monospace">${max.toExponential(0)}</text>
+    <text x="${L}" y="${H - 5}" fill="var(--muted)" font-size="8.5"
+      font-family="ui-monospace,Menlo,monospace">${lo.toFixed(0)}</text>
+    <text x="${W - R}" y="${H - 5}" fill="var(--muted)" font-size="8.5" text-anchor="end"
+      font-family="ui-monospace,Menlo,monospace">${hi.toFixed(0)} m/z</text>
+  </svg>`;
 }
 
 /** The per-run found/missing strip. */

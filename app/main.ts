@@ -15,8 +15,9 @@ import os from "node:os";
 import { loadReport, filterRows, seekKey, reportedFragments, CANONICAL,
   type ReportTable, type FilterSpec } from "../src/report.ts";
 import { MzPeakArchive } from "../src/archive.ts";
-import { buildMetadataIndex, type MetadataIndex } from "../src/spectra.ts";
-import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts";
+import { buildMetadataIndex, framesCovering, type MetadataIndex } from "../src/spectra.ts";
+import { PeakReader, extractXic, coelution, fragmentsFor, extractFramePeaks,
+  heatmap, spectrum } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 import { byProtein, byRun, type ProteinRow, type RunRow } from "../src/aggregate.ts";
 import { sortIndices, applyColumnFilters, type Cell } from "../src/table.ts";
@@ -306,6 +307,11 @@ async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
                       seq: state.rows.find(r => r.k === state.sel)?.seq ?? null,
                       scrollTop: document.getElementById("scroller").scrollTop })`);
   console.log("smoke state:", probe);
+  if (process.env.ODIA_SMOKE_SCROLL_EV) {
+    await win.webContents.executeJavaScript(
+      `document.getElementById("ev").scrollTop = ${Number(process.env.ODIA_SMOKE_SCROLL_EV)}`);
+    await new Promise((r) => setTimeout(r, 700));
+  }
   const img = await win.webContents.capturePage();
   const out = process.env.ODIA_SMOKE_OUT ?? "/tmp/odia-smoke.png";
   writeFileSync(out, img.toPNG());
@@ -832,6 +838,56 @@ function rowOf(k: number): number {
   if (grain === "runs") return runRows[gi]?.exemplar ?? -1;
   return gi;   // precursors: `order` already holds report rows
 }
+
+/**
+ * The apex frame's peaks, as a mobility heat map and a centroided spectrum.
+ *
+ * One extraction serves both: a spectrum is the frame's peaks against m/z, and
+ * the heat map is the same points binned over (m/z, 1/K0). Binning happens in
+ * the data layer because a diaPASEF frame is ~200,000 peaks and shipping those
+ * to the renderer to bin would cost more than reading them.
+ */
+ipcMain.handle("evidence:frame", async (_e, k: number, mzWindow?: number) => {
+  if (!session) return null;
+  const row = rowOf(k);
+  if (row < 0) return null;
+  const key = seekKey(session.report, row);
+  if (!key) return null;
+
+  const src = await archiveFor(key.run).catch(() => null);
+  if (!src) return { reason: "no-archive-for-run" };
+
+  // The apex frame only. A mobility map of a whole RT window would average
+  // away the separation it exists to show.
+  const frames = framesCovering(src.meta, key.precursorMz, key.rt - 0.01, key.rt + 0.01);
+  if (!frames.length) return { reason: "no-frame-at-apex" };
+
+  const t0 = performance.now();
+  try {
+    const pts = await extractFramePeaks(src.archive, src.meta, src.peaks, frames.slice(0, 1));
+    const half = mzWindow ?? 0;
+    const hm = heatmap(pts, 220, 120,
+      half > 0 ? [key.precursorMz - half, key.precursorMz + half] : undefined);
+    const sp = spectrum(pts);
+    const frags = reportedFragments(session.report, row);
+    return {
+      reason: null,
+      ms: performance.now() - t0,
+      peaks: pts.mz.length,
+      precursorMz: key.precursorMz,
+      im: key.im,
+      heat: hm && {
+        cells: Array.from(hm.cells), nx: hm.nx, ny: hm.ny,
+        mzRange: hm.mzRange, mobilityRange: hm.mobilityRange,
+        mobilogram: Array.from(hm.mobilogram),
+      },
+      spectrum: { mz: Array.from(sp.mz), intensity: Array.from(sp.intensity) },
+      fragments: (frags ?? []).slice(0, 12).map((f) => ({ label: f.label, mz: f.mz, series: f.series })),
+    };
+  } catch (e) {
+    return { reason: "extract-failed", detail: describe(e) };
+  }
+});
 
 ipcMain.handle("evidence:for", async (_e, k: number) => {
   if (!session) return null;
