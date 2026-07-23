@@ -2,8 +2,23 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, framesCovering } from "../src/spectra.ts";
-import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts";
+import { PeakReader, extractXic, coelution, fragmentsFor, spectrum } from "../src/peaks.ts";
 import { BIG, SMALL, have } from "./data.ts";
+
+test("spectrum reports the centroided peak count before truncation", () => {
+  const sp = spectrum({
+    mz: Float64Array.of(100, 200, 300),
+    intensity: Float64Array.of(10, 30, 20),
+    mobility: null,
+    frames: [1],
+    rowsScanned: 3,
+    rowsDecoded: 3,
+    rowGroupsRead: 1,
+  }, 15, 2);
+
+  assert.equal(sp.mz.length, 2);
+  assert.equal(sp.total, 3);
+});
 
 // The decisive test for the tier split. hyparquet silently returns undefined
 // structs past row 540,896; pyarrow says row 125,748,494 holds spectrum_index

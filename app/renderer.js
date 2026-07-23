@@ -486,7 +486,7 @@ async function paintFrame(k) {
     const w = heat.clientWidth || 360;
     heat.width = w * dpr; heat.height = H * dpr; heat.style.height = H + "px";
     const c = heat.getContext("2d"); c.scale(dpr, dpr);
-    const { cells, nx, ny, mzRange, mobilityRange, mobilogram } = f.heat;
+    const { cells, nx, ny, mzRange, mobilityRange, mobilogram, maxIntensity } = f.heat;
     const cs = getComputedStyle(document.documentElement);
     const stops = ["--h0", "--h1", "--h2", "--h3", "--h4"]
       .map((v) => cs.getPropertyValue(v).trim());
@@ -529,7 +529,8 @@ async function paintFrame(k) {
     $("imAxes").textContent =
       `m/z ${mzRange[0].toFixed(1)}–${mzRange[1].toFixed(1)} · ` +
       `1/K0 ${mobilityRange[0].toFixed(3)}–${mobilityRange[1].toFixed(3)}` +
-      (f.im ? ` · reported ${f.im.toFixed(4)}` : "");
+      (f.im ? ` · reported ${f.im.toFixed(4)}` : "") +
+      ` · peak intensity ${maxIntensity.toLocaleString()} — color scaled to this selection only`;
   } else if (heat) {
     $("frameLayer").innerHTML =
       `<p class="note-inline">This archive carries no ion mobility.</p>`;
@@ -582,7 +583,9 @@ function spectrumSvg(sp, frags, precursorMz) {
       font-family="ui-monospace,Menlo,monospace">${lo.toFixed(0)}</text>
     <text x="${W - R}" y="${H - 5}" fill="var(--muted)" font-size="8.5" text-anchor="end"
       font-family="ui-monospace,Menlo,monospace">${hi.toFixed(0)} m/z</text>
-  </svg>`;
+  </svg>${sp.total > sp.mz.length
+    ? `<p class="note-inline">${sp.mz.length.toLocaleString()} of ${sp.total.toLocaleString()} peaks shown.</p>`
+    : ""}`;
 }
 
 /** The per-run found/missing strip. */

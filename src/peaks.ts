@@ -686,8 +686,10 @@ export function heatmap(
  * many 1/K0 values; summing over mobility is what turns it back into a spectrum.
  */
 export function spectrum(p: FramePeaks, tolerancePpm = 15, keep = 400):
-    { mz: Float64Array; intensity: Float64Array } {
-  if (!p.mz.length) return { mz: new Float64Array(0), intensity: new Float64Array(0) };
+    { mz: Float64Array; intensity: Float64Array; total: number } {
+  if (!p.mz.length) {
+    return { mz: new Float64Array(0), intensity: new Float64Array(0), total: 0 };
+  }
 
   const order = Array.from(p.mz.keys()).sort((a, b) => p.mz[a]! - p.mz[b]!);
   const mz: number[] = [];
@@ -715,5 +717,6 @@ export function spectrum(p: FramePeaks, tolerancePpm = 15, keep = 400):
   return {
     mz: Float64Array.from(idx, (i) => mz[i]!),
     intensity: Float64Array.from(idx, (i) => inten[i]!),
+    total: inten.length,
   };
 }

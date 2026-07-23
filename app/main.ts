@@ -1252,8 +1252,11 @@ ipcMain.handle("evidence:frame", async (_e, k: number, mzWindow?: number) => {
         cells: Array.from(hm.cells), nx: hm.nx, ny: hm.ny,
         mzRange: hm.mzRange, mobilityRange: hm.mobilityRange,
         mobilogram: Array.from(hm.mobilogram),
+        maxIntensity: hm.maxIntensity,
       },
-      spectrum: { mz: Array.from(sp.mz), intensity: Array.from(sp.intensity) },
+      spectrum: {
+        mz: Array.from(sp.mz), intensity: Array.from(sp.intensity), total: sp.total,
+      },
       fragments: (frags ?? []).slice(0, 12).map((f) => ({ label: f.label, mz: f.mz, series: f.series })),
     };
   } catch (e) {
@@ -1360,4 +1363,3 @@ function describe(e: unknown): string {
   }
   return msg.split("\n")[0]!.slice(0, 200);
 }
-
