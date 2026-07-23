@@ -10,24 +10,53 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { loadReport, filterRows, seekKey, CANONICAL, type ReportTable, type FilterSpec }
   from "../src/report.ts";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, type MetadataIndex } from "../src/spectra.ts";
 import { PeakReader, extractXic } from "../src/peaks.ts";
+import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+/** One run's raw data, opened on first use and kept for the session. */
+interface OpenArchive {
+  archive: MzPeakArchive;
+  meta: MetadataIndex;
+  peaks: PeakReader;
+  path: string;
+}
 
 interface Session {
   report: ReportTable;
   reportPath: string;
-  archive: MzPeakArchive | null;
-  meta: MetadataIndex | null;
-  peaks: PeakReader | null;
-  archivePath: string | null;
+  registry: Registry;
+  /** run name → resolved archive path, or null if none was found. */
+  resolved: Map<string, string | null>;
+  /** Opened archives, keyed by path. Opening is deferred: building a metadata
+   *  index costs ~1.8 s on a large file, and a six-run report would otherwise
+   *  pay for all six before showing a single row. */
+  open: Map<string, OpenArchive>;
 }
 let session: Session | null = null;
+
+async function archiveFor(run: string): Promise<OpenArchive | null> {
+  if (!session) return null;
+  const path = session.resolved.get(run);
+  if (!path) return null;
+  const already = session.open.get(path);
+  if (already) return already;
+  const archive = await MzPeakArchive.open(path);
+  const entry: OpenArchive = {
+    archive,
+    meta: await buildMetadataIndex(archive),
+    peaks: await PeakReader.open(archive),
+    path,
+  };
+  session.open.set(path, entry);
+  return entry;
+}
 
 /** Row indices matching the current filter. Recomputed on every filter change. */
 let visible: Uint32Array = new Uint32Array(0);
@@ -86,59 +115,46 @@ ipcMain.handle("session:pick", async () => {
   return r.canceled ? null : r.filePaths[0]!;
 });
 
-/**
- * Finds a `.mzpeak` to pair with a report: alongside it, or one level up where
- * DIA-NN output usually sits next to the raw data it came from.
- */
-function findArchive(reportPath: string): string | undefined {
-  const dirs = [dirname(reportPath), join(dirname(reportPath), "..")];
-  for (const d of dirs) {
-    let names: string[];
-    try { names = readdirSync(d); } catch { continue; }
-    const hit = names.find((n) => n.endsWith(".mzpeak"));
-    if (hit) return join(d, hit);
-  }
-  return undefined;
-}
-
-ipcMain.handle("session:open", async (_e, reportPath: string, archivePath?: string) => {
-  archivePath ??= findArchive(reportPath);
+ipcMain.handle("session:open", async (_e, reportPath: string) => {
   const t0 = performance.now();
   const report = await loadReport(reportPath);
   const loadMs = performance.now() - t0;
 
-  // An archive is optional. Without one the table is fully usable and the
-  // evidence pane says why it cannot draw — never a failure to open.
-  let archive: MzPeakArchive | null = null;
-  let meta: MetadataIndex | null = null;
-  let peaks: PeakReader | null = null;
-  let archiveErr: string | null = null;
-  if (archivePath && existsSync(archivePath)) {
-    try {
-      archive = await MzPeakArchive.open(archivePath);
-      meta = await buildMetadataIndex(archive);
-      peaks = await PeakReader.open(archive);
-    } catch (e) {
-      archiveErr = String(e instanceof Error ? e.message : e);
-      archive = null;
-    }
-  }
+  // Pair every run with its archive by the identity both sides already carry.
+  const t1 = performance.now();
+  const registry = await scanArchives(searchRoots(dirname(reportPath), statsPaths(reportPath)));
+  const resolved = new Map<string, string | null>();
+  for (const run of report.runs) resolved.set(run, registry.resolve(run));
+  const scanMs = performance.now() - t1;
 
-  session = { report, reportPath, archive, meta, peaks, archivePath: archivePath ?? null };
+  session = { report, reportPath, registry, resolved, open: new Map() };
+
+  const paired = [...resolved.values()].filter(Boolean).length;
   return {
     name: basename(dirname(reportPath)),
     rowCount: report.rowCount,
     columns: report.columnNames.length,
-    runs: report.runs,
+    runs: report.runs.map((r) => ({ name: r, archive: resolved.get(r) ? basename(resolved.get(r)!) : null })),
     extra: report.extra.length,
     missing: report.missing,
     loadMs,
-    archive: archive
-      ? { path: basename(archivePath!), spectra: meta!.spectra.count, ims: !!archive.imsCalibration }
-      : null,
-    archiveErr,
+    scanMs,
+    paired,
+    found: registry.entries.length,
   };
 });
+
+/** Raw paths DIA-NN actually used, from `report.stats.tsv` if it is present. */
+function statsPaths(reportPath: string): string[] {
+  const f = join(dirname(reportPath), basename(reportPath).replace(/\.parquet$/, "") + ".stats.tsv");
+  if (!existsSync(f)) return [];
+  try {
+    const lines = readFileSync(f, "utf8").split(/\r?\n/).slice(1);
+    return lines.map((l) => l.split("\t")[0]!).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
 
 ipcMain.handle("rows:filter", (_e, spec: FilterSpec, offset = 0, limit = 300) => {
   if (!session) return { total: 0, rows: [] };
@@ -196,8 +212,9 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
     if (c) extras[label] = c[row]!;
   }
 
-  if (!session.archive || !session.meta || !session.peaks) {
-    return { key, extras, xic: null, reason: session.archivePath ? "archive-failed" : "no-archive" };
+  const src = await archiveFor(key.run).catch(() => null);
+  if (!src) {
+    return { key, extras, xic: null, reason: "no-archive-for-run" };
   }
 
   // Theoretical singly-charged y-ions from the sequence. A real library gives
@@ -206,7 +223,7 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
   const fragments = yIons(key.sequence).slice(0, 6);
   const margin = 0.15;
   const t0 = performance.now();
-  const xic = await extractXic(session.archive, session.meta, session.peaks, {
+  const xic = await extractXic(src.archive, src.meta, src.peaks, {
     precursorMz: key.precursorMz,
     rtMin: key.rtStart - margin,
     rtMax: key.rtStop + margin,
@@ -227,6 +244,7 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
       rowGroups: xic.rowGroupsRead,
       rowsDecoded: xic.rowsDecoded,
       rowsScanned: xic.rowsScanned,
+      archive: basename(src.path),
       ms,
     },
   };

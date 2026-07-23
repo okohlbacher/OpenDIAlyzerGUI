@@ -31,18 +31,18 @@ async function openSession(reportPath, archivePath) {
     `${s.runs.length} runs · ${s.rowCount.toLocaleString()} rows · ` +
     `${s.columns} columns · loaded in ${s.loadMs.toFixed(0)} ms`;
 
+  // Raw-data coverage is a property of the experiment, not a yes/no for the
+  // session: some runs may be paired and others not, and the UI should say which.
   const chip = $("archiveChip");
   chip.hidden = false;
-  if (s.archive) {
-    chip.textContent = `${s.archive.path} · ${s.archive.spectra.toLocaleString()} spectra` +
-      (s.archive.ims ? " · IM" : "");
-    chip.style.borderColor = "var(--good)";
-    chip.style.color = "var(--good)";
-  } else {
-    chip.textContent = s.archiveErr ? "archive failed to open" : "no .mzpeak — table only";
-    chip.style.borderColor = "var(--warn)";
-    chip.style.color = "var(--warn)";
-  }
+  const n = s.runs.length;
+  chip.textContent = s.paired === 0
+    ? `no raw data — table only`
+    : `raw data for ${s.paired}/${n} runs`;
+  const tone = s.paired === 0 ? "warn" : s.paired === n ? "good" : "warn";
+  chip.style.borderColor = `var(--${tone})`;
+  chip.style.color = `var(--${tone})`;
+  chip.title = `scanned in ${s.scanMs.toFixed(0)} ms · ${s.found} archive(s) found`;
 
   $("sessionCard").hidden = false;
   $("sessionDl").innerHTML = [
@@ -50,14 +50,17 @@ async function openSession(reportPath, archivePath) {
     ["columns", `${s.columns}`],
     ["unrecognised", `${s.extra}`],
     ["missing", s.missing.length ? String(s.missing.length) : "none"],
+    ["raw data", `${s.paired}/${s.runs.length}`],
   ].map(([k, v]) => `<dt>${k}</dt><dd class="mono">${v}</dd>`).join("");
 
   $("runs").innerHTML =
     `<li role="option" data-i="-1" aria-selected="true">
        <span class="dot ok"></span><span>All runs</span></li>` +
     s.runs.map((r, i) =>
-      `<li role="option" data-i="${i}" aria-selected="false" title="${esc(r)}">
-         <span class="dot ok"></span><span class="mono">${esc(shortRun(r))}</span></li>`).join("");
+      `<li role="option" data-i="${i}" aria-selected="false"
+           title="${esc(r.name)}${r.archive ? "\nraw: " + esc(r.archive) : "\nno .mzpeak found"}">
+         <span class="dot ${r.archive ? "ok" : "warnd"}"></span>
+         <span class="mono">${esc(shortRun(r.name))}</span></li>`).join("");
 
   await refresh();
 }
@@ -154,9 +157,14 @@ async function showEvidence() {
 
   if (!e.xic) {
     body += `<div class="banner" style="margin-top:14px"><div>
-      ${e.reason === "no-archive"
-        ? "<b>No .mzpeak open.</b> The table is fully usable without one — but the drilldown is a live read into raw data, so it needs the archive for this run."
-        : "<b>The archive could not be opened.</b> The table is unaffected."}
+      <b>No raw data found for this run.</b>
+      Runs pair with archives by the identity both sides already carry — the
+      report's <span class="mono">Run</span>, here
+      <span class="mono">${esc(k.run)}</span>, against the archive's
+      <span class="mono">run.id</span>. Drop its
+      <span class="mono">.mzpeak</span> beside the report and reopen. The
+      filename is irrelevant: identity is read from inside the archive, so
+      renaming or reorganising raw data cannot break the link.
       </div></div>`;
     $("evsrc").textContent = "table only";
   } else {
@@ -173,7 +181,8 @@ async function showEvidence() {
           Extracted from raw data in <b>${x.ms.toFixed(0)} ms</b> —
           ${(x.rowsDecoded / 1e6).toFixed(2)} M rows decoded,
           ${(x.rowsScanned / 1e3).toFixed(0)}k touched.
-          Fragments are theoretical y-ions from the sequence.
+          Fragments are theoretical y-ions from the sequence,
+          read from <span class="mono">${esc(x.archive)}</span>.
           ${sig ? "" : '<span class="err">No signal in this window.</span>'}
         </p>
       </div>`;
