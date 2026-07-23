@@ -20,6 +20,7 @@ import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 import { byProtein, byRun, type ProteinRow, type RunRow } from "../src/aggregate.ts";
 import { sortIndices, applyColumnFilters, type Cell } from "../src/table.ts";
+import { buildTree, flatten, idsAtLevel, type TreeNode, type FlatRow } from "../src/tree.ts";
 import { detect, verify, plan, PRESETS, countFasta, estimateMemoryGb,
   type Install, type PresetId, type Stage } from "../src/engine.ts";
 
@@ -107,7 +108,7 @@ async function archiveFor(run: string): Promise<OpenArchive | null> {
   return entry;
 }
 
-export type Grain = "precursors" | "proteins" | "runs";
+export type Grain = "precursors" | "proteins" | "runs" | "tree";
 
 export interface TableView {
   sort?: { key: string; dir: "asc" | "desc" };
@@ -134,6 +135,11 @@ function readers(g: Grain): Record<string, (row: number) => Cell> {
       q: (i) => proteins[i]?.qValue,
       quant: (i) => proteins[i]?.quantity,
     };
+  }
+  if (g === "tree") {
+    // The tree has its own order; sorting it would destroy the hierarchy. Only
+    // filtering by label is meaningful, and it is handled by the global search.
+    return {};
   }
   if (g === "runs") {
     return {
@@ -168,6 +174,9 @@ let visible: Uint32Array = new Uint32Array(0);
 let grain: Grain = "precursors";
 let proteins: ProteinRow[] = [];
 let runRows: RunRow[] = [];
+let tree: TreeNode[] = [];
+let treeFlat: FlatRow[] = [];
+let expanded = new Set<string>();
 
 
 
@@ -183,6 +192,23 @@ let order: Uint32Array = new Uint32Array(0);
 function regrain(view: TableView = {}): void {
   proteins = grain === "proteins" ? byProtein(session!.report, visible) : [];
   runRows = grain === "runs" ? byRun(session!.report, visible) : [];
+
+  if (grain === "tree") {
+    tree = buildTree(session!.report, visible);
+    // Expansion survives a re-filter where the node still exists, so moving the
+    // FDR slider does not collapse everything the user opened.
+    const alive = new Set<string>();
+    const mark = (ns: readonly TreeNode[]) => {
+      for (const n of ns) { if (expanded.has(n.id)) alive.add(n.id); mark(n.children); }
+    };
+    mark(tree);
+    expanded = alive;
+    treeFlat = flatten(tree, expanded);
+    order = new Uint32Array(treeFlat.length);
+    for (let i = 0; i < treeFlat.length; i++) order[i] = i;
+    return;
+  }
+  tree = []; treeFlat = [];
 
   // For the coarse grains the index is into the aggregate array; for precursors
   // it is into `visible`, so the readers take a *report* row there.
@@ -247,6 +273,16 @@ async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
     await new Promise((r) => setTimeout(r, 6000));
   }
   // ODIA_SMOKE_VIEW='{"sort":{"key":"q","dir":"desc"},"columns":{"gene":"ALB"}}'
+  const expandTo = process.env.ODIA_SMOKE_EXPAND;
+  if (expandTo) {
+    await win.webContents.executeJavaScript(
+      `(async () => { const r = await window.api.expandLevel(${JSON.stringify(expandTo)});
+         state.total = r.total; const p = await window.api.page(0, WINDOW);
+         state.rows = p.rows; paint(); })()`);
+    await new Promise((r) => setTimeout(r, 3000));
+    const n = await win.webContents.executeJavaScript("state.total");
+    console.log("expanded rows:", n);
+  }
   const view = process.env.ODIA_SMOKE_VIEW;
   if (view) {
     const v = JSON.parse(view);
@@ -484,10 +520,36 @@ ipcMain.handle("session:open", async (_e, reportPath: string) => {
     missing: report.missing,
     loadMs,
     scanMs,
+    mbr: usedMbr(reportPath),
     paired,
     found: registry.entries.length,
   };
 });
+
+/**
+ * Whether the search used match-between-runs.
+ *
+ * This changes what the cohort glyph means. MBR re-searches with an empirical
+ * library built from the first pass, and the report does **not** mark which
+ * identifications came from that second pass — there is no "transferred" column.
+ * So with MBR on, "5 of 6 runs" cannot distinguish five independent detections
+ * from one detection and four transfers, and the UI has to say so rather than
+ * let a reader infer reproducibility that was not measured.
+ */
+function usedMbr(reportPath: string): boolean | null {
+  const log = join(dirname(reportPath),
+    basename(reportPath).replace(/\.parquet$/, "") + ".log.txt");
+  if (!existsSync(log)) return null;
+  try {
+    const text = readFileSync(log, "utf8");
+    if (/\bMBR\b.*(enabled|will be used)|--reanalyse/i.test(text)) return true;
+    // DIA-NN echoes its full command line; absence of the flag is a real answer.
+    if (/diann[^\n]*--f\s/i.test(text)) return false;
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 /** Raw paths DIA-NN actually used, from `report.stats.tsv` if it is present. */
 function statsPaths(reportPath: string): string[] {
@@ -520,6 +582,30 @@ ipcMain.handle("rows:filter",
   });
 
 /** A window of the current filtered set. Pure paging — no predicate re-run. */
+/** Opens or closes a node, then re-flattens. Cheap: only open subtrees walk. */
+ipcMain.handle("tree:toggle", (_e, id: string, open?: boolean) => {
+  if (!session) return { total: 0, rows: [] };
+  const want = open ?? !expanded.has(id);
+  if (want) expanded.add(id); else expanded.delete(id);
+  treeFlat = flatten(tree, expanded);
+  order = new Uint32Array(treeFlat.length);
+  for (let i = 0; i < treeFlat.length; i++) order[i] = i;
+  return { total: treeFlat.length };
+});
+
+/** Expand or collapse a whole level, as Skyline's Expand All > Precursors does. */
+ipcMain.handle("tree:level", (_e, level: "protein" | "peptide" | "precursor" | "none") => {
+  if (!session) return { total: 0 };
+  expanded = level === "none" ? new Set()
+    : idsAtLevel(tree, level === "protein" ? ["protein"]
+      : level === "peptide" ? ["protein", "peptide"]
+      : ["protein", "peptide", "precursor"]);
+  treeFlat = flatten(tree, expanded);
+  order = new Uint32Array(treeFlat.length);
+  for (let i = 0; i < treeFlat.length; i++) order[i] = i;
+  return { total: treeFlat.length };
+});
+
 ipcMain.handle("rows:page", (_e, offset: number, limit: number) => {
   if (!session) return { total: 0, rows: [] };
   return { total: viewCount(), rows: page(offset, limit) };
@@ -530,6 +616,19 @@ function page(offset: number, limit: number) {
   const t = session.report;
 
   const slice = Array.from(order.subarray(offset, offset + limit));
+
+  if (grain === "tree") {
+    return slice.map((fi, n) => {
+      const f = treeFlat[fi]!;
+      return {
+        k: offset + n, i: f.node.exemplar,
+        level: f.node.level, id: f.node.id, depth: f.depth,
+        expandable: f.expandable, expanded: f.expanded,
+        label: f.node.label, detail: f.node.detail, counts: f.node.counts ?? "",
+        seen: f.node.seen, runsTotal: f.node.total, runIndex: f.node.runIndex,
+      };
+    });
+  }
 
   if (grain === "proteins") {
     return slice.map((gi, n) => proteins[gi]!).map((p, n) => ({
@@ -728,6 +827,7 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
 function rowOf(k: number): number {
   if (k < 0 || k >= order.length) return -1;
   const gi = order[k]!;
+  if (grain === "tree") return treeFlat[gi]?.node.exemplar ?? -1;
   if (grain === "proteins") return proteins[gi]?.exemplar ?? -1;
   if (grain === "runs") return runRows[gi]?.exemplar ?? -1;
   return gi;   // precursors: `order` already holds report rows

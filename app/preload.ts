@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld("api", {
   filter: (spec: unknown, offset?: number, limit?: number, grain?: string, view?: unknown) =>
     ipcRenderer.invoke("rows:filter", spec, offset, limit, grain, view),
   page: (offset: number, limit: number) => ipcRenderer.invoke("rows:page", offset, limit),
+  toggle: (id: string, open?: boolean) => ipcRenderer.invoke("tree:toggle", id, open),
+  expandLevel: (level: string) => ipcRenderer.invoke("tree:level", level),
   evidence: (k: number) => ipcRenderer.invoke("evidence:for", k),
   presence: (k: number) => ipcRenderer.invoke("evidence:presence", k),
   interrogate: (k: number, runIndex: number) =>

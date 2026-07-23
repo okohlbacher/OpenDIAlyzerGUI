@@ -114,6 +114,17 @@ async function refresh() {
 
   $("thead").innerHTML = headHtml();
   wireHeader();
+  if (state.grain === "tree") {
+    $("thead").querySelectorAll("button.lvl").forEach((b) =>
+      b.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const r = await window.api.expandLevel(b.dataset.level);
+        state.total = r.total; state.first = 0; state.sel = 0;
+        $("scroller").scrollTop = 0;
+        const p = await window.api.page(0, WINDOW);
+        state.rows = p.rows; paint();
+      }));
+  }
   paint();
   scheduleEvidence();
 }
@@ -124,6 +135,7 @@ async function refresh() {
  * the place it is used rather than in documentation nobody opens.
  */
 const COLUMNS = {
+  tree: [{ key: "tree", label: "Targets", hint: "" }],
   precursors: [
     { key: "seq", label: "Peptide", hint: "text" },
     { key: "z", label: "z", num: true, hint: "2" },
@@ -156,6 +168,18 @@ const COLUMNS = {
 };
 
 function headHtml() {
+  if (state.grain === "tree") {
+    // Sorting would destroy the hierarchy, so the header carries the level
+    // controls instead — Skyline's Expand All > Precursors, which is the only
+    // way to work a tree of 8,000 proteins without clicking 8,000 times.
+    return `<tr><th colspan="2" style="font-weight:500">
+        expand
+        <button class="linkish lvl" data-level="none">none</button>
+        <button class="linkish lvl" data-level="protein">proteins</button>
+        <button class="linkish lvl" data-level="peptide">peptides</button>
+        <button class="linkish lvl" data-level="precursor">precursors</button>
+      </th><th class="num" style="font-weight:500">runs</th></tr>`;
+  }
   const cols = COLUMNS[state.grain];
   const th = cols.map((c) => {
     const sorted = state.sort?.key === c.key;
@@ -173,7 +197,43 @@ function headHtml() {
 }
 
 /** One row of the current grain. */
+/**
+ * The cohort glyph: n of N runs, as filled segments plus the fraction.
+ *
+ * Shape and text, never colour alone. Skyline shipped colour-only red/green
+ * dots and needed until December 2025 to retrofit distinct shapes.
+ */
+function cohortGlyph(seen, total) {
+  if (!total || total < 1) return "";
+  const seg = [];
+  for (let i = 0; i < Math.min(total, 12); i++) {
+    seg.push(`<i class="seg ${i < seen ? "on" : ""}"></i>`);
+  }
+  const cls = seen === total ? "all" : seen === 0 ? "none" : "some";
+  return `<span class="cohort ${cls}" title="identified in ${seen} of ${total} runs at the current threshold">
+    ${seg.join("")}<span class="frac mono">${seen}/${total}</span></span>`;
+}
+
+function treeRowHtml(row) {
+  const sel = row.k === state.sel;
+  const pad = 6 + row.depth * 15;
+  const twist = row.expandable
+    ? `<span class="twist" data-toggle="${esc(row.id)}">${row.expanded ? "▾" : "▸"}</span>`
+    : `<span class="twist"></span>`;
+  return `<tr data-k="${row.k}" data-level="${row.level}" class="${sel ? "sel" : ""}"
+      aria-selected="${sel}">
+    <td class="tcell" style="padding-left:${pad}px">
+      ${twist}<span class="tlabel ${row.level}" ${row.level === "run" ? `title="${esc(row.label)}"` : ""}
+        >${esc(row.level === "run" ? shortRun(row.label) : row.label)}</span>
+      ${row.detail ? `<span class="tdetail">${esc(row.detail)}</span>` : ""}
+    </td>
+    <td class="tcounts">${esc(row.counts)}</td>
+    <td class="num">${row.level === "run" ? "" : cohortGlyph(row.seen, row.runsTotal)}</td>
+  </tr>`;
+}
+
 function rowHtml(row) {
+  if (state.grain === "tree") return treeRowHtml(row);
   const sel = row.k === state.sel;
   const open = `<tr data-k="${row.k}" class="${sel ? "sel" : ""}" aria-selected="${sel}">`;
   const qcls = row.q <= 0.001 ? "ok" : row.q <= 0.01 ? "mid" : "bad";
@@ -216,7 +276,7 @@ function paint() {
   const before = state.first * ROW_H;
   const after = Math.max(0, (state.total - state.first - state.rows.length) * ROW_H);
 
-  const cols = COLUMNS[state.grain].length;
+  const cols = state.grain === "tree" ? 3 : COLUMNS[state.grain].length;
   $("tbody").innerHTML =
     (before ? `<tr class="spacer" style="height:${before}px"><td colspan="${cols}"></td></tr>` : "") +
     state.rows.map(rowHtml).join("") +
@@ -590,7 +650,16 @@ $("q").addEventListener("input", (e) => {
   searchTimer = setTimeout(() => { state.search = v; state.sel = 0; refresh(); }, 140);
 });
 
-$("tbody").addEventListener("click", (e) => {
+$("tbody").addEventListener("click", async (e) => {
+  const tw = e.target.closest("[data-toggle]");
+  if (tw) {
+    const r = await window.api.toggle(tw.dataset.toggle);
+    state.total = r.total;
+    const p = await window.api.page(state.first, WINDOW);
+    state.rows = p.rows;
+    paint();
+    return;
+  }
   const tr = e.target.closest("tr");
   if (!tr) return;
   select(Number(tr.dataset.k));

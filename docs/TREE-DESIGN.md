@@ -71,6 +71,32 @@ dots and needed until December 2025 to close the accessibility bug
 ([#941](https://skyline.ms/issues/home/issues/details.view?issueId=941)),
 retrofitting a check / triangle / X. We start there.
 
+### What n/N does and does not mean — checked against the data
+
+Two qualifications, both found by reviewing the design against the actual
+report rather than by reasoning about it.
+
+**It is a count at the current threshold.** n/N is computed from the *filtered*
+set, so moving the FDR slider moves it. That is correct and consistent with the
+other grains, but it must be labelled: *"identified in 4 of 6 runs at
+q ≤ 0.01"*, never a bare `4/6`.
+
+**Match-between-runs makes it ambiguous, and the report cannot disambiguate it.**
+MBR re-searches using an empirical library built from the first pass, and
+DIA-NN's report has no column marking which identifications came from that
+second pass. With MBR on, `5/6` cannot distinguish five independent detections
+from one detection and four transfers. So the session reads MBR state out of
+`report.log.txt` and the UI qualifies the glyph when it was on. A two-species
+spike-in study found Spectronaut reporting ~16 % of a proteome in samples that
+did not contain it, driven by cross-run transfer with nothing in the UI marking
+it (`docs/ROADMAP.md`, Phase 3) — this is that failure mode, and the fix is to
+say what was measured.
+
+**Protein grouping is not a problem here, verified.** Only 0.1 % of rows list
+several accessions, and **0 of 122,713 peptide forms map to more than one
+protein group** — DIA-NN assigns each peptide to exactly one group. A single
+protein parent per peptide is therefore correct rather than a simplification.
+
 ### Counts go on the node, not in a status bar
 
 Skyline puts counts in the bottom-right status bar as

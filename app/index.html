@@ -100,6 +100,26 @@
     font:inherit;font-size:11px;padding:2px 5px;min-width:0}
   thead tr.filters input::placeholder{color:var(--muted);opacity:.65}
   thead tr.filters input.on{border-color:var(--accent-line);color:var(--accent)}
+  /* Tree */
+  .twist{display:inline-block;width:14px;color:var(--muted);cursor:pointer;user-select:none}
+  .twist:hover{color:var(--ink)}
+  td.tcell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:1px;width:99%}
+  .tlabel{font-weight:560}
+  .tlabel.protein{font-family:ui-monospace,Menlo,monospace}
+  .tlabel.peptide{font-family:ui-monospace,Menlo,monospace;letter-spacing:.01em}
+  .tlabel.precursor{font-family:ui-monospace,Menlo,monospace;font-weight:500;color:var(--ink-2)}
+  .tlabel.run{font-family:ui-monospace,Menlo,monospace;font-weight:500;color:var(--muted)}
+  .tdetail{color:var(--muted);font-size:11px;margin-left:8px}
+  td.tcounts{color:var(--muted);font-size:11px;white-space:nowrap;text-align:right}
+  /* Cohort glyph: segments carry the count, the fraction carries the number.
+     Colour is redundant with both, never the sole channel. */
+  .cohort{display:inline-flex;align-items:center;gap:1.5px;white-space:nowrap}
+  .cohort .seg{width:4px;height:11px;border-radius:1px;border:1px solid var(--line);display:block}
+  .cohort .seg.on{background:var(--muted);border-color:var(--muted)}
+  .cohort.all .seg.on{background:var(--good);border-color:var(--good)}
+  .cohort.some .seg.on{background:var(--warn);border-color:var(--warn)}
+  .cohort .frac{margin-left:6px;font-size:10.5px;color:var(--muted)}
+  .lvl{margin-left:7px;font-size:11px}
 </style>
 
 <div class="app">
@@ -194,6 +214,7 @@
     <section class="pane" aria-label="Matches">
       <div class="pane-head">
         <div class="grain" role="group" aria-label="Grain">
+          <button data-grain="tree" aria-pressed="false">Targets</button>
           <button data-grain="precursors" aria-pressed="true">Precursors</button>
           <button data-grain="proteins" aria-pressed="false">Proteins</button>
           <button data-grain="runs" aria-pressed="false">Runs</button>
