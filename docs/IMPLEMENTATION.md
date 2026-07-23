@@ -86,6 +86,37 @@ It is a better exercise than a benchmark corpus would have been, because the
 study's own question *is* question 2: **is a specific variant peptide present
 in this sample, and if not, what is actually at that coordinate?**
 
+### The FDR slider, demonstrated
+
+The same cohort searched twice — once at DIA-NN's default `--qvalue 0.01`, once
+under our policy of writing everything at `--qvalue 0.5`:
+
+| written at | rows | q ≤ 0.001 | q ≤ 0.01 | q ≤ 0.05 | q ≤ 0.5 |
+|---|---|---|---|---|---|
+| 1 % | 268,948 | 209,967 | 268,948 | 268,948 | 268,948 |
+| **50 %** | **377,775** | 210,663 | 268,166 | **314,655** | **377,775** |
+
+The 1 % report is **flat above 0.01**: the slider cannot go anywhere DIA-NN has
+already discarded, so relaxing the threshold means re-running the search. The
+50 % report keeps climbing. That is the whole of "FDR is not a setting" in one
+table, and it costs 3× the report size — 37 MB against 109 MB.
+
+DIA-NN's own log confirms the calibrate→pin plan took effect:
+
+```
+Output will be filtered at 0.5 FDR
+Scan window radius set to 6
+Mass accuracy will be fixed to 7e-06 (MS2) and 1e-05 (MS1)
+```
+
+*Fixed*, not optimised — so the result no longer depends on which run DIA-NN
+happened to calibrate on, which is the documented cause of its run-order
+sensitivity (#1766, #778).
+
+`--export-quant` also brings fragment-level columns: 129 columns against 72, and
+96 unrecognised ones carried through instead of 39. All 33 canonical columns
+still present.
+
 ### The column contract was right
 
 `docs/DIANN-COMPAT.md` listed the columns the UI depends on, derived from the
