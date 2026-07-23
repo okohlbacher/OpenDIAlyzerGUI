@@ -1,8 +1,27 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { MzPeakArchive, FACET } from "../src/archive.ts";
 import { CountingRangeReader, FileRangeReader } from "../src/range.ts";
 import { SMALL, SMALL_DIR, SMALL_CHUNKED, HAS_UV, BIG, have } from "./data.ts";
+
+test("repeated invalid archive opens do not exhaust file handles", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "mzpeak-invalid-"));
+  const path = join(dir, "incomplete.mzpeak");
+  await writeFile(path, Buffer.from("PK\x03\x04"));
+  try {
+    for (let i = 0; i < 256; i++) {
+      await assert.rejects(
+        () => MzPeakArchive.open(path),
+        (e: Error) => e.message === "not a ZIP archive: no end-of-central-directory record",
+      );
+    }
+  } finally {
+    await rm(dir, { recursive: true });
+  }
+});
 
 test("opens a small archive and lists its facets", { skip: !have(SMALL) }, async () => {
   const a = await MzPeakArchive.open(SMALL);

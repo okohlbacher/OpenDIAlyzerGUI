@@ -68,18 +68,24 @@ export class MzPeakArchive {
 
   static async #openZip(path: string): Promise<MzPeakArchive> {
     const reader = await FileRangeReader.open(path);
-    const members = new Map<string, ZipMember>();
-    for (const m of await readCentralDirectory(reader)) members.set(m.name, m);
+    try {
+      const members = new Map<string, ZipMember>();
+      for (const m of await readCentralDirectory(reader)) members.set(m.name, m);
 
-    const idx = members.get(FACET.index);
-    if (!idx) throw new Error(`${basename(path)}: not an mzPeak archive (no ${FACET.index})`);
-    const off = await resolveDataOffset(reader, idx);
-    const raw = await reader.read(off, idx.compressedSize);
-    if (idx.method !== STORED) {
-      throw new Error(`${FACET.index} is compressed (method ${idx.method}); expected STORED`);
+      const idx = members.get(FACET.index);
+      if (!idx) throw new Error(`${basename(path)}: not an mzPeak archive (no ${FACET.index})`);
+      const off = await resolveDataOffset(reader, idx);
+      const raw = await reader.read(off, idx.compressedSize);
+      if (idx.method !== STORED) {
+        throw new Error(`${FACET.index} is compressed (method ${idx.method}); expected STORED`);
+      }
+      const index = JSON.parse(new TextDecoder().decode(raw)) as MzPeakIndex;
+      return new MzPeakArchive(path, reader, members, null, index);
+    } catch (e) {
+      // A failure before construction must not orphan the file handle opened above.
+      await reader.close();
+      throw e;
     }
-    const index = JSON.parse(new TextDecoder().decode(raw)) as MzPeakIndex;
-    return new MzPeakArchive(path, reader, members, null, index);
   }
 
   static async #openDir(path: string): Promise<MzPeakArchive> {
