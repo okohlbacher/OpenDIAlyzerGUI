@@ -33,7 +33,12 @@ export interface ProteinRow {
    * reason.
    */
   qValue: number;
-  /** The engine's MaxLFQ. Null when it gave none — see `quantityNote`. */
+  /**
+   * The engine's MaxLFQ, **maximum across runs**. Null when it gave none.
+   *
+   * A single number for a cohort is a summary, not an abundance: the column
+   * header must say which summary, or it reads as *the* quantity.
+   */
   quantity: number | null;
   /**
    * Why `quantity` is null, when it is.
@@ -77,6 +82,11 @@ const median = (xs: number[]): number => {
 export function byProtein(t: ReportTable, rows: Uint32Array): ProteinRow[] {
   const pg = t.text(CANONICAL.proteinGroup);
   const seqs = t.text(CANONICAL.strippedSequence);
+  // Precursor identity must be the *modified* sequence plus charge, matching
+  // src/tree.ts. Keying on the stripped sequence merges a phosphopeptide with
+  // its unmodified form, so the protein grain would report fewer precursors
+  // than the tree shows for the same protein on any PTM dataset.
+  const forms = t.text(CANONICAL.modifiedSequence) ?? seqs;
   if (!pg || !seqs) return [];
   const genes = t.text(CANONICAL.genes);
   const q = t.numeric(CANONICAL.pgQValue) ?? t.numeric(CANONICAL.qValue);
@@ -109,7 +119,7 @@ export function byProtein(t: ReportTable, rows: Uint32Array): ProteinRow[] {
     }
     a.observations++;
     a.peptides.add(seqs[i]!);
-    a.precursorKeys.add(`${seqs[i]}|${charge?.[i] ?? 0}`);
+    a.precursorKeys.add(`${forms![i]}|${charge?.[i] ?? 0}`);
     a.runs.add(t.runOf[i]!);
     a.sum += quant?.[i] ?? 0;
     const qv = q?.[i] ?? NaN;

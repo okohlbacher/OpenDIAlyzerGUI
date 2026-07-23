@@ -231,3 +231,50 @@ test("fragment selection stays inside the acquired m/z range", () => {
   // Ascending m/z, so the legend reads in order.
   for (let i = 1; i < f.length; i++) assert.ok(f[i]!.mz > f[i - 1]!.mz);
 });
+
+// diaPASEF's whole point is the extra separating dimension. A chromatogram that
+// sums the entire mobility ramp throws it away: on this cohort 73 % of the
+// summed signal sits outside the precursor's own 1/K0 window, and excluding it
+// *raised* fragment co-elution from 3 to 6 — the interference was making the
+// evidence look worse, not better.
+test("ion-mobility filtering removes interference", { skip: !have(BIG) }, async () => {
+  const a = await MzPeakArchive.open(BIG);
+  const meta = await buildMetadataIndex(a);
+  const r = await PeakReader.open(a);
+  const p = 500;
+  const mz = meta.precursors.targetMz[p]!;
+  const at = meta.spectra.time[meta.precursors.spectrumIndex[p]!]!;
+  const base = { precursorMz: mz, rtMin: at - 0.5, rtMax: at + 0.5,
+                 fragments: [401.2, 514.3, 613.4, 726.5], ppm: 20 };
+
+  const off = await extractXic(a, meta, r, base);
+  assert.equal(off.imWindow, null, "no window unless asked for");
+  assert.equal(off.rowsOutsideIm, 0);
+
+  const on = await extractXic(a, meta, r, { ...base, imCenter: 1.0, imTolerance: 0.05 });
+  assert.ok(on.imWindow, "window reported so the panel can state it");
+  assert.ok(on.rowsOutsideIm > 0, "a narrow window excludes most of the ramp");
+  assert.equal(on.rowsScanned, off.rowsScanned, "same rows visited, fewer accepted");
+
+  const sum = (x: typeof on) => x.traces.reduce((n, t) => n + t.reduce((s, v) => s + v, 0), 0);
+  assert.ok(sum(on) <= sum(off), "filtering can only remove signal");
+  console.log(`    IM window rejected ${on.rowsOutsideIm.toLocaleString()} of ` +
+    `${on.rowsScanned.toLocaleString()} rows`);
+  r.free();
+  await a.close();
+});
+
+// An archive with no mobility column must ignore the request rather than
+// silently dropping every peak.
+test("an IM window on a non-mobility archive is inert", { skip: !have(SMALL) }, async () => {
+  const a = await MzPeakArchive.open(SMALL);
+  const meta = await buildMetadataIndex(a);
+  const r = await PeakReader.open(a);
+  const mz = meta.precursors.count ? meta.precursors.targetMz[0]! : 500;
+  const on = await extractXic(a, meta, r, {
+    precursorMz: mz, rtMin: -Infinity, rtMax: Infinity,
+    fragments: [200, 300], ppm: 50, imCenter: 1.0 });
+  assert.equal(on.rowsOutsideIm, 0, "nothing rejected for lacking a dimension it has not got");
+  r.free();
+  await a.close();
+});

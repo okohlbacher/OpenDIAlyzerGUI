@@ -161,7 +161,31 @@ states its prerequisite — *"make sure that the mass accuracies and the scan
 window are fixed to specific values"* — which stages 1–2 satisfy by
 construction.
 
-What that buys, mapped to documented DIA-NN failures:
+> **Not yet verified, and it is the highest-risk assumption in the whole plan.**
+> The isolation, checkpoint and order-independence claims below rest on the
+> per-run `.quant` files being *discovered and reused* by the aggregate stage
+> exactly as a monolithic run would produce them. Three things are unproven:
+>
+> - **`.quant` discovery.** `--use-quant` finds files by raw-file name in the
+>   temp/output dir. The stage-4 config lists `--f` for every run, so the raw
+>   files must still be reachable at aggregation — the checkpoint is not "the
+>   `.quant` files alone", contrary to an earlier phrasing here. If the raw
+>   files moved, stage 4 needs dummy placeholders (DIA-NN #1909), which the plan
+>   does not yet create.
+> - **MBR.** `--reanalyse` re-searches in a second cross-run pass using an
+>   empirical library; whether a per-run-then-aggregate split reproduces a
+>   monolithic MBR result is untested and plausibly *not* equal.
+> - **Library re-prediction.** If mass accuracies are not pinned, the aggregate
+>   stage can re-optimise and diverge from the per-run stages — which is why the
+>   pin (stage 2) is mandatory, not optional.
+>
+> **The settling experiment (spike 0, before any of Phase 1 ships):** on a
+> platform where DIA-NN runs — not this Mac, which has no DIA-NN build — search
+> two files monolithically, then via this split, and diff the reports. Until
+> that passes, the run plan is a design, not a guarantee.
+
+What that buys *if the split reproduces the monolith*, mapped to documented
+DIA-NN failures:
 
 | Property | Fixes |
 |---|---|

@@ -251,6 +251,18 @@ export interface XicRequest {
   fragments: number[];
   /** Mass tolerance in ppm. */
   ppm?: number;
+  /**
+   * Ion-mobility centre, in 1/K0. When given, peaks outside `imTolerance` of it
+   * are excluded.
+   *
+   * Without this a co-eluting interferent at a different mobility contributes
+   * its full intensity to the trace — which discards the separating dimension
+   * diaPASEF exists to provide, and is exactly the interference the neighbouring
+   * heat map makes visible.
+   */
+  imCenter?: number;
+  /** Half-width in 1/K0. Default matches the ±0.05 typical of diaPASEF methods. */
+  imTolerance?: number;
 }
 
 export interface Xic {
@@ -264,6 +276,10 @@ export interface Xic {
   /** Rows we actually touched — what the offset table narrowed it to. */
   rowsScanned: number;
   rowGroupsRead: number;
+  /** Rows excluded by the ion-mobility window, when one was applied. */
+  rowsOutsideIm: number;
+  /** The mobility window used, for the panel to state. */
+  imWindow: readonly [number, number] | null;
 }
 
 /**
@@ -289,7 +305,8 @@ export async function extractXic(
   const frames = framesCovering(meta, req.precursorMz, req.rtMin, req.rtMax);
   if (frames.length === 0) {
     return { rt: new Float64Array(0), traces: [], frames: [],
-             rowsDecoded: 0, rowsScanned: 0, rowGroupsRead: 0 };
+             rowsDecoded: 0, rowsScanned: 0, rowGroupsRead: 0,
+             rowsOutsideIm: 0, imWindow: null };
   }
 
   const { rowStart, time } = meta.spectra;
@@ -299,6 +316,13 @@ export async function extractXic(
   const rt = new Float64Array(frames.length);
   frames.forEach((f, i) => (rt[i] = time[f]!));
   const traces = req.fragments.map(() => new Float64Array(frames.length));
+
+  const imTol = req.imTolerance ?? 0.05;
+  const imLo = req.imCenter !== undefined ? req.imCenter - imTol : -Infinity;
+  const imHi = req.imCenter !== undefined ? req.imCenter + imTol : Infinity;
+  const imWindow = req.imCenter !== undefined
+    ? ([imLo, imHi] as const) : null;
+  let outsideIm = 0;
 
   // Precompute tolerance windows once rather than per row.
   const lo = req.fragments.map((m) => m * (1 - ppm / 1e6));
@@ -322,8 +346,11 @@ export async function extractXic(
 
   for await (const cols of reader.scan(groups)) {
     decoded += cols.rowCount;
-    const { tof, mz: mzCol, intensity } = cols;
+    const { tof, mz: mzCol, intensity, mobility } = cols;
     const useTof = mzCol === null;
+    // An IM window was asked for but this archive has no mobility column —
+    // apply nothing rather than silently dropping every peak.
+    const useIm = imWindow !== null && mobility !== null;
     if (useTof && !cal) throw new Error("archive has neither an mz column nor ims_calibration");
 
     for (let k = 0; k < frames.length; k++) {
@@ -336,6 +363,10 @@ export async function extractXic(
       matched += e - b;
 
       for (let i = b; i < e; i++) {
+        if (useIm) {
+          const m = mobility![i]!;
+          if (m < imLo || m > imHi) { outsideIm++; continue; }
+        }
         let mz: number;
         if (useTof) {
           const v = ca + cb * tof[i]!;
@@ -360,6 +391,8 @@ export async function extractXic(
     rowsDecoded: decoded,
     rowsScanned: matched,
     rowGroupsRead: groups.length,
+    rowsOutsideIm: outsideIm,
+    imWindow,
   };
 }
 

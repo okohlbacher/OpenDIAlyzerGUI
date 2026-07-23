@@ -473,24 +473,42 @@ release and gates some behind Enterprise.
 Native OpenDIAlyzer output is the same schema plus `ODIA.`-prefixed columns.
 There is no adapter layer and no format registry: two producers, one schema.
 
-## First four spikes, in order
+## Spikes — done, and the one that was skipped
 
-1. **The spectrum offset table.** Prefix-sum `MS_1003059_number_of_peaks` from
-   the metadata facet and verify it exactly predicts each spectrum's row range
-   in the peak facet, across Thermo and Bruker archives. Everything else depends
-   on it, and nothing in the format *declares* the density invariant it relies
-   on — so it must be checked, not assumed.
-2. **One XIC round-trip through `parquet-wasm`** — keypress to painted chart,
-   RT-bounded, on a laptop rather than on spock. Native measures 105 ms; the
-   WASM tier should land near 300 ms. **This spike decides Decision 2's
-   escalation.**
-3. **Cold-open a DIA-NN `report.parquet`** with a few million rows; measure
-   time-to-first-row in the virtualised table.
-4. **The tile pyramid.** Build one for a single run, measure first-paint and
-   cache-hit cost, and size the cache. This replaces the grid facet that does
-   not exist.
+The plan review made a sharp point: the original spike list validated mzPeak
+*reading*, which the measurements above had already settled, and skipped the
+genuine unknown — the engine run plan. Corrected.
 
-Prefetching is the mitigation that makes spike 2's number matter less than it
-looks: stepping `↑`/`↓` is the dominant interaction, and prefetching N±1 hides
+**Settled in shipped code** (the original spikes 1–3):
+
+1. **Offset table** — prefix-sum `MS_1003059_number_of_peaks` predicts peak-facet
+   rows exactly, tested on Thermo and Bruker (`test/spectra.test.ts`).
+2. **XIC round-trip through `parquet-wasm`** — 178 ms measured; Decision 2's
+   escalation is closed, parquet-wasm stays (`test/peaks.test.ts`).
+3. **Cold-open a report** — 576 ms for 268,948 × 72 (`test/report.test.ts`).
+
+**Spike 0 — the one that actually matters, and is not yet run.** Does the
+`calibrate → per-run → aggregate` split reproduce a monolithic DIA-NN run? Every
+Phase-1 value claim (per-file isolation, checkpoint, order-independence, cluster
+re-queue) inherits from it, and it is **untestable on this machine** — DIA-NN has
+no macOS build. It must run on Linux/Windows or in CI: search two files
+monolithically, then split, diff the reports. Until it passes, `docs/DIANN-COMPAT.md`'s
+run plan is a design, not a guarantee.
+
+**Still ahead:**
+
+4. **The tile pyramid** — build one for a run, measure first-paint and cache-hit,
+   size the cache. And the plan review's catch: in the *browser* build this
+   cannot be built client-side (it would mean downloading the whole 8–14 GB
+   archive over HTTP), so the pyramid must be produced at convert time or
+   server-side and shipped beside the archive. The browser story is read-only
+   results viewing over a pre-built pyramid, and the roadmap should say so plainly.
+5. **One XIC round-trip over HTTP range from a home connection** — the browser
+   build's real risk is latency, not bandwidth: a bounded XIC is several
+   dependent round trips, and at 50–200 ms each the 178 ms local query becomes
+   0.5–1.5 s unless ranges are coalesced and prefetch is aggressive.
+
+Prefetching is the mitigation that makes spikes 2 and 5 matter less than they
+look: stepping `↑`/`↓` is the dominant interaction, and prefetching N±1 hides
 the latency for it entirely. Only a cold jump — `⌘K`, or clicking a distant
 row — pays the full cost.

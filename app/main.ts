@@ -1043,6 +1043,9 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
   }
   donors.sort((a, b) => a - b);
   const rt = donors[Math.floor(donors.length / 2)]!;
+  const ims = t.numeric(CANONICAL.im);
+  const donorIm = donorRow >= 0 && ims && Number.isFinite(ims[donorRow]!)
+    ? ims[donorRow]! : null;
   const spread = donors.length > 1 ? donors.at(-1)! - donors[0]! : 0;
   // Widen for the disagreement between donors plus normal run-to-run RT drift.
   const margin = Math.max(0.25, spread / 2 + 0.15);
@@ -1073,6 +1076,8 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
   try {
     const xic = await extractXic(src.archive, src.meta, src.peaks, {
       precursorMz: mz, rtMin: rt - margin, rtMax: rt + margin, fragments, ppm: 20,
+      // Borrowed like the RT: the runs that identified it measured the mobility.
+      imCenter: donorIm ?? undefined,
     });
     const verdict = coelution(xic.traces);
     return {
@@ -1090,6 +1095,8 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
         rowsDecoded: xic.rowsDecoded,
         rowsScanned: xic.rowsScanned,
         archive: basename(src.path),
+        imWindow: xic.imWindow,
+        rowsOutsideIm: xic.rowsOutsideIm,
         verdict,
         ms: performance.now() - t0,
       },
@@ -1206,6 +1213,11 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
       rtMax: key.rtStop + margin,
       fragments,
       ppm: 20,
+      // The engine's measured 1/K0 for this precursor. Without it the trace
+      // sums the whole mobility ramp, which discards the separating dimension
+      // diaPASEF exists to provide — measured at 73 % of the signal on this
+      // cohort, and removing it *raised* fragment co-elution from 3 to 6.
+      imCenter: key.im ?? undefined,
     });
   } catch (e) {
     // A decode failure must not take the window with it. WASM runs out of
@@ -1233,6 +1245,8 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
       rowsDecoded: xic.rowsDecoded,
       rowsScanned: xic.rowsScanned,
       archive: basename(src.path),
+      imWindow: xic.imWindow,
+      rowsOutsideIm: xic.rowsOutsideIm,
       ms,
     },
   };

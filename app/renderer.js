@@ -153,7 +153,7 @@ const COLUMNS = {
     { key: "peptides", label: "Peptides", num: true, hint: "" },
     { key: "runs", label: "Runs", num: true, hint: "6" },
     { key: "q", label: "best q", num: true, hint: "<0.01" },
-    { key: "quant", label: "Quantity", num: true, hint: "" },
+    { key: "quant", label: "MaxLFQ max", num: true, hint: "" },
   ],
   runs: [
     { key: "run", label: "Run", hint: "text" },
@@ -396,7 +396,9 @@ async function showEvidence() {
         <p class="note-inline">
           Extracted from raw data in <b>${x.ms.toFixed(0)} ms</b> —
           ${(x.rowsDecoded / 1e6).toFixed(2)} M rows decoded,
-          ${(x.rowsScanned / 1e3).toFixed(0)}k touched.
+          ${(x.rowsScanned / 1e3).toFixed(0)}k touched${x.imWindow ?
+            `, ${((x.rowsOutsideIm ?? 0) / 1e3).toFixed(0)}k dropped as off-mobility ` +
+            `(1/K0 ${x.imWindow[0].toFixed(3)}–${x.imWindow[1].toFixed(3)})` : ""}.
           ${x.measured
             ? "Fragments are the ions the engine itself scored, with its own m/z"
             : '<span class="err">Fragments are theoretical y-ions from the sequence</span>' +

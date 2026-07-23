@@ -97,6 +97,20 @@ The important consequence: **OpenSWATH cannot search library-free**, so choosing
 it makes the library a prerequisite rather than an option. The screen must say
 that at the point of choosing, not fail later.
 
+**How much the `Engine` interface actually shares, honestly.** The plan review
+was right that one interface risks leaking. The two engines differ in every
+concrete: OpenSWATH takes mzML (so a Bruker `.d` needs converting first),
+consumes a `.pqp` assay library, runs as a chain of OpenMS tools
+(`OpenSwathWorkflow` → `pyprophet` → `TRIC`) rather than one binary, and emits
+an OSW/SQLite result, not `report.parquet`. What the interface *can* honestly
+promise is narrow and worth keeping: `detect`, `verify`, `plan` (returning
+inspectable stages), and `run` (spawn, stream, cancel). Everything downstream —
+the assay-library conversion, the mzML conversion, the OSW→canonical-table
+reader — lives inside the OpenSWATH implementation, not in the shared shape. The
+interface is a lifecycle contract, not a claim that the engines are alike. If a
+method starts needing an `if (engine === "openswath")` in shared code, that is
+the signal the boundary was drawn wrong.
+
 ### Library generation is a separate, cacheable step
 
 Currently folded into stage 0 of the DIA-NN plan. It becomes visible, because:
@@ -105,15 +119,24 @@ Currently folded into stage 0 of the DIA-NN plan. It becomes visible, because:
   of GPU-less prediction);
 - DIA-NN's own documentation says to generate the library as a **separate run**
   — 24 maintainer replies say so;
-- **the same library feeds both engines**, so it cannot live inside one engine's
-  plan;
 - it is cacheable by (FASTA hash + digest parameters), which is only expressible
   if it is its own step.
 
 ```
-  Sequences ─▶ [ generate library ]  ─▶  library.parquet ─┬─▶ DIA-NN
-              or import an existing one                   └─▶ OpenSWATH
+  Sequences ─▶ [ generate library ]  ─▶  library ─┬─▶ DIA-NN
+              or import an existing one           └─▶ OpenSWATH (after conversion)
 ```
+
+**Correction (plan review).** An earlier draft said "the same library feeds both
+engines". That is wrong, and glossing it would design in a lie. A DIA-NN
+`.predicted.speclib` is a DIA-NN binary; OpenSWATH consumes a `.pqp`/`.tsv`
+assay library built by its own tooling (`OpenSwathAssayGenerator` +
+`OpenSwathDecoyGenerator`) with its own decoy model. Sharing "a library" means a
+**conversion step per engine**, not one artifact — and the conversion is not
+always lossless, since DIA-NN predicts fragments and iRT that OpenSWATH's format
+represents differently. So the library step is cacheable per (FASTA, digest,
+**engine**), and the OpenSWATH branch owns a converter. See the OpenSWATH
+honesty note under "Two engines" below.
 
 ### Progress is the same surface, not a modal
 

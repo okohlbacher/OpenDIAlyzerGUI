@@ -186,10 +186,20 @@ Making evidence class visible is a correctness feature wearing a UI costume.
 
 ## Phase 4 — Repository submission
 
-One action assembles a complete, validated ProteomeXchange / PRIDE submission:
+One action assembles a complete, validated ProteomeXchange / PRIDE **bundle**:
 raw files, results, the SDRF, the ISA metadata and the provenance graph.
 
-This phase is small *because* phases 2 and 3 did the work. A submission is
+**What "one action" does and does not include (plan review).** Assembling and
+validating the bundle is the tractable part and is what phases 2–3 make small.
+The parts it cannot make one-click: ProteomeXchange requires an Aspera/`px-submit`
+upload of tens of GB (a supervised transfer, not a button), a PX submission.px
+XML with **submitter and lab-head as distinct contacts**, a dataset licence, and
+keywords — none of which SDRF carries, and `src/sdrf.ts` currently models a
+single contact. So Phase 4's deliverable is a *validated submission bundle plus a
+supervised upload*, and Phase 3 must add CV-term binding for instrument,
+modifications and cleavage agent, and split contact into submitter/PI. This phase
+is small *because* phases 2 and 3 did the work, not because submission is
+trivial. A submission is
 mostly a rearrangement of metadata that is already tracked and already
 validated. If submission feels large when we get here, it means phase 2 or 3
 under-delivered, and that is the signal to fix them rather than to write a

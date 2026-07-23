@@ -60,7 +60,21 @@ Four levels plus leaves. **Every sequence appears exactly once.**
 ### The cohort glyph is the differentiator
 
 Each node above run level carries **n/N runs identified**, drawn as N segments —
-filled, half, or empty — plus the fraction as text.
+one per run, each **filled or empty** — plus the fraction as text.
+
+(An earlier draft said "filled, half, or empty". There is no half: a run is
+above the current threshold or it is not. The three tones are the *summary*
+colour — green at N/N, amber below, matching the cohort call — not a per-segment
+state.)
+
+**The exemplar must not undercut the glyph.** A node's exemplar row is the
+best-q observation across all runs, which is right for "show me this at its
+best" but wrong as the default when the glyph says `3/6`: it pairs a
+mediocre-consistency claim with best-case evidence, which is exactly the
+"best replicate" dishonesty this document criticises in Skyline's
+`GetDisplayResultsIndex`. So selecting a node with `run: undefined` shows the
+**cohort view** — all N chromatograms and the presence strip — not the single
+best run's pane. Drilling into one run is a deliberate second click.
 
 This is the thing neither tool has. It turns "is this peptide consistent across
 my cohort" from a question requiring a second view into a property of the row
@@ -126,11 +140,23 @@ convention and is what users of both tools already recognise.
 ```ts
 interface Selection {
   protein?: string;
-  peptide?: string;    // stripped sequence
+  peptide?: string;    // MODIFIED sequence — the peptidoform, not stripped
   charge?: number;
-  run?: number;        // undefined = the cohort, not a specific run
+  run?: string;        // run identity; undefined = the cohort, not a run
 }
 ```
+
+Two corrections from the plan review, both the same class of bug the code review
+already burned us on once:
+
+- **`peptide` is the modified sequence.** An earlier draft said "stripped
+  sequence", which cannot name a phosphopeptide — selecting `PEPTIDEK` would
+  select both the modified and unmodified form. `src/tree.ts` already keys on
+  `Modified.Sequence`; the selection type must agree, or the selection authority
+  is coarser than the tree it drives.
+- **`run` is an identity, not an index.** Run order is user-sortable by SDRF
+  factor, so an index would silently point at a different run when the order
+  changes. Order is presentation; identity is what selection holds.
 
 Every view derives from this and nothing holds its own copy. Skyline does the
 same with `SelectedPath` + `SelectedResultsIndex`, and it is why its Document
