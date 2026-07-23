@@ -1,0 +1,897 @@
+<title>OpenDIAlyzer Workbench — interaction design</title>
+
+<style>
+/* ── palette derived from the OpenMS logo ────────────────────────────────
+   The mark is a mass spectrum: peak sticks filled with one horizontal
+   gradient, amber → orange → magenta → purple → blue, wordmark in #231f20.
+   Those six values are the entire palette. The gradient is not decoration —
+   reversed, it is the intensity ramp on every heat map, and two of its stops
+   are the b/y fragment-ion colours.                                        */
+:root{
+  --oms-amber:#ffb401; --oms-orange:#ff7501; --oms-magenta:#ff03cb;
+  --oms-purple:#b503ff; --oms-blue:#3157e9;  --oms-ink:#231f20;
+
+  --ground:#f2f1f0; --panel:#fff; --panel-2:#faf9f8; --sunk:#eceae8;
+  --line:#dcd8d5; --line-soft:#eae7e5;
+  --ink:#231f20; --ink-2:#4a4441; --muted:#7d7570;
+  --accent:#2544c4; --accent-line:#3157e9; --accent-soft:#e5e9fd;
+  --good:#2f8f5b; --warn:#a8720c; --crit:#c2453c;
+  --ion-b:#3157e9; --ion-y:#d100a6; --ion-ms1:#e06600;
+  --h0:#f7f6f5; --h1:#3157e9; --h2:#b503ff; --h3:#ff03cb; --h4:#ffb401;
+  --shadow:0 1px 2px rgba(35,31,32,.06), 0 10px 26px -14px rgba(35,31,32,.22);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#100f0e; --panel:#1a1817; --panel-2:#221f1e; --sunk:#0c0b0a;
+    --line:#332f2c; --line-soft:#262321;
+    --ink:#ece9e6; --ink-2:#b8b2ac; --muted:#867e78;
+    --accent:#8aa4f9; --accent-line:#6b8cf7; --accent-soft:#1a2140;
+    --good:#57ba81; --warn:#d9a441; --crit:#e0685f;
+    --ion-b:#6b8cf7; --ion-y:#ff5cdc; --ion-ms1:#ff9433;
+    --h0:#0c0b0a; --h1:#3157e9; --h2:#b503ff; --h3:#ff03cb; --h4:#ffb401;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 32px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#100f0e; --panel:#1a1817; --panel-2:#221f1e; --sunk:#0c0b0a;
+  --line:#332f2c; --line-soft:#262321;
+  --ink:#ece9e6; --ink-2:#b8b2ac; --muted:#867e78;
+  --accent:#8aa4f9; --accent-line:#6b8cf7; --accent-soft:#1a2140;
+  --good:#57ba81; --warn:#d9a441; --crit:#e0685f;
+  --ion-b:#6b8cf7; --ion-y:#ff5cdc; --ion-ms1:#ff9433;
+  --h0:#0c0b0a; --h1:#3157e9; --h2:#b503ff; --h3:#ff03cb; --h4:#ffb401;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 32px -16px rgba(0,0,0,.8);
+}
+:root[data-theme="light"]{
+  --ground:#f2f1f0; --panel:#fff; --panel-2:#faf9f8; --sunk:#eceae8;
+  --line:#dcd8d5; --line-soft:#eae7e5;
+  --ink:#231f20; --ink-2:#4a4441; --muted:#7d7570;
+  --accent:#2544c4; --accent-line:#3157e9; --accent-soft:#e5e9fd;
+  --good:#2f8f5b; --warn:#a8720c; --crit:#c2453c;
+  --ion-b:#3157e9; --ion-y:#d100a6; --ion-ms1:#e06600;
+  --h0:#f7f6f5; --h1:#3157e9; --h2:#b503ff; --h3:#ff03cb; --h4:#ffb401;
+  --shadow:0 1px 2px rgba(35,31,32,.06), 0 10px 26px -14px rgba(35,31,32,.22);
+}
+
+.oms-p{fill:url(#oms-peaks);stroke-width:0}
+.oms-w{fill:currentColor;stroke-width:0}
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased}
+.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  font-variant-numeric:tabular-nums}
+.wrap{max-width:1380px; margin:0 auto; padding:26px 20px 72px}
+.spacer{margin-left:auto}
+:focus-visible{outline:2px solid var(--accent-line); outline-offset:2px}
+
+/* logo */
+.omslogo{display:block; height:auto}
+.lockup{display:flex; align-items:center; gap:13px}
+.lockup .omslogo{width:96px; flex:none; color:var(--ink)}
+.lockup .bar{width:1px; align-self:stretch; background:var(--line)}
+.lockup .pname{font-size:15px; font-weight:640; letter-spacing:-.015em; line-height:1.2}
+.lockup .psub{font-size:10.5px; color:var(--muted); letter-spacing:.04em}
+
+/* masthead */
+.masthead{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px 32px;
+  padding-bottom:18px; margin-bottom:22px; border-bottom:1px solid var(--line)}
+.masthead h1{margin:8px 0 0; font-size:clamp(22px,3vw,30px); font-weight:620;
+  letter-spacing:-.022em; text-wrap:balance}
+.masthead p{margin:7px 0 0; color:var(--ink-2); max-width:60ch}
+.eyebrow{font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:10.5px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+.thesis{margin-left:auto; padding:3px 0 3px 15px; max-width:29ch;
+  font-size:12.5px; color:var(--ink-2); position:relative}
+.thesis::before{content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+  border-radius:2px;
+  background:linear-gradient(180deg,var(--oms-amber),var(--oms-orange),
+    var(--oms-magenta),var(--oms-purple),var(--oms-blue))}
+
+/* app frame */
+.app{background:var(--panel); border:1px solid var(--line); border-radius:11px;
+  box-shadow:var(--shadow); overflow:hidden}
+.titlebar{display:flex; align-items:center; gap:13px; padding:8px 13px;
+  background:var(--panel-2); border-bottom:1px solid var(--line)}
+.titlebar .omslogo{width:62px; color:var(--ink); flex:none}
+.titlebar .name{font-size:12.5px; font-weight:600; letter-spacing:-.01em}
+.titlebar .ctx{font-size:11px; color:var(--muted)}
+.chip{display:inline-flex; align-items:center; gap:6px; padding:2.5px 9px;
+  border:1px solid var(--line); border-radius:999px; font-size:11px;
+  color:var(--ink-2); background:var(--panel); white-space:nowrap}
+.chip.engine{border-color:var(--accent-line); color:var(--accent); cursor:pointer;
+  font:inherit; font-size:11px; background:var(--panel)}
+.chip.engine:hover{background:var(--accent-soft)}
+.chip.diann{border-color:var(--oms-orange); color:var(--oms-orange)}
+.chip.diann:hover{background:color-mix(in srgb, var(--oms-orange) 12%, transparent)}
+.chip.soon{border-style:dashed; color:var(--muted)}
+
+.panes{display:grid; grid-template-columns:218px minmax(0,1fr) minmax(0,1.05fr);
+  min-height:680px}
+.pane{min-width:0; display:flex; flex-direction:column}
+.pane + .pane{border-left:1px solid var(--line)}
+.pane-head{display:flex; align-items:center; gap:8px; padding:9px 13px;
+  border-bottom:1px solid var(--line-soft); background:var(--panel-2); min-height:42px}
+.pane-head .eyebrow{font-size:10px}
+.pane-body{padding:13px; overflow:auto; flex:1}
+.pane-body.flush{padding:0}
+
+/* scope */
+.search{display:flex; align-items:center; gap:7px; width:100%; padding:7px 9px;
+  border:1px solid var(--line); border-radius:7px; background:var(--sunk);
+  color:var(--ink); font:inherit; font-size:12.5px}
+.search input{border:0; background:none; color:inherit; font:inherit; flex:1;
+  outline:none; min-width:0}
+.search kbd{font-family:ui-monospace,Menlo,monospace; font-size:9.5px; color:var(--muted);
+  border:1px solid var(--line); border-radius:4px; padding:1px 4px}
+.grp{margin-top:19px}
+.grp > .eyebrow{display:block; margin-bottom:8px}
+.runlist{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:1px}
+.runlist li{display:flex; align-items:center; gap:7px; padding:4.5px 7px; border-radius:5px;
+  font-size:12px; cursor:pointer}
+.runlist li:hover{background:var(--panel-2)}
+.runlist li[aria-selected="true"]{background:var(--accent-soft)}
+.dot{width:6px; height:6px; border-radius:50%; flex:none}
+.dot.ok{background:var(--good)} .dot.warnd{background:var(--warn)}
+.runlist .n{margin-left:auto; color:var(--muted); font-size:11px}
+.slider-row{display:flex; justify-content:space-between; align-items:baseline;
+  font-size:11.5px; color:var(--ink-2); margin-bottom:5px}
+input[type=range]{width:100%; accent-color:var(--accent-line)}
+.toggles{display:flex; flex-direction:column; gap:6px; margin-top:12px}
+.tg{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-2); cursor:pointer}
+.tg input{accent-color:var(--accent-line); margin:0}
+.card{margin-top:19px; border:1px solid var(--line-soft); border-radius:7px;
+  padding:9px 10px; background:var(--panel-2); font-size:11px; color:var(--muted)}
+.card dl{margin:0; display:grid; grid-template-columns:auto 1fr; gap:2px 10px}
+.card dt{color:var(--muted)}
+.card dd{margin:0; color:var(--ink-2); text-align:right}
+.card .foot{margin-top:7px; border-top:1px solid var(--line); padding-top:6px;
+  display:flex; align-items:center; gap:6px}
+.linkish{background:none; border:0; padding:0; font:inherit; font-size:11px;
+  color:var(--accent); cursor:pointer; text-decoration:underline;
+  text-underline-offset:2px}
+
+/* matches */
+.grain{display:flex; gap:1px; padding:2px; background:var(--sunk);
+  border-radius:7px; border:1px solid var(--line)}
+.grain button{border:0; background:none; color:var(--muted); font:inherit;
+  font-size:11.5px; padding:3.5px 10px; border-radius:5px; cursor:pointer}
+.grain button[aria-pressed="true"]{background:var(--panel); color:var(--ink);
+  font-weight:560; box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.grain button.soon{opacity:.55; font-style:italic}
+table{width:100%; border-collapse:collapse; font-size:12px}
+thead th{position:sticky; top:0; z-index:1; background:var(--panel); text-align:left;
+  font-weight:500; font-size:10px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--line)}
+thead th.num, td.num{text-align:right}
+tbody td{padding:6px 10px; border-bottom:1px solid var(--line-soft); white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--panel-2)}
+tbody tr[aria-selected="true"]{background:var(--accent-soft)}
+tbody tr[aria-selected="true"] td:first-child{box-shadow:inset 2px 0 0 var(--accent-line)}
+tr.below{opacity:.34}
+.seq{font-weight:560; letter-spacing:.01em}
+.fam{color:var(--oms-purple); font-size:9.5px; border:1px solid var(--oms-purple);
+  border-radius:3px; padding:0 3px; margin-left:6px; vertical-align:1px}
+.qv.ok{color:var(--good)} .qv.mid{color:var(--warn)} .qv.bad{color:var(--crit)}
+.tablefoot{display:flex; align-items:center; gap:12px; padding:8px 13px;
+  border-top:1px solid var(--line); background:var(--panel-2);
+  font-size:11.5px; color:var(--muted)}
+
+/* evidence */
+.ev-title{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.ev-title .s{font-size:16px; font-weight:620; letter-spacing:.01em}
+.ev-title .z{color:var(--muted); font-size:12px}
+.ev-meta{display:grid; grid-template-columns:repeat(auto-fit,minmax(84px,1fr));
+  gap:1px; background:var(--line-soft); border:1px solid var(--line-soft);
+  border-radius:7px; overflow:hidden; margin:12px 0 4px}
+.ev-meta div{background:var(--panel); padding:6px 9px}
+.ev-meta .k{font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+.ev-meta .v{font-size:13px; font-weight:560; margin-top:1px}
+.layer{border-top:1px solid var(--line-soft); padding-top:14px; margin-top:16px}
+.layer:first-of-type{border-top:0; padding-top:0}
+.layer-head{display:flex; align-items:center; gap:8px; margin-bottom:9px}
+.layer-head h3{margin:0; font-size:11px; letter-spacing:.11em; text-transform:uppercase;
+  font-weight:600; color:var(--ink-2)}
+.layer-head .hint{margin-left:auto; font-size:10.5px; color:var(--muted)}
+.legend{display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:8px; font-size:10.5px;
+  color:var(--muted)}
+.legend span{display:inline-flex; align-items:center; gap:5px}
+.legend i{width:11px; height:2.5px; border-radius:2px; display:block}
+svg.chart{display:block; width:100%; height:auto}
+canvas{display:block; width:100%; border-radius:6px}
+.ramp{height:7px; border-radius:4px; margin-top:7px;
+  background:linear-gradient(90deg,var(--h0),var(--h1),var(--h2),var(--h3),var(--h4))}
+.banner{display:flex; gap:10px; padding:10px 12px; border:1px solid var(--warn);
+  border-left-width:3px; border-radius:7px; font-size:12px; color:var(--ink-2);
+  background:color-mix(in srgb, var(--warn) 9%, transparent); margin-bottom:14px}
+.banner b{color:var(--ink); font-weight:600}
+button.act{border:1px solid var(--accent-line); background:var(--accent-soft);
+  color:var(--accent); font:inherit; font-size:11.5px; font-weight:560;
+  padding:4px 11px; border-radius:6px; cursor:pointer; white-space:nowrap}
+button.act:hover{background:var(--accent-line); color:#fff; border-color:var(--accent-line)}
+
+/* notes + roadmap */
+.notes{display:grid; grid-template-columns:repeat(auto-fit,minmax(268px,1fr));
+  gap:15px; margin-top:32px}
+.note{border:1px solid var(--line); border-radius:9px; padding:15px 16px; background:var(--panel)}
+.note.hero{border-color:var(--accent-line)}
+.note h4{margin:8px 0 6px; font-size:14.5px; font-weight:620; letter-spacing:-.012em}
+.note p{margin:0; color:var(--ink-2); font-size:12.5px}
+.note .q{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted); font-family:ui-monospace,Menlo,monospace}
+.note.hero .q{color:var(--accent)}
+.verdict{margin-top:10px; font-size:11.5px; color:var(--muted)}
+.verdict b{color:var(--good); font-weight:600}
+.verdict b.no{color:var(--crit)}
+
+.phases{margin-top:34px; border-top:1px solid var(--line); padding-top:22px}
+.phases > .eyebrow{display:block; margin-bottom:14px}
+.ptrack{display:grid; grid-template-columns:repeat(auto-fit,minmax(198px,1fr)); gap:0}
+.ph{padding:0 15px 2px; border-top:3px solid var(--pc); position:relative}
+.ph:first-child{padding-left:0}
+.ph .pn{font-family:ui-monospace,Menlo,monospace; font-size:10px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--pc); margin-top:10px}
+.ph h5{margin:3px 0 5px; font-size:13px; font-weight:620; letter-spacing:-.01em}
+.ph p{margin:0; font-size:11.5px; color:var(--muted); line-height:1.5}
+footer{margin-top:34px; padding-top:16px; border-top:1px solid var(--line);
+  display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+  font-size:11.5px; color:var(--muted)}
+footer .omslogo{width:74px; color:var(--muted); opacity:.85}
+
+@media (max-width:1080px){
+  .panes{grid-template-columns:1fr}
+  .pane + .pane{border-left:0; border-top:1px solid var(--line)}
+  .thesis{margin-left:0}
+  .ph{padding-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="oms-peaks" x1="44.08" y1="305.27" x2="811.73" y2="305.27" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#ffb401"/>
+<stop offset="0" stop-color="#ffb201"/>
+<stop offset=".05" stop-color="#ff9701"/>
+<stop offset=".11" stop-color="#ff8401"/>
+<stop offset=".16" stop-color="#ff7901"/>
+<stop offset=".22" stop-color="#ff7501"/>
+<stop offset=".54" stop-color="#ff03cb"/>
+<stop offset=".77" stop-color="#b503ff"/>
+<stop offset=".91" stop-color="#3157e9"/>
+</linearGradient><symbol id="oms-logo" viewBox="0 0 841.89 595.28"><g id="g17">
+<path class="oms-p" d="m66.73,375.03h-22.65v-72.54h22.66v72.54h-.01Zm37.41-72.54h-22.65v107.23h22.66v-107.23h0Zm37.41,0h-22.65v162.9h22.66v-162.9h0Zm37.41,0h-22.66v84.77h22.66v-84.77Zm94.61,0h-22.66v46.45h22.66v-46.45Zm37.4,0h-22.66v133.17h22.66v-133.17Zm37.41,0h-22.66v66.86h22.66v-66.86Zm82.38,0h-22.66v92.91h22.66v-92.91Zm37.41,0h-22.66v122.17h22.66v-122.17Zm37.41,0h-22.66v151.52h22.66v-151.52Zm93.77-103.03h-22.66v103.03h22.66v-103.03Zm37.41,63.2h-22.66v39.83h22.66v-39.83h0Zm62.74-63.2h-22.66v103.03h22.66v-103.03Zm37.41-54.31h-22.66v157.33h22.66v-157.33Zm37.41,90.36h-22.66v66.98h22.66v-66.98Zm37.41,27.15h-22.66v39.83h22.66v-39.83Z"/>
+<g id="g16">
+<g id="g13">
+<g>
+<path id="path10" class="oms-w" d="m38.31,208.47c0-39.2,29.98-68.41,70.72-68.41s70.52,29.02,70.52,68.41-30.17,68.41-70.52,68.41c-40.74-.01-70.72-29.22-70.72-68.41Zm127.02,0c0-32.09-24.02-55.73-56.3-55.73s-56.69,23.64-56.69,55.73,24.21,55.73,56.69,55.73c32.28-.01,56.3-23.65,56.3-55.73Z"/>
+<path class="oms-w" d="m109.03,282.82c-21.23,0-40.68-7.53-54.77-21.19-14.11-13.68-21.89-32.56-21.89-53.16s7.77-39.49,21.89-53.17c14.09-13.66,33.54-21.18,54.77-21.18,43.59,0,76.46,31.96,76.46,74.35s-32.87,74.35-76.46,74.35Zm0-136.82c-37.54,0-64.78,26.27-64.78,62.47s27.24,62.46,64.78,62.47c17.99,0,34.42-6.31,46.26-17.76,11.81-11.43,18.32-27.31,18.32-44.71s-6.51-33.28-18.32-44.71c-11.84-11.45-28.27-17.76-46.26-17.76Zm0,124.14c-35.71,0-62.63-26.51-62.63-61.67s26.93-61.67,62.63-61.67,62.24,26.51,62.24,61.67-26.76,61.66-62.24,61.67Zm0-111.46c-29.41,0-50.75,20.94-50.75,49.79s21.34,49.79,50.75,49.79c29.18,0,50.36-20.95,50.36-49.79s-21.18-49.79-50.36-49.79Z"/>
+</g>
+<g>
+<path id="path11" class="oms-w" d="m310.99,225.18c0,30.75-21.52,51.5-50.35,51.5-16.14,0-29.98-6.92-38.43-19.99v56.31h-13.64v-138.36h13.07v19.99c8.26-13.45,22.29-20.76,39.01-20.76,28.82,0,50.34,20.76,50.34,51.31Zm-13.64,0c0-23.44-16.33-39.39-37.66-39.39s-37.66,15.95-37.66,39.39,16.14,39.39,37.66,39.39,37.66-15.75,37.66-39.39Z"/>
+<path class="oms-w" d="m228.15,318.94h-25.52v-150.24h24.95v10.31c8.93-7.16,20.38-11.08,33.07-11.08,32.61,0,56.28,24.08,56.28,57.25s-23.67,57.44-56.29,57.44c-12.55,0-23.68-3.7-32.49-10.64v46.96Zm-13.64-11.88h1.76v-70.5l1.7,2.63c-1.23-4.36-1.88-9.06-1.88-14.01,0-4.43.52-8.66,1.51-12.62l-1.9,3.09v-35.07h-1.19v126.48Zm35.68-37.5c3.3.78,6.8,1.17,10.45,1.17,26.15,0,44.41-18.73,44.41-45.56s-18.26-45.37-44.4-45.37c-.87,0-1.73.02-2.59.07.54-.02,1.08-.03,1.63-.03,25.26,0,43.6,19.06,43.6,45.33s-18.34,45.33-43.6,45.33c-3.29,0-6.47-.32-9.5-.95Zm9.5-77.83c-18.68,0-31.72,13.75-31.72,33.45s13.04,33.45,31.72,33.45,31.72-13.75,31.72-33.45-13.04-33.45-31.72-33.45Z"/>
+</g>
+<g>
+<path id="path12" class="oms-w" d="m413.03,251.32l7.69,8.84c-9.03,10.76-22.87,16.52-38.82,16.52-31.51,0-53.23-21.52-53.23-51.5s20.95-51.31,49.97-51.31c27.09,0,47.46,19.79,48.42,48.23l-83.01,16.14c5,16.34,19.22,26.33,38.05,26.33,12.48,0,23.44-4.41,30.93-13.25Zm-71.1-27.1c0,1.54,0,2.88.19,4.23l71.29-13.84c-2.88-16.53-16.14-29.02-34.78-29.02-21.52.01-36.7,15.76-36.7,38.63Z"/>
+<path class="oms-w" d="m381.9,282.62c-16.74,0-31.86-5.75-42.58-16.19-10.7-10.43-16.59-25.07-16.59-41.25,0-33.17,23.51-57.25,55.91-57.25,30.44,0,53.3,22.7,54.36,53.97l.17,5.06-80.83,15.72c5.58,10.1,16.29,15.95,29.76,15.95,11.09,0,20.22-3.86,26.4-11.15l4.47-5.28,15.56,17.89-3.26,3.89c-10.09,12.02-25.49,18.64-43.37,18.64Zm-16.99-100.9c-18.36,5.39-30.3,21.77-30.3,43.46,0,26.82,19.45,45.56,47.29,45.56,11.65,0,21.89-3.39,29.49-9.67-7.89,6.13-18.02,9.44-29.29,9.44-21.21,0-37.97-11.7-43.73-30.53l-1.93-6.31.41-.08-.61-4.31c-.25-1.76-.25-3.36-.25-5.06,0-12.57,4.23-23.93,11.92-31.99,4.66-4.88,10.47-8.45,17-10.51Zm13.72,9.81c-17.45,0-29.47,11.83-30.66,29.73l58.09-11.28c-4.18-11.38-14.43-18.46-27.42-18.46Zm17.76-8.17c11.89,5.37,20.43,16.21,22.87,30.23l.67,3.84.79-.15c-2.04-15.91-11.12-28.19-24.33-33.92Z"/>
+</g>
+<g>
+<path id="path13" class="oms-w" d="m547.93,217.11v79.82h-13.64v-78.47c0-21.33-11.15-32.28-30.36-32.28-21.72,0-35.36,13.45-35.36,36.51v53.04h-13.64v-101.09h13.07v18.64c7.3-12.3,20.95-19.41,38.43-19.41,24.59,0,41.5,14.22,41.5,43.24Z"/>
+<path class="oms-w" d="m553.87,302.49h-25.52v-84.03c0-17.72-7.99-26.34-24.42-26.34-18.7,0-29.42,11.14-29.42,30.57v58.98h-25.52v-112.97h24.95v9.23c8.58-6.47,19.8-10,32.49-10,29.71,0,47.44,18.39,47.44,49.18v85.38Zm-13.64-11.5h1.76v-73.88c0-24.05-12.63-37.3-35.56-37.3-3.51,0-6.84.31-9.96.93,2.38-.33,4.87-.5,7.46-.5,23.07,0,36.3,13.93,36.3,38.22v72.53Zm-79.36-21.2h1.76v-47.1c0-3.59.3-7,.88-10.2l-1.45,2.44v-34.35h-1.19v89.21Z"/>
+</g>
+</g>
+<g id="g15">
+<g>
+<path id="path14" class="oms-w" d="m674.02,328.42v134.51h-13.64v-107.61l-52.84,90.51h-6.73l-52.84-89.94v107.04h-13.64v-134.51h15.79l54.35,99.74,55.19-99.74h14.36Z"/>
+<path class="oms-w" d="m679.96,468.87h-25.52v-91.59l-43.49,74.49h-13.54l-43.5-74.04v91.14h-25.52v-146.39h25.25l50.87,93.34,51.65-93.34h23.8v146.39Zm-13.64-11.88h1.76v-122.63h-1.76v122.63Zm-126.05,0h1.76v-122.63h-1.76v122.63Zm1.94-122.63l60.44,102.88-56.06-102.88h-4.38Zm120.95,0l-46.79,84.56,49.37-84.56h-2.58Z"/>
+</g>
+<g>
+<path id="path15" class="oms-w" d="m704.96,446.6l5.57-10.95c9.61,9.42,26.71,16.33,44.39,16.33,25.17,0,36.12-10.57,36.12-23.83,0-36.9-82.82-14.22-82.82-63.99,0-19.79,15.37-36.9,49.58-36.9,15.18,0,30.94,4.42,41.7,11.92l-4.81,11.34c-11.53-7.5-24.98-11.14-36.9-11.14-24.6,0-35.55,10.95-35.55,24.41,0,36.9,82.82,14.6,82.82,63.6,0,19.79-15.76,36.7-50.15,36.7-20.17,0-39.96-7.12-49.95-17.49Z"/>
+<path class="oms-w" d="m754.91,470.03c-21.64,0-42.93-7.58-54.23-19.31l-2.93-3.04,11.16-21.94,5.78,5.67c9.07,8.89,24.86,14.63,40.23,14.63,19.18,0,30.18-6.52,30.18-17.89s-10.33-14.92-32.25-20.26c-22.53-5.49-50.57-12.32-50.57-43.73,0-12.07,5.01-22.88,14.1-30.44,9.76-8.11,24.08-12.4,41.42-12.4s33.43,4.85,45.1,12.99l3.95,2.76-9.46,22.3-5.94-3.86c-9.94-6.47-22.21-10.18-33.66-10.18-18.82,0-29.61,6.73-29.61,18.47s12.35,15.49,32.49,20.41c22.42,5.47,50.33,12.29,50.33,43.19,0,12.05-5.1,22.84-14.37,30.38-9.86,8.02-24.29,12.26-41.72,12.26Zm-42.61-24.77c9.73,7.81,26.2,12.88,42.61,12.88,27.27,0,44.21-11.79,44.21-30.76,0-20.07-16.34-25.56-41.27-31.65-19.48-4.75-41.55-10.14-41.55-31.95,0-14.67,10.9-30.35,41.49-30.35,11.42,0,23.5,3.07,34.06,8.56l.2-.46c-9.41-5.21-22.08-8.34-34.25-8.34-27.33,0-43.64,11.57-43.64,30.96,0,20.54,16.43,26.08,41.5,32.19,19.37,4.72,41.32,10.06,41.32,31.8,0,8.77-3.93,16.47-11.06,21.68-7.34,5.37-17.77,8.09-31,8.09-15.32,0-31.15-4.95-42.46-12.97l-.16.31Z"/>
+</g>
+</g>
+</g>
+</g></symbol></defs></svg>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <div class="lockup">
+        <svg class="omslogo" viewBox="0 0 841.89 595.28" role="img" aria-label="OpenMS"><use href="#oms-logo"/></svg>
+        <span class="bar"></span>
+        <span>
+          <span class="pname">OpenDIAlyzer</span><br>
+          <span class="psub mono">WORKBENCH · INTERACTION DESIGN v1</span>
+        </span>
+      </div>
+      <h1>Every chart is a query</h1>
+      <p>Two screens, three panes. Each panel is a live byte-range read into a
+         <span class="mono">.mzpeak</span> file — not a lookup into a chromatogram
+         cache someone had to decide to write before the run started.</p>
+    </div>
+    <p class="thesis">Incumbents freeze the answerable questions at analysis
+       time. Random access unfreezes them.</p>
+  </header>
+
+  <div class="app">
+    <div class="titlebar">
+      <svg class="omslogo" viewBox="0 0 841.89 595.28" role="img" aria-label="OpenMS"><use href="#oms-logo"/></svg>
+      <div class="name">PXD034539 · C1R-B*57:01</div>
+      <div class="ctx mono">12 runs · Orbitrap Fusion · 25 × 24.0 Th · no IM</div>
+      <div class="spacer"></div>
+      <span class="chip">local · 16 threads</span>
+      <button class="chip engine diann" id="engineChip"
+        title="Switch engine — the UI does not change">◆ DIA-NN 2.6.1 Academia</button>
+    </div>
+
+    <div class="panes">
+
+      <section class="pane" aria-label="Scope">
+        <div class="pane-head"><span class="eyebrow">Scope</span></div>
+        <div class="pane-body">
+          <label class="search">
+            <span aria-hidden="true" style="color:var(--muted)">⌕</span>
+            <input id="q" placeholder="peptide, gene, m/z…" aria-label="Interrogate">
+            <kbd>⌘K</kbd>
+          </label>
+
+          <div class="grp">
+            <span class="eyebrow">Runs</span>
+            <ul class="runlist" id="runs" role="listbox" aria-label="Runs"></ul>
+          </div>
+
+          <div class="grp">
+            <span class="eyebrow">Confidence</span>
+            <div class="slider-row" style="margin-top:8px">
+              <span>precursor q ≤</span><b class="mono" id="fdrOut">0.010</b>
+            </div>
+            <input type="range" id="fdr" min="0" max="100" value="50"
+                   aria-label="q-value threshold">
+            <div class="toggles">
+              <label class="tg"><input type="checkbox" id="proteotypic" checked> proteotypic only</label>
+              <label class="tg"><input type="checkbox" id="hidedecoy" checked> hide decoys</label>
+            </div>
+          </div>
+
+          <div class="card">
+            <dl>
+              <dt>preset</dt><dd>HLA-I</dd>
+              <dt>MS2 acc.</dt><dd class="mono">12.4 ppm ⓜ</dd>
+              <dt>scan win.</dt><dd class="mono">7 ⓜ</dd>
+              <dt>threads</dt><dd class="mono">16 / stage</dd>
+            </dl>
+            <div class="foot">
+              <span>ⓜ measured</span>
+              <span class="spacer"></span>
+              <button class="linkish" id="prov">provenance</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="pane" aria-label="Matches">
+        <div class="pane-head">
+          <div class="grain" role="group" aria-label="Grain">
+            <button data-grain="precursors" aria-pressed="true">Precursors</button>
+            <button data-grain="proteins"   aria-pressed="false">Proteins</button>
+            <button data-grain="runs"       aria-pressed="false">Runs</button>
+            <button data-grain="design" class="soon" aria-pressed="false"
+              title="Phase 2 — SDRF experiment design">Design</button>
+          </div>
+        </div>
+        <div class="pane-body flush" style="overflow:auto">
+          <table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+        </div>
+        <div class="tablefoot">
+          <span class="mono" id="count">—</span>
+          <span class="spacer"></span>
+          <span>↑↓ to step · space to flag</span>
+        </div>
+      </section>
+
+      <section class="pane" aria-label="Evidence">
+        <div class="pane-head">
+          <span class="eyebrow">Evidence</span>
+          <span class="spacer"></span>
+          <span class="eyebrow" id="evsrc">from raw · 41 ms</span>
+        </div>
+        <div class="pane-body" id="ev"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <section class="notes">
+    <article class="note">
+      <div class="q">Question 1</div>
+      <h4>Is this identification real?</h4>
+      <p>Fragment traces, isotope envelope, measured-versus-library spectrum.
+         Every tool in the field answers this one.</p>
+      <div class="verdict">DIA-NN · Skyline · Spectronaut → <b>solved</b></div>
+    </article>
+    <article class="note hero">
+      <div class="q">Question 2</div>
+      <h4>Why is my peptide missing?</h4>
+      <p>No engine pre-extracts chromatograms for candidates it rejected, so the
+         evidence behind a negative result does not exist on disk. Random access
+         means we build it on the spot.</p>
+      <div class="verdict">everyone else → <b class="no">cannot be asked</b></div>
+    </article>
+    <article class="note hero">
+      <div class="q">Question 3</div>
+      <h4>What else is in this window?</h4>
+      <p>The neighbourhood map slices raw m/z × RT around the match. Interference
+         stops being a score in a column and becomes something you look at.</p>
+      <div class="verdict">everyone else → <b class="no">weakly served</b></div>
+    </article>
+  </section>
+
+  <section class="phases">
+    <span class="eyebrow">Delivery phases</span>
+    <div class="ptrack">
+      <div class="ph" style="--pc:var(--oms-amber)">
+        <div class="pn">Phase 1 · now</div>
+        <h5>The workbench</h5>
+        <p>Sets up, runs and inspects <strong>DIA-NN</strong> — no OpenDIAlyzer
+           engine needed. mzPeak drilldown, Interrogate, and one range-read
+           abstraction that is local today and HTTP later.</p>
+      </div>
+      <div class="ph" style="--pc:var(--oms-orange)">
+        <div class="pn">Phase 2</div>
+        <h5>Provenance</h5>
+        <p>Every processing step recorded as a signed graph: parameters, input
+           hashes, versions, timings. Methods text and a machine-readable record
+           fall out of it.</p>
+      </div>
+      <div class="ph" style="--pc:var(--oms-magenta)">
+        <div class="pn">Phase 3</div>
+        <h5>SDRF &amp; ISA</h5>
+        <p>Experiment design as a first-class editable grain, not an import.
+           ISA investigation/study/assay above it; annotation and curation
+           state alongside.</p>
+      </div>
+      <div class="ph" style="--pc:var(--oms-purple)">
+        <div class="pn">Phase 4</div>
+        <h5>Repository submission</h5>
+        <p>One action assembles a complete, validated ProteomeXchange /
+           PRIDE submission from what is already tracked.</p>
+      </div>
+      <div class="ph" style="--pc:var(--oms-blue)">
+        <div class="pn">Phase 5</div>
+        <h5>Cluster &amp; cloud</h5>
+        <p>The engine moves to a CUDA cluster; the GUI stays a client because
+           it was always reading byte ranges. Object-store datasets, same code
+           path.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <svg class="omslogo" viewBox="0 0 841.89 595.28" role="img" aria-label="OpenMS"><use href="#oms-logo"/></svg>
+    <span>Built on OpenMS · BSD-3-Clause. Palette and mark derived from the
+      OpenMS logo (<span class="mono">FinalLogo_Nov2024</span>).</span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;
+  let t=Math.imul(seed^seed>>>15,1|seed);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};}
+const hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0;};
+const $=id=>document.getElementById(id);
+
+const RUNS=[
+  {id:"S1_DIA",n:3421,ok:true},{id:"S2_DIA",n:3388,ok:true},
+  {id:"S3_DIA",n:3502,ok:true},{id:"S4_DIA",n:2104,ok:false},
+  {id:"T1_25pc",n:2870,ok:true},{id:"T2_50pc",n:3119,ok:true},
+];
+/* HLA class-I ligands; the SLYNTVATL family is the nested-family case the
+   engine must arbitrate jointly rather than score independently. */
+const ROWS=[
+  {seq:"SLYNTVATL", z:2,mz:496.77,q:0.0001, rt:38.42,i:4.2e6,pg:"P04591",gene:"gag",  fam:1,pt:1},
+  {seq:"SLYNTVATLY",z:2,mz:578.30,q:0.0031, rt:38.61,i:8.1e5,pg:"P04591",gene:"gag",  fam:1,pt:1},
+  {seq:"LYNTVATL",  z:1,mz:923.52,q:0.0402, rt:38.30,i:2.0e5,pg:"P04591",gene:"gag",  fam:1,pt:0},
+  {seq:"NLVPMVATV", z:2,mz:479.76,q:0.00002,rt:44.10,i:9.9e6,pg:"P06725",gene:"UL83", fam:0,pt:1},
+  {seq:"RMFPNAPYL", z:2,mz:568.29,q:0.00008,rt:51.88,i:3.1e6,pg:"P19544",gene:"WT1",  fam:0,pt:1},
+  {seq:"KLGGALQAK", z:2,mz:436.77,q:0.0006, rt:22.05,i:1.8e6,pg:"P11021",gene:"HSPA5",fam:0,pt:1},
+  {seq:"YLLEMLWRL", z:2,mz:598.33,q:0.0011, rt:62.47,i:1.2e6,pg:"P03230",gene:"LMP1", fam:0,pt:1},
+  {seq:"KAFSPEVIPMF",z:2,mz:632.83,q:0.0003,rt:57.19,i:2.4e6,pg:"P04591",gene:"gag",  fam:0,pt:1},
+  {seq:"ISPRTLNAW", z:2,mz:522.79,q:0.0019, rt:49.33,i:6.7e5,pg:"P04591",gene:"gag",  fam:0,pt:1},
+  {seq:"AIFQSSMTK", z:2,mz:507.26,q:0.0088, rt:26.71,i:4.4e5,pg:"P12497",gene:"pol",  fam:0,pt:1},
+  {seq:"VTEHDTLLY", z:2,mz:539.27,q:0.0004, rt:35.02,i:2.9e6,pg:"P30443",gene:"HLA-A",fam:0,pt:0},
+  {seq:"FLYALALLL", z:2,mz:519.31,q:0.0142, rt:71.60,i:3.3e5,pg:"Q9BYF1",gene:"ACE2", fam:0,pt:1},
+  {seq:"GLCTLVAML", z:2,mz:490.75,q:0.0007, rt:54.28,i:1.5e6,pg:"P13285",gene:"BMLF1",fam:0,pt:1},
+  {seq:"ALIAPVHAV", z:2,mz:446.28,q:0.0225, rt:47.95,i:2.1e5,pg:"P08238",gene:"HSP90AB1",fam:0,pt:1},
+];
+const PROTEINS=[
+  {pg:"P04591",gene:"gag",  n:5,q:0.00003,i:8.9e6,cov:14.2},
+  {pg:"P06725",gene:"UL83", n:1,q:0.00002,i:9.9e6,cov:1.6},
+  {pg:"P11021",gene:"HSPA5",n:3,q:0.00040,i:4.0e6,cov:5.1},
+  {pg:"P19544",gene:"WT1",  n:1,q:0.00008,i:3.1e6,cov:2.0},
+  {pg:"P30443",gene:"HLA-A",n:4,q:0.00011,i:6.2e6,cov:9.8},
+  {pg:"P13285",gene:"BMLF1",n:2,q:0.00070,i:2.2e6,cov:3.4},
+];
+const FDRSTOPS=[0.001,0.002,0.005,0.01,0.02,0.03,0.05,0.10,0.20,0.50];
+let state={grain:"precursors", sel:0, run:0, fdr:0.01, view:null};
+
+/* ── charts ─────────────────────────────────────────────────────────── */
+const W=420,H=132,PADL=30,PADB=18,PADT=8,PADR=6;
+const gauss=(x,mu,s)=>Math.exp(-((x-mu)**2)/(2*s*s));
+
+function xicPaths(key, seed, n, present){
+  const r=rng(seed), N=90, mu=.5+(r()-.5)*.04, w=.055+r()*.012, out=[];
+  for(let k=0;k<n;k++){
+    const h=present?(.95-k*.13)*(.85+r()*.3):.06+r()*.05;
+    const dm=(r()-.5)*.012, dw=w*(.9+r()*.25), pts=[];
+    for(let j=0;j<N;j++){
+      const t=j/(N-1);
+      const v=h*gauss(t,mu+dm,dw)+(r()-.5)*.035+.02;
+      pts.push([PADL+t*(W-PADL-PADR), PADT+(1-Math.max(0,Math.min(1,v)))*(H-PADT-PADB)]);
+    }
+    out.push("M"+pts.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L"));
+  }
+  return {paths:out, mu};
+}
+function axis(x0,x1,unit){
+  let g="";
+  for(let i=0;i<=4;i++){
+    const x=PADL+i/4*(W-PADL-PADR), v=x0+(x1-x0)*i/4;
+    g+=`<line x1="${x.toFixed(1)}" y1="${PADT}" x2="${x.toFixed(1)}" y2="${H-PADB}" stroke="var(--line-soft)"/>
+        <text x="${x.toFixed(1)}" y="${H-5}" fill="var(--muted)" font-size="8.5" text-anchor="middle"
+         font-family="ui-monospace,Menlo,monospace">${v.toFixed(1)}</text>`;
+  }
+  return g+`<line x1="${PADL}" y1="${H-PADB}" x2="${W-PADR}" y2="${H-PADB}" stroke="var(--line)"/>
+    <text x="2" y="${PADT+8}" fill="var(--muted)" font-size="8.5" font-family="ui-monospace,Menlo,monospace">int</text>
+    <text x="${W-PADR}" y="${H-5}" fill="var(--muted)" font-size="8.5" text-anchor="end"
+     font-family="ui-monospace,Menlo,monospace">${unit}</text>`;
+}
+function xicSvg(row,present){
+  const {paths,mu}=xicPaths(row.seq,hash(row.seq)+row.z,6,present);
+  const cols=["var(--ion-y)","var(--ion-y)","var(--ion-y)","var(--ion-b)","var(--ion-b)","var(--ion-b)"];
+  const bl=PADL+(mu-.115)*(W-PADL-PADR), br=PADL+(mu+.115)*(W-PADL-PADR);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Fragment ion chromatograms">
+    ${axis(row.rt-.75,row.rt+.75,"min")}
+    ${present?`<rect x="${bl.toFixed(1)}" y="${PADT}" width="${(br-bl).toFixed(1)}" height="${H-PADT-PADB}"
+        fill="var(--accent-line)" opacity=".07"/>
+      <line x1="${bl.toFixed(1)}" y1="${PADT}" x2="${bl.toFixed(1)}" y2="${H-PADB}"
+        stroke="var(--accent-line)" stroke-dasharray="3 2"/>
+      <line x1="${br.toFixed(1)}" y1="${PADT}" x2="${br.toFixed(1)}" y2="${H-PADB}"
+        stroke="var(--accent-line)" stroke-dasharray="3 2"/>`:""}
+    ${paths.map((d,k)=>`<path d="${d}" fill="none" stroke="${cols[k]}" stroke-width="1.35"
+        opacity="${present?.92:.6}" stroke-linejoin="round"/>`).join("")}
+  </svg>`;
+}
+function ms1Svg(row,present){
+  const {paths}=xicPaths(row.seq,hash(row.seq)*3+7,3,present);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="MS1 isotope chromatograms">
+    ${axis(row.rt-.75,row.rt+.75,"min")}
+    ${paths.map((d,k)=>`<path d="${d}" fill="none" stroke="var(--ion-ms1)"
+      stroke-width="${1.5-k*.3}" opacity="${1-k*.28}" stroke-linejoin="round"/>`).join("")}</svg>`;
+}
+function mirrorSvg(row,present){
+  const r=rng(hash(row.seq)+11), n=row.seq.length-1, MH=112, mid=MH/2; let g="";
+  for(let k=0;k<n*2;k++){
+    const isB=k<n, x=PADL+((k%n)+.5+(isB?0:.28))/n*(W-PADL-PADR);
+    const hi=.25+r()*.75, lo=present?hi*(.72+r()*.5):r()*.25;
+    const col=isB?"var(--ion-b)":"var(--ion-y)";
+    g+=`<line x1="${x.toFixed(1)}" y1="${mid}" x2="${x.toFixed(1)}" y2="${(mid-hi*(mid-6)).toFixed(1)}"
+          stroke="${col}" stroke-width="1.6"/>
+        <line x1="${x.toFixed(1)}" y1="${mid}" x2="${x.toFixed(1)}" y2="${(mid+lo*(mid-6)).toFixed(1)}"
+          stroke="${col}" stroke-width="1.6" opacity=".5"/>`;
+  }
+  return `<svg class="chart" viewBox="0 0 ${W} ${MH}" role="img" aria-label="Observed versus library spectrum">
+    <line x1="${PADL}" y1="${mid}" x2="${W-PADR}" y2="${mid}" stroke="var(--line)"/>
+    <text x="2" y="14" font-size="8.5" fill="var(--muted)" font-family="ui-monospace,Menlo,monospace">obs</text>
+    <text x="2" y="${MH-6}" font-size="8.5" fill="var(--muted)" font-family="ui-monospace,Menlo,monospace">lib</text>
+    ${g}</svg>`;
+}
+const hex=s=>{const h=s.trim().replace("#","");
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+function drawHeat(cv,row,present){
+  const dpr=Math.min(2,window.devicePixelRatio||1), cw=cv.clientWidth||400, ch=118;
+  cv.width=cw*dpr; cv.height=ch*dpr; cv.style.height=ch+"px";
+  const c=cv.getContext("2d"); c.scale(dpr,dpr);
+  const cs=getComputedStyle(document.documentElement);
+  /* the OpenMS logo gradient, reversed: blue = low, amber = high */
+  const stops=["--h0","--h1","--h2","--h3","--h4"].map(v=>hex(cs.getPropertyValue(v)));
+  const grad=v=>{const t=Math.max(0,Math.min(1,v))*(stops.length-1),
+    i=Math.min(stops.length-2,Math.floor(t)), f=t-i, a=stops[i], b=stops[i+1];
+    return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;};
+  const r=rng(hash(row.seq)+29), NX=64, NY=34, bw=cw/NX, bh=ch/NY, blobs=[];
+  for(let k=0;k<7;k++) blobs.push({x:r(),y:r(),sx:.02+r()*.05,sy:.03+r()*.10,a:.3+r()*.7});
+  if(present) blobs.push({x:.5,y:.5,sx:.035,sy:.045,a:1.35});
+  for(let iy=0;iy<NY;iy++)for(let ix=0;ix<NX;ix++){
+    const x=ix/NX,y=iy/NY; let v=.02+r()*.05;
+    for(const b of blobs) v+=b.a*gauss(x,b.x,b.sx)*gauss(y,b.y,b.sy);
+    c.fillStyle=grad(v); c.fillRect(ix*bw,iy*bh,bw+.6,bh+.6);
+  }
+  c.strokeStyle=cs.getPropertyValue("--accent-line").trim(); c.lineWidth=1.25;
+  c.setLineDash([4,3]); c.strokeRect(cw*.5-16,ch*.5-11,32,22); c.setLineDash([]);
+  c.fillStyle=cs.getPropertyValue("--muted").trim();
+  c.font='9px ui-monospace,Menlo,monospace';
+  c.fillText("m/z "+(row.mz-12).toFixed(0)+"–"+(row.mz+12).toFixed(0),6,12);
+  c.fillText((row.rt-.75).toFixed(1)+"–"+(row.rt+.75).toFixed(1)+" min",6,ch-6);
+}
+
+/* ── render ─────────────────────────────────────────────────────────── */
+function visibleRows(){
+  let rs=ROWS.filter(r=>r.q<=state.fdr);
+  if($("proteotypic").checked) rs=rs.filter(r=>r.pt);
+  return rs;
+}
+function renderRuns(){
+  $("runs").innerHTML=RUNS.map((r,i)=>
+    `<li role="option" data-i="${i}" aria-selected="${i===state.run}">
+      <span class="dot ${r.ok?"ok":"warnd"}"></span><span class="mono">${r.id}</span>
+      <span class="n mono">${r.n}</span></li>`).join("");
+}
+function renderTable(){
+  const th=$("thead"), tb=$("tbody");
+  if(state.grain==="design"){
+    th.innerHTML=`<tr><th>Run</th><th>characteristics[organism part]</th>
+      <th>factor value[allotype]</th><th>comment[instrument]</th></tr>`;
+    tb.innerHTML=RUNS.map((r,i)=>`<tr data-i="${i}" aria-selected="${i===state.sel}">
+      <td class="mono seq">${r.id}</td><td>B lymphoblastoid</td>
+      <td>${i<4?"HLA-B*57:01":"HLA-A*02:01"}</td><td>Orbitrap Fusion</td></tr>`).join("");
+    $("count").textContent="SDRF · phase 3 · editable in place";
+    return;
+  }
+  if(state.grain==="proteins"){
+    th.innerHTML=`<tr><th>Protein</th><th>Gene</th><th class="num">Prec.</th>
+      <th class="num">q</th><th class="num">Cov %</th><th class="num">MaxLFQ</th></tr>`;
+    tb.innerHTML=PROTEINS.map((p,i)=>`<tr data-i="${i}" aria-selected="${i===state.sel}">
+      <td class="mono seq">${p.pg}</td><td>${p.gene}</td><td class="num mono">${p.n}</td>
+      <td class="num mono qv ok">${p.q.toExponential(0)}</td>
+      <td class="num mono">${p.cov.toFixed(1)}</td>
+      <td class="num mono">${p.i.toExponential(1)}</td></tr>`).join("");
+    $("count").textContent=PROTEINS.length+" protein groups";
+    return;
+  }
+  if(state.grain==="runs"){
+    th.innerHTML=`<tr><th>Run</th><th class="num">Precursors</th><th class="num">Proteins</th>
+      <th class="num">Median FWHM</th><th>Status</th></tr>`;
+    tb.innerHTML=RUNS.map((r,i)=>`<tr data-i="${i}" aria-selected="${i===state.sel}">
+      <td class="mono seq">${r.id}</td><td class="num mono">${r.n}</td>
+      <td class="num mono">${Math.round(r.n*.42)}</td>
+      <td class="num mono">${(r.ok?4.1+i*.07:7.9).toFixed(1)} s</td>
+      <td><span class="chip" style="border-color:var(--${r.ok?"good":"warn"});
+        color:var(--${r.ok?"good":"warn"})">${r.ok?"ok":"low IDs"}</span></td></tr>`).join("");
+    $("count").textContent=RUNS.length+" runs";
+    return;
+  }
+  const rs=visibleRows();
+  th.innerHTML=`<tr><th>Peptide</th><th class="num">z</th><th class="num">m/z</th>
+    <th class="num">RT</th><th class="num">q</th><th class="num">Quantity</th><th>Gene</th></tr>`;
+  tb.innerHTML=ROWS.map((r,i)=>{
+    const shown=rs.includes(r), cls=r.q<=.001?"ok":r.q<=.01?"mid":"bad";
+    return `<tr data-i="${i}" class="${shown?"":"below"}" aria-selected="${i===state.sel}">
+      <td><span class="mono seq">${r.seq}</span>${r.fam?'<span class="fam">family</span>':""}</td>
+      <td class="num mono">${r.z}+</td><td class="num mono">${r.mz.toFixed(2)}</td>
+      <td class="num mono">${r.rt.toFixed(2)}</td>
+      <td class="num mono qv ${cls}">${r.q<1e-3?r.q.toExponential(0):r.q.toFixed(4)}</td>
+      <td class="num mono">${r.i.toExponential(1)}</td><td>${r.gene}</td></tr>`;}).join("");
+  $("count").textContent=`${rs.length} of ${ROWS.length} shown · 58 210 in report`;
+}
+
+function renderEvidence(){
+  const ev=$("ev");
+  if(state.view&&state.view.k==="interrogate") return renderInterrogate(ev,state.view.v);
+  if(state.view&&state.view.k==="prov")        return renderProvenance(ev);
+  if(state.grain==="design"){
+    ev.innerHTML=`<div class="banner"><div><b>Phase 3.</b> Experiment design is a
+      grain, not an import dialog. Columns are SDRF characteristics and factor
+      values, edited in place; ISA investigation/study/assay sits above.</div></div>
+      <p style="color:var(--ink-2);font-size:12.5px">Because design metadata lives
+      in the same table model as everything else, a factor value is immediately
+      usable as a filter, a colour-by, and a submission field — without a second
+      editor.</p>`;
+    return;
+  }
+  if(state.grain==="runs"){
+    const r=RUNS[state.sel]||RUNS[0];
+    ev.innerHTML=`<div class="ev-title"><span class="s mono">${r.id}</span>
+      <span class="z">run diagnostics</span></div>
+      <div class="ev-meta">
+        <div><div class="k">precursors</div><div class="v mono">${r.n}</div></div>
+        <div><div class="k">proteins</div><div class="v mono">${Math.round(r.n*.42)}</div></div>
+        <div><div class="k">MS2 ppm</div><div class="v mono">12.4</div></div>
+        <div><div class="k">FWHM</div><div class="v mono">${r.ok?"4.1":"7.9"} s</div></div>
+      </div>
+      <div class="layer"><div class="layer-head"><h3>Identifications over the run</h3></div>
+      ${xicSvg({seq:r.id,z:1,mz:600,rt:79},true)}</div>
+      <p style="color:var(--muted);font-size:12px;margin-top:14px">Same three-pane
+      spine — no separate QC screen. Grain is <span class="mono">Runs</span>, so a
+      row is a run and the evidence pane shows that run's diagnostics.</p>`;
+    return;
+  }
+  if(state.grain==="proteins"){
+    const p=PROTEINS[state.sel]||PROTEINS[0], kids=ROWS.filter(r=>r.pg===p.pg);
+    ev.innerHTML=`<div class="ev-title"><span class="s mono">${p.pg}</span>
+      <span class="z">${p.gene} · ${p.n} precursors</span></div>
+      <div class="ev-meta">
+        <div><div class="k">PG q</div><div class="v mono">${p.q.toExponential(0)}</div></div>
+        <div><div class="k">MaxLFQ</div><div class="v mono">${p.i.toExponential(1)}</div></div>
+        <div><div class="k">coverage</div><div class="v mono">${p.cov.toFixed(1)}%</div></div>
+        <div><div class="k">runs</div><div class="v mono">12/12</div></div>
+      </div>
+      <div class="layer"><div class="layer-head"><h3>Supporting precursors</h3>
+        <span class="hint">click to drill in</span></div>
+      ${kids.length?kids.map(k=>`<div style="display:flex;gap:10px;align-items:center;
+        padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:12px">
+        <span class="mono seq">${k.seq}</span>
+        <span class="mono" style="color:var(--muted)">${k.z}+</span>
+        <span style="flex:1"></span>
+        <span class="mono qv ${k.q<=.001?"ok":k.q<=.01?"mid":"bad"}">${k.q.toExponential(0)}</span>
+        </div>`).join(""):`<p style="color:var(--muted);font-size:12px">Single-peptide
+        protein — the normal case in immunopeptidomics, and why protein-level FDR
+        means little here.</p>`}</div>`;
+    return;
+  }
+
+  const row=ROWS[state.sel]||ROWS[0], fam=row.fam?ROWS.filter(r=>r.fam===row.fam&&r!==row):[];
+  ev.innerHTML=`
+    <div class="ev-title"><span class="s mono">${row.seq}</span>
+      <span class="z mono">${row.z}+ · ${row.mz.toFixed(3)} m/z · ${row.gene}</span></div>
+    <div class="ev-meta">
+      <div><div class="k">q-value</div><div class="v mono qv ${row.q<=.001?"ok":row.q<=.01?"mid":"bad"}">${row.q<1e-3?row.q.toExponential(0):row.q.toFixed(4)}</div></div>
+      <div><div class="k">apex RT</div><div class="v mono">${row.rt.toFixed(2)}</div></div>
+      <div><div class="k">quantity</div><div class="v mono">${row.i.toExponential(1)}</div></div>
+      <div><div class="k">FWHM</div><div class="v mono">4.2 s</div></div>
+    </div>
+    <div class="layer">
+      <div class="layer-head"><h3>Fragment ion chromatograms</h3>
+        <span class="hint">layer 0 · 1 range query</span></div>
+      ${xicSvg(row,true)}
+      <div class="legend">
+        <span><i style="background:var(--ion-y)"></i>y-series</span>
+        <span><i style="background:var(--ion-b)"></i>b-series</span>
+        <span><i style="background:var(--accent-line);opacity:.5"></i>integration bounds</span>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-head"><h3>MS1 isotope envelope</h3><span class="hint">layer 1</span></div>
+      ${ms1Svg(row,true)}
+    </div>
+    <div class="layer">
+      <div class="layer-head"><h3>Neighbourhood map</h3>
+        <span class="hint">layer 1 · cached tiles → exact peaks on zoom</span></div>
+      <canvas id="heat" aria-label="m/z by retention time heat map of the isolation window"></canvas>
+      <div class="ramp" role="img" aria-label="intensity ramp, low to high"></div>
+      <p style="color:var(--muted);font-size:11.5px;margin:7px 0 0">
+        Everything co-eluting inside the 24 Th isolation window; the dashed box is
+        the target, extracted RT-bounded in ~105 ms. The ramp is the OpenMS logo
+        gradient reversed — blue is low, amber is high.</p>
+    </div>
+    <div class="layer">
+      <div class="layer-head"><h3>Observed vs library spectrum</h3><span class="hint">layer 1</span></div>
+      ${mirrorSvg(row,true)}
+    </div>
+    ${fam.length?`<div class="layer">
+      <div class="layer-head"><h3>Nested family</h3>
+        <span class="hint">layer 2 · immunopeptidomics</span></div>
+      <p style="color:var(--ink-2);font-size:12px;margin:0 0 8px">
+        ${fam.map(f=>`<span class="mono seq">${f.seq}</span>`).join(" · ")} share most
+        fragment ions with this precursor. They compete for the same evidence and
+        must be arbitrated as a set, not scored independently.</p>
+      ${xicSvg(fam[0],true)}</div>`:""}`;
+  const cv=$("heat"); if(cv) drawHeat(cv,row,true);
+}
+
+function renderInterrogate(ev,seq){
+  const fake={seq,z:2,mz:530.29,rt:46.20};
+  ev.innerHTML=`
+    <div class="banner"><div><b>${seq}</b> is not identified in any of the 12 runs.
+      Evidence below was extracted from raw data on demand — no engine wrote a
+      chromatogram for a candidate it rejected.</div></div>
+    <div class="ev-title"><span class="s mono">${seq}</span>
+      <span class="z mono">2+ · ${fake.mz} m/z · theoretical b/y</span></div>
+    <div class="ev-meta">
+      <div><div class="k">q-value</div><div class="v mono">—</div></div>
+      <div><div class="k">expected RT</div><div class="v mono">${fake.rt.toFixed(2)}</div></div>
+      <div><div class="k">signal</div><div class="v mono" style="color:var(--crit)">none</div></div>
+      <div><div class="k">interference</div><div class="v mono">high</div></div>
+    </div>
+    <div class="layer">
+      <div class="layer-head"><h3>Fragment ion chromatograms</h3>
+        <span class="hint">computed from sequence</span></div>
+      ${xicSvg(fake,false)}
+      <p style="color:var(--muted);font-size:11.5px;margin:8px 0 0">No co-eluting
+      fragment group at the predicted retention time. The peptide is absent, not
+      merely unscored — and that is now a statement with a picture behind it.</p>
+    </div>
+    <div class="layer"><div class="layer-head"><h3>Neighbourhood map</h3></div>
+      <canvas id="heat"></canvas><div class="ramp"></div></div>
+    <div style="margin-top:16px"><button class="act" id="back">← back to matches</button></div>`;
+  const cv=$("heat"); if(cv) drawHeat(cv,fake,false);
+  $("back").onclick=()=>{state.view=null; $("q").value=""; render();};
+}
+
+function renderProvenance(ev){
+  const steps=[
+    ["convert","mzpeak-convert 0.3.1","12 × .raw → .mzpeak","sha256:9f2c…","7 m 14 s"],
+    ["calibrate","odia 0.1.0","MS1 11.8 ppm · MS2 12.4 ppm","sha256:31ab…","41 s"],
+    ["candidates","odia 0.1.0","HLA-I preset · 5.1e7 precursors","sha256:c07d…","2 m 02 s"],
+    ["extract+score","odia 0.1.0","16 threads · OpenSWATH oracle ✓","sha256:44e1…","18 m 39 s"],
+    ["fdr","odia 0.1.0","entrapment-reported · 1.0 % nominal","sha256:8b90…","55 s"],
+    ["quantify","odia 0.1.0","MaxLFQ-equivalent · RT-dependent norm","sha256:2de6…","1 m 07 s"],
+  ];
+  ev.innerHTML=`<div class="banner" style="border-color:var(--accent-line);
+      background:var(--accent-soft)"><div><b>Phase 2.</b> Every step recorded with
+      its parameters, input hashes, software version and duration. The methods
+      paragraph and the machine-readable record are generated from this, never
+      typed.</div></div>
+    <div class="ev-title"><span class="s">Processing graph</span>
+      <span class="z mono">session 2026-07-23T08:14Z</span></div>
+    <div class="layer">${steps.map(([n,v,d,h,t])=>`
+      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:3px 11px;
+        padding:9px 0;border-bottom:1px solid var(--line-soft);align-items:baseline">
+        <span class="mono seq" style="color:var(--accent)">${n}</span>
+        <span style="font-size:12px">${d}</span>
+        <span class="mono" style="font-size:11px;color:var(--muted)">${t}</span>
+        <span></span>
+        <span class="mono" style="font-size:10.5px;color:var(--muted)">${v} · ${h}</span>
+        <span></span></div>`).join("")}
+    </div>
+    <div style="margin-top:15px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="act">Copy methods text</button>
+      <button class="act">Export record</button>
+      <button class="act">Submit to PRIDE →</button>
+    </div>
+    <p style="color:var(--muted);font-size:11.5px;margin-top:12px">The submission
+      action (phase 4) assembles raw files, results, SDRF and this graph into a
+      validated ProteomeXchange package. Nothing extra to fill in, because
+      nothing was left untracked.</p>
+    <div style="margin-top:14px"><button class="act" id="back">← back to matches</button></div>`;
+  $("back").onclick=()=>{state.view=null; render();};
+}
+
+function render(){ renderRuns(); renderTable(); renderEvidence();
+  $("evsrc").textContent = state.view ? "computed on demand" : "from raw · 41 ms"; }
+
+/* ── events ─────────────────────────────────────────────────────────── */
+document.querySelectorAll(".grain button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".grain button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  state.grain=b.dataset.grain; state.sel=0; state.view=null; render();});
+$("tbody").addEventListener("click",e=>{const tr=e.target.closest("tr"); if(!tr) return;
+  state.sel=+tr.dataset.i; state.view=null; render();});
+$("runs").addEventListener("click",e=>{const li=e.target.closest("li"); if(!li) return;
+  state.run=+li.dataset.i; render();});
+$("prov").addEventListener("click",()=>{state.view={k:"prov"}; render();});
+const ENGINES=[{label:"\u25c6 DIA-NN 2.6.1 Academia", cls:"chip engine diann"},
+               {label:"\u25c6 OpenDIAlyzer 0.1",      cls:"chip engine"}];
+let engine=0;
+$("engineChip").addEventListener("click",()=>{
+  engine=(engine+1)%ENGINES.length;
+  $("engineChip").textContent=ENGINES[engine].label;
+  $("engineChip").className=ENGINES[engine].cls;
+  render();                      // identical UI — that is the point
+});
+$("fdr").addEventListener("input",e=>{
+  state.fdr=FDRSTOPS[Math.round(e.target.value/100*(FDRSTOPS.length-1))];
+  $("fdrOut").textContent=state.fdr.toFixed(3); renderTable();});
+$("proteotypic").addEventListener("change",renderTable);
+$("q").addEventListener("keydown",e=>{
+  if(e.key!=="Enter") return;
+  const v=$("q").value.trim().toUpperCase(); if(!v) return;
+  const hit=ROWS.findIndex(r=>r.seq===v);
+  if(hit>=0){ state.sel=hit; state.grain="precursors"; state.view=null;
+    document.querySelectorAll(".grain button").forEach(x=>
+      x.setAttribute("aria-pressed", x.dataset.grain==="precursors"));
+  } else state.view={k:"interrogate",v};
+  render();});
+document.addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==="k"){e.preventDefault(); $("q").focus(); return;}
+  if(e.target.tagName==="INPUT") return;
+  const n=state.grain==="precursors"?ROWS.length:state.grain==="proteins"?PROTEINS.length:RUNS.length;
+  if(e.key==="ArrowDown"){e.preventDefault(); state.sel=(state.sel+1)%n; render();}
+  if(e.key==="ArrowUp"){e.preventDefault(); state.sel=(state.sel-1+n)%n; render();}});
+const redraw=()=>{const cv=$("heat"); if(!cv) return;
+  const r=state.view&&state.view.k==="interrogate"
+    ? {seq:state.view.v,mz:530.29,rt:46.2} : (ROWS[state.sel]||ROWS[0]);
+  drawHeat(cv,r,!state.view);};
+matchMedia("(prefers-color-scheme:dark)").addEventListener("change",redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+addEventListener("resize",redraw);
+$("fdrOut").textContent=state.fdr.toFixed(3);
+render();
+</script>

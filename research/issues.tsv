@@ -1,0 +1,1040 @@
+Issue ID	Type	Area	Title	Assigned To	Priority	Status	Milestone
+1058	Todo	Skyline	Add more support for chromatogram types in Bruker data	guest	3	closed	
+1057	Defect	Skyline	"Add a transition list reader column ""CNL Spectrum Filter"" to simplify working with Constant Neutral Loss scan data"	guest	3	closed	
+1056	Defect	Skyline	"""Copy Data"" for IMS heatmap display in Full Scan view is broken"	guest	3	closed	
+1055	Defect	Skyline	Alert user when importing ion mobility data when there are IM filter values available (explicit, imsdb, blib) but IM filtering is disabled	guest	3	closed	
+1054	Defect	Skyline	"NIST .msp peptide descriptions with n and c terminal notation (e.g. ""… …Name: n[43]ALAVLALLSLSGLEAIQR/5"" or ""Name: AACDEFGHIKc[17]/3"") are being ignored"	guest	3	closed	
+1053	Defect	Skyline	"Target tree allows for manual creation of nonsense molecules e.g. ""U-H2O"""	guest	3	closed	
+1052	Defect	Skyline	AlphaPeptDeep wording suggestions	guest	4	closed	25.2
+1051	Defect	Skyline	Too many LongWaitDlgs during AlphaPeptDeep library building	guest	3	closed	25.2
+1050	Defect	Skyline	AlphaPeptDeep output files need to be written somewhere outside the Skyline.exe/Tools folder	guest	2	closed	25.2
+1049	Todo	Skyline	Users need to be able to tell Skyline that they have GC EI data	guest	3	closed	
+1048	Defect	Skyline	Retention Times - Peptide Comparison graph is not UI mode aware	guest	3	closed	
+1047	Defect	Skyline	improve SkylineCmd's handling of unrecognized transition list column names	guest	3	closed	
+1046	Todo	Skyline	command line needs the ability to remove named replicates from document	guest	3	closed	
+1045	Todo	Skyline	Users would like settable colors for each molecule	guest	3	closed	
+1044	Todo	Skyline	Add .sdf file support for spectral library creation	guest	3	closed	
+1043	Defect	Skyline	Provide for manual adjustmen of IM integration as we do for RT	guest	3	closed	
+1042	Todo	Skyline	Library Explorer should show iRT information when it is present in a BLIB file	guest	3	closed	24.2
+1041	Defect	Skyline	MSGF+ Installation form does not copy text	guest	3	closed	24.2
+1040	Todo	Skyline	Import DIA Peptide Search should suggest using a prespecified isolation scheme based on the data	guest	3	closed	24.2
+1039	Defect	Skyline	Import DDA Peptide Search produces different replicate name sort order than Import DIA Peptide Search	guest	3	closed	24.2
+1038	Todo	Skyline	Import DIA Peptide Search never suggests chromatogram extraction files	guest	2	closed	24.2
+1037	Defect	Skyline	Documents with lots of mods can get very slow for Import > Transition List	guest	3	closed	24.2
+1036	Todo	Skyline	Mass spec files contain metadata that could usefully be preserved as annotations on replicates in Skyline	guest	3	closed	
+1035	Todo	Skyline	Add Mirror and Koina menu options to Full-Scan graph	guest	3	closed	24.2
+1034	Todo	Skyline	Add mirror plot option to chromatogram graphs	guest	3	closed	24.2
+1033	Defect	Skyline	Fix Normalize To > Heavy Peak Areas - Replicate plot to show rdotp line graph	guest	2	closed	24.2
+1032	Todo	Skyline	Skyline needs at least one default report that just gives peak areas for all replicates	guest	3	closed	24.2
+1031	Defect	Skyline	Molecule reports show up in Document Settings - Reports when in proteomics mode	guest	3	closed	24.2
+1030	Defect	Skyline	Small molecule improvements are predicted RT	guest	3	closed	
+1029	Todo	Skyline	Integrate Carafe into Peptide Settings - Library - Build	guest	2	closed	24.2
+1028	Todo	Skyline	Integrate AlphaPeptDeep prediction into Peptide Settings - Library - Build	guest	2	closed	24.2
+1027	Todo	Skyline	Skyline DDA Searches that use Percolator need to calculate all-files-q-values	guest	2	closed	24.2
+1026	Defect	Skyline	Peak Areas - Relative Abundance includes decoys by default	guest	2	closed	24.2
+1025	Defect	Skyline	Feature finding should provide information in terms of the expected peptides in a document - what's novel in the search result, what's missing	guest	3	closed	
+1024	Todo	Skyline	"Support transition list ""Note"" import for all node levels (molecule, precursor, transition)"	guest	3	closed	
+1023	Defect	Skyline	"ArgumentOutOfRangeException scrolling ""Ion Types"" context menu"	guest	2	closed	24.2
+1022	Defect	Skyline	idFileName column values are not set in minimized libraries.	guest	3	closed	
+1021	Defect	Skyline	Discourage training mProphet models when explicit peak boundaries are being used from libraries	guest	3	closed	23.2
+1020	Defect	Skyline	Transition Full Scan Settings page should discourage user from using retention time filtering with PRM	guest	3	closed	23.2
+1019	Defect	Skyline	Confusing behavior of ID lines on chromatograms when library has multiple charge states	guest	3	closed	23.2
+1018	Defect	Skyline	Adducts should not attempt formula math when the molecule is described as mass only	guest	3	closed	
+1017	Defect	Skyline	Menuitem enabling needs cleanup for Spectrum Match settings	guest	3	closed	23.2
+1016	Todo	Skyline	"Use new ""Associate Proteins"" dialog in other places proteins are associated"	guest	3	closed	
+1015	Defect	Skyline	Glycan idotp values incorrect until close and re-open document	guest	3	closed	23.2
+1014	Defect	Skyline	Immediate Window does not support ESC to focus the Targets View	guest	3	closed	23.2
+1013	Todo	Skyline	Consider adding ability to filter MS/MS during DDA import peptide search	guest	3	closed	23.2
+1012	Defect	Skyline	Ratio to Heavy not available in small molecule mode until heavy precursors added	guest	3	closed	23.2
+1011	Defect	Skyline	Out of Memory Error for Yeast.hlf in MethodEdit tutorial on Polish system	guest	2	closed	23.2
+1010	Todo	Skyline	Add shortcuts for Peptide Settings and Transition Settings	guest	2	closed	23.2
+1009	Defect	Skyline	bottleneck in spectral library viewer when attempting to access ion mobility values	guest	3	closed	
+1008	Defect	Skyline	include more .D metadata in Skyline replicates	guest	3	closed	
+1007	Defect	Skyline	ModificationMatcher over guesses with Acetyl modifications	guest	2	closed	23.2
+1006	Defect	Skyline	ImportTransitionListColumnSelectDlg too trusting of column header names	guest	3	closed	23.2
+1005	Todo	Skyline	Add support for setting Settings > Integrate All from the command-line	guest	2	closed	23.2
+1004	Todo	Skyline	Add support for adding modifications from the command-line	guest	2	closed	23.2
+1003	Defect	Skyline	Fix TransitionGroup.GetTransitions() for small molecules to use library information when available	guest	3	closed	23.2
+1002	Defect	Skyline	trouble with transition list created with our own document grid export	guest	3	closed	
+1001	Defect	Skyline	need exceptiion handling for bad MoleculeMassOffset.SplitFormulaAndMasses input	guest	3	closed	
+1000	Defect	Skyline	When reading peptide transition lists we should offer to apply document settings - adding reporter ions, other precursor charges etc.	guest	3	closed	
+999	Defect	Skyline	Investigate using ExcludeFromAssay field from DIA-NN	guest	3	closed	
+998	Defect	Skyline	Fix issues with matching DIANN speclib to report TSV	guest	3	closed	
+997	Defect	Skyline	"We should allow adducts with formulaic losses on mass-only molecule description (e.g. don't complain that Adduct ""[M-CO2]-"" calls for removing more C atoms than are found in the molecule [+331.977251])"	guest	3	closed	
+996	Todo	Skyline	Feature detection could be reworked to parallelize tasks	guest	3	closed	
+995	Todo	Skyline	Import Peptide Search should default to no decoys when Library.UseExplicitPeakBounds will be used	guest	3	closed	23.2
+994	Todo	Skyline	File > Import > Peptide Search - FASTA page should have Peptide Settings - Filter options	guest	3	closed	23.2
+993	Defect	Skyline	Weirdness in the raw data view when switching from IM-containing replicate to non-IM replicate	guest	3	closed	23.2
+992	Defect	Skyline	DIA-NN Speclib handling in BlibBuild mishandles n-terminal mods	guest	2	closed	23.2
+991	Defect	Skyline	"We should add a ""Run"" submenu to Skyline's File menu, and move Feature Detection, Encyclopedia, and peptide search engines there from the ""Import"" menu"	guest	3	closed	
+990	Todo	Skyline	Clean up Transition Settings and IMS arguments in command-line documentation	guest	3	closed	23.2
+989	Todo	Skyline	Need to add new coverage for Peptide Settings changes by command-line	guest	1	closed	23.2
+988	Defect	Skyline	Need to normalize Transition Settings change command-line output	guest	3	closed	23.2
+987	Defect	Skyline	"Displaying tooltip for protein sometimes takes a really long time when ""Enforce Uniqueness"" is enabled"	guest	3	closed	
+986	Defect	Skyline	Make ion mobility library editor searchable	guest	3	closed	
+985	Defect	Skyline	"Target tree's Find function results window says ""Peptide"" where it should say ""Molecule"""	guest	3	closed	
+984	Defect	Skyline	"""zombie chromatograms"" complicate merging of Skyline files"	guest	3	closed	
+983	Defect	Skyline	manually modifying molecule mass does not modify the m/z of precursor transitions below	guest	3	closed	
+982	Todo	Skyline	Improved error message when user tries to File>Open a mass spec data file in Skyline	guest	3	closed	
+981	Defect	Skyline	CE optimization does not work for SCIEX QTOF instruments	guest	3	closed	
+979	Defect	Skyline	"Support isotope nomenclature like ""[13C]3H7[15N]O2""  (that's C'3H7N'O2 in Skyline-speak)"	guest	3	closed	
+978	Defect	Skyline	Need a way to represent targets that were dimers in the IMS stage but broke into monomers in the MS stage	guest	3	closed	
+977	Defect	Skyline	"Need a way to import and display keys other than InChI, SMILES, KEGG etc - e.g. ""METLIN ID"""	guest	3	closed	
+976	Defect	Skyline	Library Explorer: Allow for searching within peptide/molecule description	guest	3	closed	
+975	Todo	Skyline	feature request: User-editable keyboard shortcuts for menu items	guest	3	closed	
+974	Defect	Skyline	OpenDataSourceDialog WIFF/WIFF2 data type causes file selection to be painful	guest	2	closed	23.2
+973	Todo	Skyline	Add a way to add annotation definitions to a Skyline document from the command-line	guest	2	closed	23.2
+972	Defect	Skyline	Feature: Export mProphet features from commandline	guest	3	closed	
+971	Defect	Skyline	Small molecule transition list reader could be more clever about setting formulas	guest	3	closed	
+970	Todo	Skyline	Feature request: Right click on molecule in the molecule tree to “Add to iRT Database”	guest	3	closed	
+969	Defect	Skyline	Trouble handling transition lists that declare precursor isotopes	guest	3	closed	
+968	Defect	Skyline	NullReferenceException when uploading to a saved Panorama URI	guest	3	closed	
+967	Defect	Skyline	Create matching small molecule versions of all standard peptide reports in Document Grid	guest	3	closed	
+966	Todo	Skyline	"""Mobiligram"" display for ion mobility filtered chromatograms (alternate view to our ion mobility heatmap)"	guest	3	closed	
+965	Todo	Skyline	Add command arg to SkylineRunner.exe to run any instance of Skyline by path	guest	3	closed	23.2
+964	Defect	Skyline	Feature Request - Surrogate calibration curves	guest	3	closed	
+963	Defect	Skyline	Feature Request - Remove Replicate/Result from Chromatogram or Replicate Right-click menu	guest	3	closed	
+962	Defect	Skyline	Find CCS values for targets not found in an IMSDB library without changing existing values	guest	3	closed	
+961	Todo	Skyline	Show units for pressure traces in Skyline chromatograms and enable Panorama to do the same	guest	3	closed	23.2
+960	Defect	Skyline	"Chinese language update:  ""Centroided"" in the drop down list can be translated as 中心对称的"	guest	2	closed	23.1
+959	Todo	Skyline	Improve error message for BlibBuild failures	guest	2	closed	23.1
+958	Defect	Skyline	"add the Skyline version to the ""More Info"" text in alert dialogs"	guest	3	closed	
+957	Todo	Skyline	Duplicated collision energy settings for SCIEX instruments	guest	3	closed	
+956	Defect	Skyline	Support for importing results from the Sage search engine	guest	3	closed	
+955	Defect	Skyline	"""Associate Proteins"" should not remove unmapped peptides from the document."	guest	2	closed	23.1
+954	Defect	Skyline	some interesting small molecule transition list weirdness	guest	3	closed	
+953	Defect	Skyline	add a code inspection test to check that the start page Tutorials tab uses the same links as the Tutorials tests	guest	3	closed	
+952	Todo	Skyline	Strategies for reducing ExceptionWeb reports for already-solved issues	guest	3	closed	
+951	Defect	Skyline	Spectral Library ion mobility values don't work intuitively in document grid and method export	guest	3	closed	
+950	Todo	Skyline	"Investigate more efficient sorting of three-array IMS scans - possibly the locally sorted  ""sawtooth"" nature of the mz could be exploited"	guest	3	closed	
+949	Defect	Skyline	"Peak Areas > Peptide Comparison view should not show a ""heavy"" pane with nothing in it"	guest	3	closed	23.1
+948	Todo	Skyline	Make Import Assay Library work for small molecules	guest	3	closed	
+947	Defect	Skyline	IMS spectrum viewer less reliable than it used to be	guest	2	closed	22.2
+946	Todo	Skyline	Renaming a molecule in small molecules breaks associations	guest	2	closed	
+945	Todo	Skyline	Add a splitter to Unique Peptides form	guest	3	closed	
+944	Defect	Skyline	Peak area plotting still deceiving when transforms are applied to the chromatograms	guest	3	closed	
+943	Defect	Skyline	Importing BLIB into IMSDB, we should take mean of multiple IM values instead of creating multiple entries	guest	3	closed	
+942	Todo	Skyline	Add Start Time and End Time to spectrum properties	guest	3	closed	23.1
+941	Defect	Skyline	Red and green dots in Targets tree should be customizable colors, or different shapes	guest	3	closed	
+940	Defect	AutoQC	Add sample file filtering option to AutoQC Loader	guest	3	closed	
+939	Defect	Skyline	Off-by-one in Enzyme.GetMatches() dealing with protein C-terminus	guest	3	closed	23.1
+938	Todo	Skyline	Add property sheets to spectrum graphs	guest	2	closed	23.1
+937	Defect	Skyline	DIA Umpire tests are much slower for languages with a comma decimal separator	guest	2	closed	23.1
+936	Todo	Skyline	Thermo Eclipse and Fusion Lumos method export	guest	3	closed	23.1
+935	Defect	Skyline	Capture injection time as sample-scoped chromatogram	guest	3	closed	
+934	Todo	Skyline	Enable optimization method export for more TOF instruments	guest	2	closed	
+933	Todo	Skyline	Thorium method export	guest	2	closed	
+932	Todo	TestResults	Summarize/graph pass1 iteration count for tests	guest	4	closed	
+931	Todo	Skyline	Agilent MH 12 method export	guest	2	closed	
+930	Todo	Skyline	Export isolation list (DIA) for Bruker timsTOF	guest	4	closed	
+929	Defect	Skyline	When explicit ion mobility values are used, the reported CCS value should be adjusted appropriately in the resulting chromatogram extractions	guest	3	closed	
+928	Defect	Skyline	AssumptionException saving document with protein groups sometimes	guest	2	closed	23.1
+927	Defect	Skyline	Bibliospec - retain fragment charge values in MGF files	guest	3	closed	
+926	Todo	Skyline	Implement Bruker Paser support in BlibBuild	guest	2	closed	23.1
+925	Defect	Skyline	Targets view hangs during mouse-over with peptides longer than 2000 or so	guest	3	closed	
+924	Defect	Skyline	Fix ability to provide a protein description in Edit > Insert > Peptides	guest	3	closed	
+923	Todo	Skyline	Implement an interface that allows for multiple algorithms to do peak group assignment	guest	3	closed	
+922	Defect	Skyline	Edit > Find needs to use LongWaitDlg and support cancel	guest	3	closed	23.1
+921	Todo	Skyline	Transition list reader should identify special ions by m/z the same way it does calculated peptide fragment ions	guest	3	closed	
+920	Defect	Skyline	When Group By fails in replicate comparison graphs you lose the Order By menu item	guest	3	closed	23.1
+919	Defect	Skyline	SpectrumLibraryInfoDlg scoring columns should match library build columns	guest	3	closed	23.1
+918	Defect	Skyline	"a few issues with ""Use Results"" in ion mobility libraries"	guest	3	closed	23.1
+917	Defect	Skyline	Ion mobility high energy offset should be applied for all Full Scan MS/MS modes, not just All Ions DIA	guest	3	closed	23.1
+916	Documentation	Skyline	Document normalization methods	guest	2	closed	22.2
+915	Defect	Skyline	Library Match and Full-Scan - Right-click menu item order is broken in 22.2	guest	2	closed	22.2
+914	Defect	Skyline	Proteomics features still showing in small molecule mode	guest	3	closed	23.1
+913	Todo	Skyline	Make Ctrl-A work in Import > Results form to select all files in a folder	guest	3	closed	22.2
+912	Defect	Skyline	Auto-Zoom X Axis > Best Peak does nothing for chromatograms with removed peaks	guest	3	closed	24.2
+911	Defect	Skyline	Calibration Curve graph calculates concentrations on double-blanks (NaN or infinity)	guest	3	closed	23.1
+910	Defect	Skyline	Synchonized integration has trouble with removed peaks	guest	3	closed	23.1
+909	Defect	Skyline	Red dots for dotp values below the cut-off appear behind bars	guest	3	closed	23.1
+908	Todo	Skyline	Command Line Enhancement Request : Include MS/MS Filtering Options	guest	3	closed	23.1
+907	Defect	Skyline	ViewLibraryDlg right-click menu lagging behind Library Match right-click menu	guest	2	closed	23.1
+906	Defect	Skyline	A few details working with Bruker PASER assay library lists	guest	3	closed	22.2
+905	Defect	Skyline	IndexOutOfRangeException bringing up GraphFullScan immediately after modifying the document	guest	3	closed	22.2
+904	Defect	Skyline	Store more spectrum and instrument information in .blib files when possible	guest	2	closed	23.1
+903	Defect	Skyline	Show names of default settings, and save settings with document when exporting a transition list	guest	3	closed	22.2
+902	Todo	Skyline	add an ion mobility range filter in Transition Settings IM tab similar to instrument settings tab's mz range filter	guest	3	closed	
+901	Defect	Skyline	Newly added annotations don't show up in the Rule Editor	guest	3	closed	22.2
+900	Defect	Skyline	Opening a .skyp file shows no progress until the file is downloaded	guest	3	closed	22.2
+899	Todo	Skyline	Adding targets from DDA library seems useful to be able to specify a number of runs a peptide got ID'd in	guest	3	closed	23.1
+898	Defect	Skyline	Record the Document Grid selection in the Undo/Redo buffer during Document Grid editing events	guest	3	closed	22.2
+897	Todo	Skyline	Make Ctrl-Z (Undo) and Ctrl-Y (Redo) work in Document Grid	guest	2	closed	22.2
+896	Defect	Skyline	"IMS library ""Use Results"" should ignore poor quality chromatographic peaks"	guest	3	closed	
+895	Todo	Skyline	"""Split Graphs"" equivalent (stacked MS1 and MS/MS views) for Full Scan view"	guest	3	closed	
+894	Todo	Skyline	"Make ""Use Results"" isolation scheme work for Import > Peptide Search of DIA"	guest	2	closed	22.2
+893	Todo	Skyline	Need a way to turn off switching replicates in retention times - regression plot	guest	3	closed	22.1
+892	Defect	Skyline	Export > Transition / Isolation List with scheduling seems broken for counting multiple methods	guest	1	closed	21.2
+891	Defect	Skyline	Adjusting peak boundaries with non-quantitative transitions is confusing	guest	3	closed	22.2
+890	Defect	Skyline	Audit log Skyline Version upgrade	guest	3	closed	22.1
+889	Todo	Skyline	Make more instrument parameters available on Files in the Document Grid	guest	3	closed	22.1
+888	Defect	Skyline	File > Import > Peptide Search with existing library reports the build settings in the Audit Log	guest	2	closed	22.2
+887	Defect	Skyline	Smooth handling of .skyp file for server lacking credentials	guest	3	closed	22.1
+886	Defect	Skyline	AutoQC Loader stops scrolling log text area after a wrapped line	guest	3	closed	22.1
+885	Defect	Skyline	Dotp line graph points should be clickable for changing the active replicate	guest	3	closed	22.1
+884	Defect	Skyline	Some user are really unhappy that they can't type transition lists into Skyline like they used to do	guest	3	closed	
+883	Documentation	Skyline	Update tutorials with new library building interface	guest	2	closed	
+882	Todo	Skyline	Clean out apparent IMS related cruft in Full Scan tab	guest	3	closed	
+881	Defect	Skyline	Move Bruker timsTOF method export into BuildMethod	guest	3	closed	
+880	Todo	Skyline	SSL format changes for Feature Detection	guest	3	closed	22.1
+879	Defect	Skyline	Need some way to show user FAIMS information in raw scan view, to demystify jagged chromatograms before IM filters are applied	guest	3	closed	
+878	Defect	Skyline	Need to handle retention time shifts for deuterated internal standards	guest	3	closed	
+877	Defect	Skyline	"""How Skyline Calculates Peak Areas and Heights"" tip could use updating"	guest	3	closed	
+876	Defect	Skyline	"Typo in ""Skyline Small Molecule Method Development and CE Optimization"" tutorial"	guest	3	closed	
+875	Defect	Skyline	The adduct pick list (as used in Modify... in Targets tree) should include [M+] and [M-]	guest	3	closed	
+874	Defect	Skyline	Default Win32 MAX_PATH value of 260 is too small for some users	guest	3	closed	
+873	Defect	Skyline	Feature request: single molecule/peptide re-integration	guest	3	closed	
+872	Defect	Skyline	Document created by an m/z-only transition list should not depend on list order	guest	3	closed	22.1
+871	Defect	Skyline	Clean up the interaction of small molecule transition list imports and Transition Settings that affect precursor isotope ([M+1], [M+2] etc) creation	guest	1	closed	23.1
+870	Todo	Skyline	Implement special peak statistics for DDA MS/MS	guest	1	closed	22.2
+869	Todo	Skyline	Add a Prosit RT calculator parallel to SSRCalc	guest	3	closed	
+868	Todo	Skyline	Consider generating a dictionary of less common isotopes instead of hardcoding them piecemeal in response to user requests	guest	3	closed	
+867	Todo	Skyline	Possible Improvements to Edit>Insert>TransitionList	guest	3	closed	22.1
+866	Defect	Skyline	Provide option in Skyline to upload a minimized library to Panorama	guest	3	closed	22.1
+865	Defect	Skyline	"Adding heavy mods in Peptide Settings does not add ""Ratio to Heavy"" normalization to Quantification tab"	guest	1	closed	21.2
+864	Defect	Skyline	Various issues reading this small molecule transition list with heavy label formulas	guest	3	closed	22.1
+863	Defect	Skyline	Problem loading a small mol document with isotope labels - Skyline complains that they aren't known modifications (which should not matter)	guest	3	closed	22.1
+862	Defect	Skyline	"""Importing Results..."" window should resize its multi-file progress control when there's a vertical scrollbar in use (currently cuts off the ""Cancel"" buttons and looks funny)"	guest	3	closed	22.1
+861	Todo	Skyline	Implement better peptide to protein assignment strategies for target selection	guest	2	closed	22.1
+860	Defect	Skyline	Support more than one fragment specification per line in transition list column picker, for small molecules at least	guest	3	closed	
+859	Defect	Skyline	Add peak apex CCS to Transition Result	guest	3	closed	22.1
+858	Defect	Skyline	"make ""ImportPeptideSearch with the IMS filtering visible"" a form view that can be shown in the SkylineTester  Forms tab"	guest	3	closed	22.1
+857	Defect	Skyline	ImportTransitionListColumnSelectDlg lags a bit when associate proteins checked	guest	3	closed	21.2
+856	Defect	Skyline	"When training a ""Default"" peak scoring model, the model should be able to use feature scores that are present for some but not all peptides"	guest	3	closed	22.1
+855	Defect	Skyline	Log scale with median normalization does not mention the normalization in the y-axis label	guest	3	closed	22.2
+854	Defect	Skyline	Peak Areas - Replicate Comparison - Normalize to strangely chooses poorly	guest	2	closed	21.2
+853	Defect	Skyline	Remove peak should make dotp annotations and line missing	guest	1	closed	21.2
+852	Defect	Skyline	Full-Scan graph no longer auto-scales the y-axis when clicking arrow buttons	guest	2	closed	21.2
+851	Todo	Skyline	Rename auto trained peak scoring models	guest	3	closed	22.1
+850	Defect	Skyline	Fix performance issue with ion moblity filtering in library viewer	guest	3	closed	22.1
+849	Defect	Skyline	Failure opening .sky file saying audit log entry has been modified	guest	2	closed	21.2
+848	Defect	Skyline	Show a better error message if check for Panorama server fails	guest	1	closed	23.1
+847	Defect	Skyline	Add option to use explicit RT instead of measured for exporting scheduled methods	guest	3	closed	
+846	Defect	Skyline	Trouble exporting polarity-switching QQQ method from Skyline to Agilent-6495C	guest	3	closed	
+845	Defect	Skyline	User says Agilent 6495C can go down to a dwell time of 0.5ms, but we insist on integer dwell times in UI	guest	3	closed	
+844	Defect	Skyline	Libraries should load without error even if the directory that the library is in is not writeable.	guest	2	closed	21.2
+843	Defect	Skyline	"Update ""_elementMasses"" in MaxQuantReader.cpp"	guest	2	closed	21.2
+842	Todo	Skyline	Add a setting for RT annotation display to Chromatogram graph right-click > properties form	guest	2	closed	
+841	Defect	Skyline	Insert Transition List with heavy precursors results in document that cannot be opened.	guest	2	closed	
+840	Defect	Skyline	is M+Na precursor being handled properly in display of split graphs and heat maps, and is it being used properly in SONAR extraction?	guest	3	closed	
+839	Defect	Skyline	"Inconsistent representation of ""squared"" in IM peak display on chromatogram graphs"	guest	3	closed	
+838	Defect	Skyline	initial zoom on ion mobility heat map should not default to zero as lower range	guest	3	closed	21.1
+837	Defect	Skyline	"Import Peptide wizard ""Configure Full-Scan Settings"" IMS stuff should have its own page/step"	guest	3	closed	21.1
+836	Defect	Skyline	Certain TransitionSettings>Library tab controls dealing with product ion filtering should be declared as proteomic	guest	3	closed	21.2
+835	Defect	Skyline	Audit verification error after minimizing and sharing Skyline document	guest	3	closed	
+834	Defect	Skyline	Precursors for the same peptide with same precursor m/z get lost in the .skyd file	guest	2	closed	
+833	Todo	Skyline	Show rdotp in Peak Areas > Replicate Comparison plot when Normalize To > Heavy is chosen	guest	3	closed	21.2
+832	Defect	Skyline	Improve ZedGraph handing of clipboard exceptions	guest	3	closed	21.2
+831	Defect	Skyline	Change or add an option for MS/MS spectrum graph dotp value in mirror plot with Prosit	guest	2	closed	24.2
+830	Todo	Skyline	"Add a ""High resolution"" check box to Transition Settings - Library - Ion match tolerance"	guest	2	closed	22.1
+829	Todo	Skyline	Change reports to report 1-based AA positions	guest	3	closed	21.2
+828	Todo	Skyline	Make it possible to see RT with more precision in chromatogram graphs	Brian Pratt	3	closed	22.1
+827	Defect	BiblioSpec	X! Tandem point mutations not understood by BlibBuild	guest	2	closed	23.1
+826	Defect	Skyline	Choosing an existing standard during Assay Library import fails to add library spectrum to BLIB	guest	3	closed	21.2
+825	Todo	Skyline	SDRF Reports	guest	3	closed	23.1
+824	Todo	Skyline	Implement command-line option --import-peak-boundaries	guest	3	closed	22.1
+823	Todo	Skyline	Make it easier to export FASTA file of the proteins in the targets window	guest	3	closed	
+822	Defect	Skyline	Show Prosit spectrum always when Mirror is on	guest	3	closed	22.1
+821	Todo	Skyline	Expand multiple selection handling in chromatogram graphs to handle precursors	guest	3	closed	
+820	Defect	Skyline	Ion Mobility Library editor should offer to wipe CCS value when IM value is altered	guest	3	closed	
+819	Todo	Skyline	Implement new option to synchronize integration	guest	2	closed	21.2
+818	Todo	Skyline	BlibBuild needs to write more information to .blib files	guest	2	closed	
+817	Todo	Skyline	Small molecule support for Import > Transition > List column picker	guest	1	closed	21.2
+816	Todo	Skyline	File>Share should offer to include a selection of raw files	guest	3	closed	
+815	Todo	Skyline	Settings UI should offer choices when a change is made that would break consistency	guest	3	closed	22.1
+814	Todo	Skyline	Need a way to more easily run all tests that produce audit logs	guest	3	closed	21.2
+813	Defect	Skyline	"tidy up user-facing notation for mass-only fragments, and adjust sense of ""[M-]"", ""[M+2]"" etc to means ""inherently charged, m/z to mass conversion is simple multiplication, no particles lost/gained"""	guest	3	closed	
+812	Todo	Skyline	Calculate and store peak skewness/asymmetry value	guest	2	closed	23.1
+811	Defect	Skyline	"deal with the TODO from commit ""When adding small molecule library values to a document, just ignore any fragment peaks with absurdly small or large m/z values"""	guest	3	closed	
+810	Defect	Skyline	"Manage Reports - Copy button still has ""Open View Editor"" menu item"	guest	3	closed	21.2
+809	Todo	Skyline	Implement better searching in Library Explorer for small molecules	guest	3	closed	
+808	Todo	Skyline	Change Targeted to PRM and add a SureQuant option to Acquisition method list	guest	3	closed	21.2
+807	Defect	Skyline	Fix/Improve File > Export > Spectral Library	guest	3	closed	21.2
+806	Defect	Skyline	"""Column1"", ""Column2"" etc generated headers in the column picker should be localized."	guest	3	closed	
+805	Defect	Skyline	Stopping SkylineTester does not abort the second run of SkylineNightly	guest	3	closed	
+804	Todo	Skyline	Implement simple filtering for MSP file import	guest	3	closed	
+803	Todo	Skyline	Retain previous iRT values in iRT databases	guest	2	closed	22.1
+802	Todo	Skyline	"Add ""Synchronize Integration"" option"	guest	3	closed	21.2
+801	Defect	Skyline	BiblioSpec MaxQuant reader should look for all necessary raw data files and issue a block error about any that are missing	guest	3	closed	21.2
+800	Defect	Skyline	BiblioSpec MaxQuant reader should look in parent folders for raw data files	guest	3	closed	21.2
+799	Todo	Skyline	Improve Library Match behavior when precursor not selected	guest	3	closed	22.1
+798	Todo	Skyline	When missing chromatograms but we have a RT prediction, we should graph that	guest	3	closed	22.2
+797	Todo	Skyline	Transitions Split Graph confusing for multiple precursor charges	guest	3	closed	22.1
+796	Defect	Skyline	Import Transition List column picker is too sticky	guest	3	closed	21.1
+795	Defect	Skyline	Import Peptide Search library build with Automatic iRT leaves standard peptides hidden	guest	3	closed	21.1
+794	Defect	Skyline	Unable to deselect (or remove) the Prosit library for library matching in Molecule UI	guest	3	closed	
+793	Todo	Skyline	Create a way to limit the set of replicates immediately under analysis without removing replicates	guest	3	closed	
+792	Defect	Skyline	trying to type an adduct description into the Modify... popup is maddening, cursor location keeps jumping back to start of line	guest	3	closed	
+791	Defect	Skyline	Inconsistencies in Small Molecule UI mode make it difficult to reopen a closed Targets window	guest	3	closed	
+790	Todo	Skyline	Edit > Insert > Peptides lacks the ability to add specific precursors	guest	3	closed	
+789	Defect	Skyline	No longer able to reset settings in Tools > Options > Misc tab	guest	2	closed	21.1
+788	Defect	Skyline	Need better handling for IO problems in library load	guest	3	closed	
+787	Todo	Skyline	Custom graph background colors - or maybe just Dark Mode - for Skyline	guest	3	closed	
+786	Defect	Skyline	"Ion mobility library ""use results"" algorithm improvements"	guest	3	closed	
+785	Defect	Skyline	Transition Settings - Ion Mobility - Fixed width value not saved when it is all that changes	guest	2	closed	22.1
+784	Defect	Skyline	Improvements to associating raw files with .sky.zip files (for support, Panorama, ???)	guest	3	closed	
+783	Defect	Skyline	small molecule transition list reader should be more tolerant of missing values for InChIKey etc, and should explain properly when it rejects a mismatch	guest	3	closed	22.1
+782	Defect	Skyline	allow small molecule precursors to support the full range of retention time matching options found in the isotope modification form	guest	3	closed	
+781	Defect	Skyline	"allow user to select which files are used in ion mobility library ""Use Results"""	guest	3	closed	
+780	Defect	Skyline	show m/z value in Ion Mobility Library editor window	guest	3	closed	
+779	Defect	Skyline	"Adapt ion mobility library editor ""Use Results"" to work with FAIMS data"	guest	3	closed	
+778	Defect	Skyline	Pasting into the Target window should be on a LongWaitDialog	guest	3	closed	
+777	Defect	Skyline	Training IMSDB hangs when raw data files are not present	guest	3	closed	20.2
+776	Defect	Skyline	"Standard industry teminology for CCS has landed on ""Collision Cross Section"", we call it ""Collisional Cross Section"" and should change that"	guest	3	closed	
+775	Defect	Skyline	follow up on possible improper parenting of MessageDlg	guest	3	closed	
+774	Defect	Skyline	add an error sense to ion mobility filtering in chromatogram extraction, akin to what we do in the RT dimension	guest	3	closed	
+773	Defect	Skyline	ImportTransitionListColumnSelectDlg needs a better code page for text	guest	3	closed	
+772	Defect	Skyline	ImportTransitionListColumnSelectDlg.CheckForErrors() needs to use a LongWaitDlg	guest	1	closed	21.1
+771	Defect	Skyline	MSP reader should be aware same peptide mods as the rest of Skyline	guest	3	closed	
+770	Todo	Skyline	Allow user to select RT display units - currently fixed at minutes, seconds is desirable too	guest	3	closed	
+769	Todo	Skyline	Support parent ion scanning for Sciex (and Thermo?)	guest	3	closed	
+768	Todo	Skyline	Update audit log to use SHA-256 or better	guest	4	closed	
+767	Defect	Skyline	Phase 2 work item for hierarchical clustering	guest	3	closed	
+766	Todo	Skyline	further enhancements to the Import Transition List column picker	guest	3	closed	
+765	Defect	Skyline	Refactor AuditLog hash calculation	guest	3	closed	20.2
+764	Defect	Skyline	the list of pre-made iRT standards should be filtered based on UI mode - don't present peptide standards for small molecules mode and vice versa	guest	3	closed	
+763	Defect	Skyline	Editing iRT standard in Edit iRT Calculator form no longer sets standard to None	guest	3	closed	20.2
+762	Defect	Skyline	enforce or infer setting ion mobilty units for explicit ion mobility values	guest	3	closed	
+761	Defect	Skyline	User would like to force integration of areas that don't have identifiable peaks	guest	3	closed	
+760	Defect	Skyline	Skyline should probably offer to reimport raw data after user creates or alters an ion mobility library	guest	3	closed	
+759	Defect	Skyline	"""Use Results"" button on the Edit Ion Mobility Library dialog does not fail promptly when raw data is not present"	guest	3	closed	
+758	Defect	Skyline	Chromatogram peaks should show IM information as well as RT	guest	3	closed	
+757	Todo	Skyline	add a display for ion mobility spectrum	guest	3	closed	
+756	Todo	Skyline	add support for Thermo mzVault small molecule spectral libraries	guest	3	closed	
+755	Defect	Skyline	Improved handling of ambiguous entries when importing spectral libraries that are .MSP format database dumps	guest	3	closed	
+754	Todo	Skyline	Make Import Peptide Search wizard smarter about isolation schemes	guest	3	closed	22.1
+753	Defect	Skyline	Value list annotations should not allow empty lists	guest	3	closed	22.1
+752	Todo	Skyline	Add option to use 1-based amino acid position numbering	guest	3	closed	
+751	Defect	Skyline	When creating IM library from results, don't create high energy offsets that are impossible for the equipment (e.g. positive drift time offset - that should only decrease)	guest	3	closed	
+750	Defect	Skyline	small molecule accession numbers in Document Grid should be made editable	guest	3	closed	
+749	Defect	Skyline	Reimport after adding new transitions causes new transitions to have #N/A peak areas	guest	3	closed	20.2
+748	Defect	Skyline	Edit>Insert>TransitionList should issue a warning when ignoring an input line because it duplicates or conflicts with an existing transition	guest	3	closed	
+747	Todo	Skyline	Import > Assay Library should automatically recognize Water and Ammonia losses	guest	2	closed	22.1
+746	Defect	Skyline	Retention time alignment makes mouse act out of phase on aligned replicate graphs	guest	3	closed	20.2
+745	Defect	Skyline	qualification in skyline	guest	3	closed	
+744	Defect	Skyline	qualification 偶发	guest	3	closed	
+743	Documentation	BiblioSpec	Create Bibliospec library (.blib) using Tabular text input (.tsv)	guest	1	closed	
+740	Todo	Skyline	Change the scale of the peptide intensity	guest	3	closed	
+739	Defect	Skyline	setup.exe fails on Windows Server 12 and 16	guest	3	closed	
+738	Defect	Skyline	issue to download Skyline 64bit	guest	3	closed	
+737	Defect	Skyline	Webinar #19: Ion Mobility Spectrum Filtering with Skyline some problem encounter	guest	3	closed	
+736	Defect	Skyline	Webinar #19: Ion Mobility Spectrum Filtering with Skyline some problem encounter	guest	3	closed	
+735	Todo	Skyline	Skyline should attempt BlibBuild conversion when confronted with a spectral library whose format is not natively supported	guest	3	closed	
+734	Defect	Skyline	Enable joining partial .skyd files when the filenames do not have a hash	guest	3	closed	
+733	Todo	Skyline	Can Skyline export the protein intensities?	guest	3	closed	20.2
+732	Defect	Skyline	Exporting user-defined reports from command line	guest	3	closed	
+731	Defect	Skyline	Varying small molecule implementations of .MSP format aren't handled well by Skyline	guest	3	closed	
+730	Defect	Skyline	Peak MS1 integration with FAIMS	guest	2	closed	
+729	Defect	Skyline	Confusing progress indicator behavior on SRM import when targeted transitions are less intense than other unmatched transitions - it just shows grey	guest	3	closed	
+728	Defect	Skyline	AutoQC: retry upload to Panorama if upload fails due to network error	guest	3	closed	
+727	Defect	Skyline	Panorama upload issues	guest	3	closed	22.1
+726	Defect	BiblioSpec	Skyline nonredundant blib format  to MS2  conversion	guest	3	closed	
+725	Defect	Skyline	Need to improve inference of ionization type when reading small molecule .MSP files	guest	3	closed	
+724	Defect	Skyline	Import multiple files as a single run for iRT calibration	guest	3	closed	
+723	Defect	Skyline	Precursors per sample injection think's it is transitions per sample injection	guest	3	closed	
+722	Todo	Skyline	How can I put z+1 ions in the fragments list for ETD?	guest	2	closed	22.1
+721	Defect	Skyline	Skyline cannot properly analyze Agilent QQQ with waste diverter  in the beginning of the run	guest	3	closed	
+720	Defect	Skyline	Upload to Panorama fails when There are custom annotations for the Transitions	guest	3	closed	
+719	Defect	Skyline	Calibration curve of Sodiated Adduct not appearing	guest	3	closed	
+718	Todo	Skyline	Allow overlay of QC traces on chromatograms	guest	3	closed	
+717	Defect	Skyline	"Improve handling of unknown adducts in small molecule transition reader (exception on seeing adduct ""[+]"" not caught gracefully)"	guest	3	closed	
+716	Defect	Skyline	When light and heavy precursors have different sets of transitions, all quantifiable transitions should be summed when calculating Light:Heavy ratios	guest	3	closed	21.1
+715	Defect	Skyline	Prosit not available	guest	3	closed	
+714	Defect	Skyline	Question about Data upload to panorama	guest	3	closed	
+713	Defect	Skyline	Unable to view or explore spectral libraries in Skyline Daily	guest	3	closed	
+712	Defect	Skyline	Acetyl 2H(3) K modification disappears on heavy en medium peptides, when library is created from Maxquant	guest	2	closed	
+711	Defect	Skyline	Troubles with skyline document file upload to LabKey Server	guest	3	closed	
+710	Defect	Skyline	Skyline Unistall problems	guest	3	closed	
+709	Defect	Skyline	Potentially possible to do a better job at routing external tool support requests to tool-specific support boards	guest	4	closed	
+708	Defect	Skyline	Renaming a molecule in Targets tree causes Skyline to miscalculate mass of transition with heavy label adduct	guest	3	closed	19.2
+707	Defect	Skyline	Default report names stuck in installation language	guest	3	closed	22.1
+706	Defect	Skyline	Peptide data not imported for a few peptides	guest	3	closed	
+705	Defect	Skyline	Too much audit logging for Refine > Accept Peptides	guest	3	closed	
+704	Defect	Skyline	Skyline silently fails reading FASTA files with sequences in lowercase	guest	3	closed	
+703	Defect	Skyline	Nightly tutorial tests should not always re-download data sets - makes us too vulnerable to temporary outages	guest	3	closed	
+702	Defect	Skyline	Illegal character is phosphopeptide sequence	guest	3	closed	
+701	Defect	Skyline	Malfunctioning of the reintegration tool	guest	3	closed	
+700	Defect	Skyline	Malfunctioning of the reintegration tool	guest	3	closed	
+699	Defect	Skyline	Malfunctioning of the reintegration tool	guest	3	closed	
+698	Todo	Skyline	Add Mass Errors to Spectrum Match graph	guest	3	closed	
+697	Defect	Skyline	import wizard should not ask about ion mobility handling if the files to be imported don't contain any IM info	guest	3	closed	
+696	Defect	Skyline	"library filename extensions are case sensitive (e.g. Skyline recognizes ""foo.msp"" but not ""foo.MSP"")"	guest	3	closed	19.2
+695	Defect	Skyline	Failed importing results DIA	guest	3	closed	
+694	Defect	Skyline	Audit Log records a failed operation and does not roll it back	guest	3	closed	
+693	Todo	Skyline	"Improve ""Apply Peak to All"" peak matching"	guest	4	closed	
+692	Todo	Skyline	Change some default settings	guest	3	closed	22.1
+691	Defect	Skyline	Limiting Transition Settings - Instrument - Max m/z has unintended consequences on spectral library transition picking	guest	2	closed	19.2
+690	Defect	Skyline	Before starting a new Import > Results we need to check that Decoys are representative of the Targets	guest	2	closed	19.2
+689	Defect	Skyline	File > Export > Spectral Library losing information from small molecule documents	guest	2	closed	
+688	Todo	Skyline	Add Product Loss Formula column to Edit > Insert > Transitions for small molecules	guest	2	closed	19.2
+687	Todo	Skyline	Implement support for charged losses where Skyline currently has only neutral losses	guest	2	closed	19.2
+686	Todo	Skyline	Implement a better system for assigning a version which is not web installed	guest	2	closed	19.2
+685	Defect	Skyline	Show progress in LongWaitDlg for Skyline document import on Panorama	guest	3	closed	19.2
+684	Defect	Skyline	Do not use getContainers to determine if a URL is for a LabKey Server	guest	3	closed	19.2
+683	Todo	Skyline	Add support for opening .skyp files in Skyline	guest	3	closed	19.2
+682	Defect	Skyline	Import peptide search from Start page differs from File > Import > Peptide Search	guest	2	closed	19.1
+681	Todo	Skyline	Export method sorted by m/z	guest	3	closed	
+680	Todo	Skyline	Add access to some of the explicit values added for small molecules to peptide transition list import	guest	3	closed	
+679	Todo	Skyline	Make ion mobility library creation available for use from command-line	guest	3	closed	22.2
+678	Defect	Skyline	Unhandled error when importing peak boundaries for document with no result files	guest	4	closed	
+677	Todo	Skyline	Add PEP (localFDR) as another score beside q values for mProphet picked peaks	guest	3	closed	
+675	Todo	Skyline	View > Proteins and View > Peptides menu items added and remove View > Targets	guest	2	closed	19.2
+674	Todo	Skyline	Work out a way for an interactive tool to know Skyline is closing or has closed	guest	3	closed	
+673	Defect	Skyline	Order By > Annotation in summary plots got broken	guest	2	closed	19.1
+672	Defect	Skyline	Querying UniProt for SGD Yeast FASTA information having problems	guest	1	closed	19.2
+671	Todo	Skyline	Improve small molecule peak boundaries import	guest	3	closed	22.1
+670	Defect	Skyline	SkylineTester's tutorial demo mode should roll forever, and slow down a bit	guest	3	closed	
+669	Todo	Skyline	Consider adding explicit window size for CCS and/or IM for transition list import	guest	3	closed	
+668	Defect	Skyline	UI mode selection capability should be available in the menu system	guest	3	closed	19.2
+667	Defect	Skyline	"Include fragment ion annotation when ""Copy Data"" from Library Match tab"	guest	3	closed	
+666	Defect	Skyline	"The ""Add small molecule test nodes"" checkbox on SkylineTester is obsolete and confusing, should be removed"	guest	3	closed	
+665	Defect	Skyline	Replicate Label Fonts on Graph Axis too small	guest	3	closed	
+664	Todo	Skyline	"Add ""Only max precursor peak"" checkbox below ""Max peptide peak rank"" field in Refine > Advanced - Results tab"	guest	3	closed	19.2
+662	Todo	Skyline	Add View > Peptides > By menu items	guest	3	closed	19.2
+661	Todo	Skyline	Update unimod.xml which is now about 2 years old	guest	3	closed	22.1
+660	Todo	Skyline	revisit changes around ReSharper 2019.1 issues with false null check warnings	guest	3	closed	
+659	Defect	Skyline	need better handling of typing mistakes (or partially completed typing) when user is renaming a peptide	guest	3	closed	
+658	Defect	Skyline	nonstandard (or at least non-intuitive) keystroke handling causes exception	guest	3	closed	
+657	Defect	Skyline	Record BlibBuild command-line arguments in LibInfo table	guest	3	closed	22.1
+656	Todo	Skyline	add diaPASEF support	guest	3	closed	19.2
+655	Defect	Skyline	"adjust behavior of ""Explicit Retention Time"" to match user expectations"	guest	3	closed	19.2
+654	Todo	Skyline	Add support for PEFF extended FASTA format (http://www.psidev.info/peff)	guest	3	closed	
+653	Todo	Skyline	Implement arbitrary peptide proportion grouping	guest	2	closed	19.2
+652	Todo	Skyline	Controlling the (#) suffix added to replicate filenames from a .wiff Import	guest	3	closed	4.3
+651	Todo	Skyline	Document Settings - Reports should have buttons to manage the list or add a new report	guest	3	closed	
+650	Todo	Skyline	Add a menuitem to turn off MIDAS triggered spectra annotations	guest	3	closed	
+649	Todo	Skyline	Need a way for external tools to produce annotations that get imported into the current document	guest	3	closed	22.1
+648	Defect	Skyline	Error when building a library from MetaMorpheus results (*.mzID)	guest	3	closed	4.3
+647	Defect	Skyline	Problems with annotations in reports	guest	2	closed	19.2
+646	Defect	Skyline	Problem to build library from MaxQuant	guest	3	closed	4.3
+645	Defect	Skyline	MaxQuant mod parser will fail when first two letters are shared between 2 different mods	guest	3	closed	
+644	Todo	Skyline	Add ability to set a minimum and maximum when generating optimization values	guest	3	closed	
+643	Defect	Skyline	Problem interpreting modification format found in NIST phospho libraries	guest	3	closed	
+642	Defect	Skyline	BiblioSpec unicode filepath support	guest	3	closed	4.3
+641	Documentation	Skyline	How to assign report template name in Command-line argument	guest	3	closed	4.3
+640	Defect	Skyline	Unable to process chromatograms for the molecule	guest	3	closed	4.3
+633	Defect	Skyline	Usability idea: when we fail to open a Skyline document, check to see if it actually IS a Skyline document	guest	3	closed	
+632	Defect	Skyline	Failure importing SRM runs	guest	3	closed	
+631	Todo	Skyline	Finding *.dat files from the spectral library	guest	4	closed	4.3
+630	Defect	Skyline	rdotp uses Statistics.Angle() when it should be using NormalizedContrastAngleSqrt()	guest	2	closed	21.2
+629	Defect	Skyline	No import due to overlapping chromatogram start times?	guest	2	closed	
+628	Todo	Skyline	Thermo RAW attribute access	guest	3	closed	4.3
+627	Todo	Skyline	Import results from multi-injection wiff files that have the same sample/injection names	guest	3	closed	19.2
+626	Todo	Skyline	Add command-line arguments to select samples to import from multi-injection wiff files	guest	3	closed	19.2
+625	Todo	Skyline	Lipid quant using Skyline and LipidSearch	guest	3	closed	
+624	Todo	Skyline	Audit log format changes	guest	3	closed	
+623	Todo	Skyline	Add command-line arguments to support background proteome creation and adding	guest	4	closed	
+622	Defect	Skyline	Building CCS containing library	guest	2	closed	22.1
+621	Todo	Skyline	Change default centroiding value to summed intensity from trapezoidal area	guest	2	closed	4.3
+620	Todo	Skyline	Expose refinement options through command-line interface	guest	2	closed	19.2
+619	Todo	Skyline	Control of extraction range in MS1 is desirable	guest	3	closed	
+618	Todo	Skyline	Problem accessing MS/MS in method with multiple fragmentation modes	guest	3	closed	
+617	Todo	Skyline	Decoy generation should only maintain C-terminus when it matches the enzyme cleavage pattern	guest	3	closed	
+616	Todo	Skyline	Request for instrument serial numbers as data file attribute in Skyline reports	guest	3	closed	
+615	Todo	Skyline	Add more information to multi-peptide chromatogram labels	guest	4	closed	
+614	Todo	Skyline	Include CSRF token when SkylineNightly posts to LabKey Server	guest	3	closed	4.2
+613	Todo		"Add clarifier ""(in min.)"" to axis legends of Skyline graphs showing duration through time"	guest	4	closed	
+612	Todo	Skyline	Support Pressure Traces in Skyline .skyd files	guest	2	closed	4.2
+611	Defect	Skyline	IndexOutOfRangeException switching spectrum type between MS1 and MS/MS in DDA mode file	guest	2	closed	4.2
+610	Todo	Skyline	Fix MaxQuant library builder to extract original spectra from source data files	guest	2	closed	4.3
+609	Todo	Skyline	Implement a way to remove peaks from a set of PrecursorResults selected in the Document Grid	guest	3	closed	4.3
+608	Defect	Skyline	Conflict with transition Ion exception when two precursors have the same charge state, and transitions with the same mass.	guest	3	closed	4.3
+607	Defect	Skyline	Peak area graph Group By should allow Analyte Concentration	guest	3	closed	4.3
+606	Defect	Skyline	Lists need better audit logging	guest	1	closed	4.2
+605	Todo	Skyline	Resize Previous Files Bar on Start Page	guest	3	closed	22.1
+604	Defect	Skyline	.NET 4.7.2 install on Wwindows 10 1803	guest	4	closed	4.2
+603	Defect	Skyline	Prompt user about removing unused chromatograms when uploading document to Panorama	guest	3	closed	
+602	Defect	Skyline	Enable using the Document Grid to filter and sort Replicate Comparison and Peptide Comparison graphs	guest	3	closed	4.3
+601	Documentation	Skyline	Number of data points per LC peak vs cycle time in scheduled MRM	guest	3	closed	4.2
+600	Defect	Skyline	Skyline-Daily Small molecules: Filter to screen out false positives based on number and proportion of transitions.	guest	3	closed	
+599	Defect	Skyline	Failing importing Agilent GC-MS/MS SRM data after upgrade to 18257	guest	3	closed	4.2
+597	Todo	Skyline	Users would like to be able to tile all chromatograms in a scrollable pane for ease of inspection	guest	3	closed	4.2
+596	Todo	Skyline	"When using a spectral library with ion mobility info, we should direct user's attention to the ""Use Spectral Library Ion Mobility Values"" setting"	guest	3	closed	19.2
+595	Defect	Skyline	Loss of adjusted peak boundaries after copy paste	guest	3	closed	
+594	Defect	Skyline	"The MS1 ""precursor [M-1]"" ion should have Quantitative property off by default"	guest	3	closed	4.1
+593	Defect	Skyline	cannot find spectal library	guest	3	closed	4.1
+592	Defect	Skyline	small molecule targets don't connect with spectral libraries unless created from spectral libraries	guest	3	closed	
+591	Todo	Skyline	Move AutoQC code into Skyline.CommandLine to allow running its functionality without the UI	guest	3	closed	
+590	Defect	Skyline	"SpectrumMill mzXMLs not loading ""no scans match current filter settings"""	guest	3	closed	4.1
+589	Defect	Skyline	Modify Skyline output for data analysis using MSstats	guest	3	closed	4.1
+588	Defect	Skyline	Duplicate vs repeated peptides	guest	4	closed	4.1
+587	Defect	Skyline	SkylineRunner Instant Crash	guest	3	closed	4.1
+586	Defect	Skyline	Pivot Editor causes SkylineWindow deactivation	guest	3	closed	4.2
+585	Defect	Skyline	1 raw file used with 2 skyline template issue	guest	3	closed	4.1
+584	Todo	Skyline	Audit log improvements	guest	3	closed	4.2
+583	Todo	Skyline	Library Match view should show the same metadata (RT,  IM , ?) seen in Library Explorer	guest	3	closed	
+582	Defect	Skyline	Usability idea: use Library Match window even when document wasn't populated from a library	guest	3	closed	
+581	Todo	Skyline	Usability idea: empty document should have getting-started hint text in the Targets window	guest	3	closed	
+580	Defect	Skyline	a couple more adduct description syntax variations seen in the wild	guest	3	closed	4.2
+579	Todo	Skyline	"use ""Natural Sort Order"" for filenames"	guest	3	closed	
+578	Defect	Skyline	Background proteome file not loading shows error message with OK button	guest	3	closed	4.3
+577	Defect	Skyline	Failed to import MassLynx (centered) Q-TOF raw data	guest	3	closed	4.1
+576	Defect	Skyline	Creating Reports: atomic composition (formula) does not contain stable isotope info	guest	3	closed	4.1
+575	Defect	Skyline	Error opening file in skyline-daily	guest	3	closed	4.1
+574	Defect	Skyline	Error downloading small molecule tutorial file	guest	3	closed	4.1
+573	Todo	Skyline	Add -> refine window missing OK / Cancel buttons	guest	0	closed	
+572	Todo	Skyline	Add View > Peak Areas > Regression plots	guest	3	closed	
+571	Defect	Skyline	issue with normalization ratio	guest	1	closed	4.1
+570	Todo	Skyline	Chromatogram extraction should respect Explicit Retention Time Window and not just Explicit Retention Time	guest	3	closed	19.2
+569	Defect	Skyline	Trouble in importing Altis SRM data in skyline daily	guest	1	closed	4.1
+568	Todo	Skyline	For Import of columnar text where we currently guess the column meanings show a grid to choose instead	guest	2	closed	
+567	Todo	Skyline	Add Expand All menu item to Targets View right-click menu when at least 1 parent node is selected	guest	2	closed	24.2
+566	Todo	Skyline	" add a Hide / Show Title menu item everywhere we have Hide / Show Legend, and make it possible to show a descriptive title everywhere (e.g. molecule name for calibration curve plot)"	guest	3	closed	
+565	Todo	Skyline	Accept defined annotation types as valid column headers for small molecule transition lists (and peptide transition lists, while we're at it)	guest	3	closed	22.1
+564	Todo	Skyline	Add checkboxes to invert meaning of Edit > Refine > Accept Proteins/Peptides	guest	3	closed	
+563	Todo	Skyline	Not all document grid columns have descriptions in help	guest	3	closed	4.2
+562	Todo	Skyline	Implement Audit Log for Skyline	guest	2	closed	4.2
+561	Defect	Skyline	Skyline-daily loosing peak integrations	guest	3	closed	4.1
+560	Todo	Skyline	Implement group by graph panes for summary graphs	guest	3	closed	
+559	Todo	Skyline	Cannot load msf result file (PD) when building a library	guest	3	closed	
+558	Todo	Skyline	Add results search paths to Document Settings	guest	3	closed	
+557	Defect	Skyline	ChooseFormatDlg needs a documentation link	guest	3	closed	4.3
+556	Defect	Skyline	Issues with Waters schedule MRM data. Can't load.	guest	3	closed	3.7
+555	Defect	Skyline	Skyline assumes /labkey context path when pinging Panorama	guest	3	closed	4.1
+554	Defect	Skyline	Assigning a wrong peak and not following the spectral library retention time	guest	3	closed	4.1
+553	Defect	Skyline	Support Contains filter for report column that looks like text	guest	3	closed	4.1
+552	Todo	Skyline	Support multiple replicate selection in summary graph panes and Remove Peak	guest	3	closed	
+551	Defect	Skyline	Skyline file not opening	guest	3	closed	4.1
+550	Defect	Skyline	Only iRT traces are imported	guest	3	closed	
+547	Defect	Skyline	XML Error -- Reading mz values; small molecule transition list	guest	3	closed	4.1
+546	Defect	Skyline	Unable to build spectral library	guest	3	closed	4.1
+545	Todo	Skyline	Add Include charge state checkbox to Edit > Insert > Peptides	guest	3	closed	
+544	Defect	Skyline	Discrepancies in Heavy and Light Peptide Chromatogram Import Ranges	guest	3	closed	4.1
+539	Defect	Skyline	Heavy/Light Peptide Chromatogram Import Range Discrepancies	guest	3	closed	4.1
+538	Todo	Skyline	Multi-peptide calibration curves would be nice	guest	3	closed	4.3
+537	Defect	Skyline	How to add a column to the documents or results grid that contains the heavy or ISTD areas?	guest	3	closed	
+536	Defect	Skyline	Points across peak count should scale with chromatogram graph font settings	guest	4	closed	4.1
+535	Defect	Skyline	MS1 chromatograms in scheduled PRM data should get limited to times of matching MS/MS scans	guest	2	closed	4.1
+534	Todo	Skyline	Multi-peptide graph fixes / enhancements	guest	3	closed	
+533	Defect	Skyline	Reporter ion masses must be less than or equal to 5000	guest	2	closed	4.1
+532	Todo	Skyline	X!Tandem in Skyline	guest	3	closed	
+531	Todo	Skyline	Include Replicate Name as column in exported chromatograms	guest	3	closed	4.1
+530	Defect	Skyline	NIST .msp reader ignores peptide entries with n- or c-terminal modifications	guest	3	closed	
+529	Todo	Skyline	Consider imposing spectrum filtering based on Full-Scan settings	guest	3	closed	
+528	Defect	Skyline	Column header sort messes up peak scoring model training grid	guest	3	closed	4.1
+527	Defect	Skyline	Double-clicking .sky file does not seem to work for Administrator Installation	guest	3	closed	21.1
+526	Todo	Skyline	Enhancements to AutoCopyUSB	guest	4	closed	4.1
+525	Defect	Skyline	Results Grid or calibration curve	guest	3	closed	4.1
+524	Todo	Skyline	Make it possible to rename replicates through the Document Grid	guest	3	closed	4.1
+523	Todo	Skyline	Make it easy to connect raw data file sample information to annotations in Skyline	guest	2	closed	4.3
+522	Todo	Skyline	Add a way to add annotations to a document from the command-line	guest	2	closed	4.1
+521	Todo	Skyline	Add CE recognition to transition list import	guest	4	closed	
+520	Todo	Skyline	Make ctrl-Page Up ctrl-Page Down retreat or advance all document panes at once	guest	3	closed	
+519	Todo	Skyline	Synchronize zooming for RT and Area plots	guest	3	closed	4.1
+518	Defect	Skyline	Resolve issue of hard-coding Waters CE equations	guest	4	closed	
+517	Todo	Skyline	Add Remove Peak  and Apply Peak to All menus to retention time graph	guest	3	closed	
+516	Defect	Skyline	Manual peak integrations are reset after import of new results file	guest	0	closed	3.7
+515	Todo	Skyline	Add some way to produce summary statistics to reports by grouping replicate annotations	guest	1	closed	4.1
+514	Todo	Skyline	Expand neutral loss support to allow for charged losses from the precursor	guest	3	closed	
+513	Defect	Skyline	Fix ExclusionUseDIAWindow setting to consider IsolationWindow.MethodStart and MethodEnd	guest	3	closed	
+512	Todo	Skyline	Add summary statistics for q values	guest	3	closed	20.2
+511	Todo	Skyline	Request for customizable bulk peak removal	guest	2	closed	4.1
+510	Todo	Skyline	Updates to iRT standards necessary	guest	3	closed	3.7
+509	Todo	Skyline	remoove limit of 200aa or  increase this number for analysis top-down  or middle-down  data	guest	3	closed	3.7
+508	Defect	Skyline	"Make SkylineCmd.exe return non-zero when a line starting with ""Error:"" is output"	guest	2	closed	4.1
+507	Documentation	Skyline	Skyline Menu for all terminology.	guest	3	closed	3.7
+506	Todo	Skyline	Add Cone Voltage optimization support for Waters triple quadrupoles	guest	3	closed	3.7
+505	Todo	Skyline	Add RF Lens optimization for Thermo triple quadrupole	guest	3	closed	
+504	Todo	Skyline	Add support for CE optimization for PRM on Waters Xevo QTOF	guest	2	closed	
+503	Todo	Skyline	Improve document minimizing and command-line support	guest	2	closed	
+502	Todo	Skyline	Improve UnimodCompiler to preserve modification more than one decimal place for modifications that require more to disambiguate	guest	2	closed	4.1
+501	Defect	Skyline	Improve BlibBuild handling of multiple searches on the same raw data files	guest	3	closed	3.7
+500	Defect	Skyline	Instrument tab not limiting time for extraction based on RT prediction	guest	3	closed	4.3
+499	Todo	Skyline	Mass error replicate comparison does not support split graph	guest	3	closed	4.3
+498	Defect	Skyline	Theoretical peptide z ion does not match	guest	3	closed	3.7
+497	Defect	Skyline	Ignore full-scan settings for retention time prediction when importing SRM data	guest	3	closed	21.1
+496	Defect	Skyline	Cannot publish data to Panorama.	guest	3	closed	3.6
+495	Todo	Skyline	More flexibility in View > Arrange Graphs > Grouped	guest	4	closed	
+494	Defect	Skyline	Can Skyline Support Waters UNIFI data format .UEP file	guest	2	closed	3.7
+493	Defect	Skyline	iRT standard peptides added to document can gain extra precursors	guest	3	closed	3.6
+492	Defect	Skyline	Another library building error	guest	2	closed	
+491	Defect	Skyline	Issue with building spectral library	guest	3	closed	3.6
+490	Defect	Skyline	ID line	guest	3	closed	3.6
+489	Defect	Skyline	Importing negative ion transitions from Masshunter (small molecules)	guest	2	closed	3.6
+488	Defect	Skyline	Peptide uniqueness change should probably ignore automanage states, or at least offer to	guest	3	closed	
+487	Defect	Skyline	make automanage status of each node knowable (ideally changeable) in DocumentGrid	guest	3	closed	4.3
+486	Todo	Skyline	Come up with clearer way of informing a user that iRT regression was not good enough	guest	2	closed	
+485	Todo	Skyline	Add Help > Check for Updates	guest	3	closed	3.6
+484	Todo	Skyline	Add confidence intervals for slope and intercept in calibration regressions	guest	3	closed	22.1
+483	Defect	Skyline	Precursor isotope peaks (M+1, M+2) not automatically shown for small molecules	guest	3	closed	3.6
+482	Todo	Skyline	set negative ion mode for peptides	guest	3	closed	3.6
+481	Defect	Skyline	Error trying to access Tool Store in Skyline Daily	guest	3	closed	3.6
+480	Defect	Skyline	Skyline Daily does not support Agilent Automation Tool	guest	3	closed	3.6
+479	Defect	Skyline	Skyline Daily shows no data when there is data - Agilent QQQ	guest	2	closed	3.6
+478	Defect	Skyline	Peak Boundary List File Fails to Load	guest	3	closed	3.5
+477	Todo	Skyline	Request for occupancy proportion report value	guest	3	closed	
+476	Defect	Skyline	Issues with QuaSAR	guest	3	closed	3.6
+475	Defect	Skyline	Need to close and reopen Document Grid after adding new annotations	guest	2	closed	4.3
+474	Defect	Skyline	Ask user about Library settings if changing peptide Filter settings	guest	3	closed	
+473	Defect	Skyline	Missing 2nd transition for some samples_small molecules	guest	3	closed	3.6
+472	Defect	Skyline	method export for Quantiva failed	guest	3	closed	3.6
+471	Defect	Skyline	MaxQuant library builder fails to understand T(2) modification	guest	2	closed	3.6
+470	Todo	Skyline	Add TotalAreaMS1Adjusted column to reports	guest	3	closed	4.3
+469	Todo	Skyline	document grid TransitionResult should show extraction width, as well as drift time and window	guest	3	closed	
+468	Defect	Skyline	S-lens value isn't written to Exported transition list when checked	guest	3	closed	3.6
+467	Defect	Skyline	Skyline-daily (3.5.1.9673, 64-bit) locks up when uploading .raw files.	guest	3	closed	3.6
+466	Defect	Skyline	SkylineRunner scriptability improvements: version number and help info from commandline, and non-zero exit code on error	guest	2	closed	19.2
+465	Defect	Skyline	Generating DIA Isolation Schemes with Optimize window placement does not work correctly for odd m/z (or fractional m/z) Window widths	guest	1	closed	3.6
+464	Todo	Skyline	Support exporting isolation list from command line	guest	3	closed	3.6
+463	Defect	Skyline	Automating Skyline for HT Proteomics with Skyline Runner	guest	3	closed	3.6
+462	Defect	Skyline	"Add ""Thermo TSQ Quantiva"" to transition settings"	guest	2	closed	3.6
+461	Defect	Skyline	Unable to change transition settings	guest	3	closed	3.6
+460	Defect	Skyline	provide a means of updating protein metadata to current Uniprot level for document and background proteome	guest	3	closed	
+459	Defect	Skyline	Only one chromatogram type in Full-Scan graph for chromatogram clicked in split graph mode	guest	3	closed	21.1
+458	Defect	Skyline	MRM Chromatogram not Processed	guest	3	closed	
+457	Todo	Skyline	Add access to SpectraST retention times to library implementation	guest	3	closed	3.6
+456	Defect	Skyline	"reimport after changing full scan settings to ""Centroided"" doesn't actually perform centroiding"	guest	3	closed	
+455	Todo	Skyline	Add option to allow exporting mass errors with File > Export > Chromatograms	guest	3	closed	
+454	Todo	Skyline	Remove asymetric isolation scheme support and add ability to specify a margin	guest	3	closed	3.6
+453	Todo	Skyline	Add check box to Digestion tab to allow removal of protein N-terminal Methionine	guest	3	closed	
+452	Defect	Skyline	Copy-paste fails to recognize equivalent modifications with different names	guest	3	closed	
+451	Todo	Skyline	Add redundant library access to Library Explorer	guest	3	closed	
+450	Defect	Skyline	Skyline should warn when importing a transition list with values that exceed the current instrument m/z range	guest	3	closed	
+449	Defect	Skyline	LIBRARY BUILD ERROR	guest	2	closed	3.6
+448	Defect	Skyline	Add optimization step to compound names in Quantiva method/transition list export	guest	3	closed	3.6
+447	Defect	Skyline	Change of e-mail address	guest	3	closed	3.6
+446	Defect	Skyline	idopt not shown when log view activated	guest	3	closed	22.1
+445	Defect	Skyline	DIA-MS on Fusion	guest	3	closed	3.2
+444	Todo	Skyline	Add errors and warnings for documents where Full-Scan settings do not match Filter ion types	guest	3	closed	3.2
+443	Todo	Skyline	Improve behavior of Cancel for a re-import or re-score operation	guest	3	closed	
+442	Todo	Skyline	Skyline should prefer heavy spectra in many cases	guest	2	closed	
+441	Todo	Skyline	Reevaluate Edit > Refine > Advanced for new filtering opportunities	guest	3	closed	
+440	Defect	BiblioSpec	Graceful failure during MaxQuantReader constructor	guest	3	closed	
+439	Defect	Skyline	MS1 Full-Scan import = match with mascot search, ppm values missing	guest	3	closed	3.2
+438	Defect	Skyline	"Make ""Insert Transition List"" for small molecules tolerant of empty product ion columns"	guest	3	closed	3.2
+437	Todo	BiblioSpec	Improve performance of BlibBuild spectral library building from pepXML/mzXML	guest	2	closed	3.2
+436	Todo	Skyline	Add TraML as a transition list import format	guest	3	closed	
+435	Defect	Skyline	Problem handling 'Optimize CE' data	guest	3	closed	3.2
+434	Todo	Skyline	Add chromatogram export support to command-line interface	guest	3	closed	3.2
+433	Defect	Skyline	Allow Remove Peak and Apply to All from peptide view with multiple precursors	guest	2	closed	3.2
+432	Todo	Skyline	Make it possible to view instrument-specific scan information from the full-scan view	guest	3	closed	
+431	Todo	Skyline	Allow clicking on totals chromatograms to show Full-Scan graph	guest	3	closed	
+430	Defect	Skyline	Cancelling report export leaves a truncated report on disk	guest	3	closed	3.2
+429	Todo	Skyline	Extend the Insert Transition List dialog to be as flexible for peptides as it is for small molecules	guest	3	closed	22.1
+428	Defect	Skyline	Mulriple injection import error when no scans match document peptides or current filter settings	guest	3	closed	
+427	Todo	Skyline	Create Thermo TraceFinder export tool	guest	2	closed	3.6
+426	Todo	Skyline	Add peak area shading to show the area integrated in Skyline	guest	2	closed	3.2
+425	Defect	Skyline	Hard to figure out how to filter on true/false columns in Document Grid	guest	2	closed	3.2
+424	Defect	Skyline	Colored summary chromatogram disappeared with latest Skyline-daily update	guest	3	closed	3.2
+423	Defect	BiblioSpec	Handle multiple modifications on the same residue	guest	4	closed	
+422	Todo	Skyline	Attempt to make Skyline ignore spectra from incorrect mass analyzer type	guest	3	closed	
+421	Defect	Skyline	Implement cursor changes for the start-up form	guest	4	closed	3.2
+420	Todo	Skyline	Add refinement option for DDA data based on peak IDs	guest	4	closed	
+419	Todo	Skyline	Add SkylineRunner support for Edit > Refine > Reintegrate	guest	3	closed	3.2
+418	Todo	Skyline	Improve peak removal UI	guest	3	closed	3.2
+417	Todo	Skyline	Add explicit property support for peptides	guest	3	closed	3.2
+416	Defect	Skyline	Having many disconnected network drives causes the Import Results form to hang for a long time	guest	3	closed	3.2
+415	Defect	Skyline	Transition list import should pick modified sequence column over bare sequence column	guest	3	closed	3.2
+414	Todo	Skyline	Add the ability to show the center of mass and possibly the target mass for an extraction region in the full-scan graph	guest	3	closed	
+413	Defect	Skyline	Keep optimization values from being negative	guest	2	closed	
+412	Todo	Skyline	Need ways to see isolation windows on full-scan graphs	guest	3	closed	22.1
+411	Defect	Skyline	Column filters do not apply to Export and Copy All	guest	1	closed	3.1
+410	Defect	Skyline	Multiple selection color is too faint	guest	3	closed	3.2
+409	Defect	Skyline	Skyline guesses poorly when it encounters AQUA/SILAC labeling	guest	3	closed	
+408	Defect	Skyline	Group comparison grid and graph can become disconnected	guest	1	closed	3.2
+407	Defect	Skyline	Opening a .sky file in a .zip file can be confusing	guest	2	closed	4.3
+406	Defect	Skyline	Need better error message for Waters instruments when multiple RT windows are required	guest	3	closed	3.2
+405	Todo	Skyline	Add View > Group Comparisons > Edit List... item	guest	3	closed	3.2
+404	Todo	Skyline	Increased versioning requested for validated environments	guest	3	closed	
+403	Todo	Skyline	Make it possible to choose top N transitions for quantification	guest	1	closed	20.2
+402	Todo	Skyline	Make it possible to do group comparison normalization by a replicate annotation value	guest	3	closed	3.2
+401	Defect	Skyline	AssumptionException SummaryPeptidePeakData.GetMzFilters	guest	3	closed	4.3
+400	Todo	Skyline	Add option to export chromatograms to SkylineRunner	guest	2	closed	3.6
+399	Defect	Skyline	Instrument info not imported from RAW file	guest	3	closed	3.1
+398	Todo	BiblioSpec	Investigate Mascot score threshold	guest	3	closed	3.1
+397	Todo	Skyline	Support mzid and pride xml from PeptideShaker	guest	3	closed	3.1
+396	Todo	Skyline	Naming convention for peptides in Thermo Quantiva transition list export	guest	3	closed	3.1
+395	Defect	Skyline	Exception thrown trying to sort Results Grid	guest	3	closed	3.1
+394	Defect	Skyline	Skyline not in Alt-Tab list when Customize View is showing	guest	3	closed	3.1
+393	Defect	Skyline	Use different strategy when we detect slow loading of Thermo files over the network	guest	4	closed	3.1
+392	Defect	Skyline	Problems importing spectral libraries from DDA to iRT libraries	guest	3	closed	3.1
+391	Defect	Topograph	Discrepancies in point count	guest	1	closed	3.1
+390	Defect	Topograph	Cannot access individual protein half-lives within Topograph	guest	0	closed	3.1
+389	Todo		Finalize AutoQC	guest	3	closed	3.1
+388	Todo		Test Results	guest	3	closed	3.1
+387	Todo	Skyline	L10N for VS2013/RS9 & team city fail builds	guest	3	closed	3.1
+386	Todo		Skyline slider	guest	3	closed	3.1
+385	Todo	Skyline	Web args collector documentation	guest	3	closed	
+384	Todo		Sign Up module	guest	3	closed	3.1
+383	Todo	Skyline	Monitoring charged losses could be made easier	guest	3	closed	
+382	Todo	Skyline	Improve modifications for glycans	guest	3	closed	
+381	Defect	Topograph	Protein Key is not displaying the correct information	guest	0	closed	3.1
+380	Todo	Skyline	Add support for PRM and DIA-with-DDA workflows to Import Peptide Search wizard	guest	2	closed	3.1
+379	Defect	Skyline	Small molecules: Annotations and user-set peaks don't serialize properly for custom molecules	guest	1	closed	3.1
+378	Todo	Skyline	Add support for IDPicker 3 .idpDB as an a search result format for BlibBuild	guest	3	closed	3.1
+377	Todo	Topograph	Need to limit the peptides used in calculating PP enrichment to those from short-lived proteins	guest	1	closed	3.1
+376	Defect	Skyline	Background Proteome Problems -“Resolving protein details for background proteome not working”	guest	3	closed	
+375	Defect	Skyline	Small molecules: need negative ion capability	guest	3	closed	3.1
+374	Defect	Skyline	Small molecules: users want to import m/z values, not masses	guest	3	closed	3.1
+373	Defect	Skyline	Small molecules: Insert Transition list doesn't construct the tree properly	guest	3	closed	3.1
+372	Defect	Skyline	Small Molecule issues with transition settings	guest	3	closed	3.1
+371	Defect	Skyline	Small molecules: need to be able to import and/or set CE, RT and DT for individual precursors and products	guest	3	closed	3.1
+370	Defect	Skyline	Small Molecule CE Output not working	guest	3	closed	4.1
+369	Defect	Skyline	"""An item with the same key has already been added"" when adding peptides from a library"	guest	2	closed	3.1
+368	Todo	Skyline	Tool Require Multiple R Versions	guest	3	closed	
+367	Defect	Topograph	Results by Cohort feature produces no output	guest	1	closed	3.1
+366	Defect	Topograph	Mass accuracy cannot be changed for an individual protein/peptide	guest	3	closed	3.1
+365	Defect	Skyline	Make peptide matching to background proteome more flexible	guest	3	closed	3.7
+364	Todo	Skyline	Add PeptideTotalArea and ProteinTotalArea values to reports and graphs	guest	3	closed	20.2
+363	Todo	Skyline	Handle Mascot Distiller settings which are problematic for Skyline	guest	3	closed	3.1
+362	Todo	Skyline	Add support to Skyline for querying a Mascot Server directly for search results	guest	3	closed	
+361	Defect	Skyline	Shrink font before hiding dtop or idotp values on the Peak Areas graph	guest	3	closed	3.1
+360	Defect	Skyline	Review all forms with tips and extend AutoPopDelay to 60000 (1 minute)	guest	3	closed	3.6
+359	Defect	Skyline	Double-click to zoom out on chromatogram graphs not reflected in synchronized zooming	guest	4	closed	
+358	Defect	Skyline	Tool Framework Python package installation bug	guest	3	closed	
+357	Todo	Skyline	Add support for Thermo Fusion method export to Skyline	guest	2	closed	3.1
+356	Todo	Skyline	Implement export isolation list for Waters Q-TOF	guest	1	closed	3.1
+355	Todo	Skyline	Add support for RT column to BiblioSpec SSL spectrum matching format	guest	3	closed	3.1
+354	Defect	Skyline	CE optimization library populated with data for labeled peptides does not work for analyte peptides	guest	3	closed	3.1
+353	Defect	Topograph	Custom view info lost with upgrade; cannot use Customize View	guest	2	closed	3.1
+352	Todo	Skyline	Annotate reporter ions in Library Match graph	guest	2	closed	22.1
+351	Defect	Topograph	Reject/Accept setting does not work from Half-Life tab for a protein	guest	2	closed	3.1
+350	Defect	Topograph	Cannot click through on peptide names from Half-Life view of protein	guest	3	closed	3.1
+349	Defect	Skyline	Acquired time attribute lost for files on Chorus	guest	2	closed	
+348	Todo	Skyline	Implement intensity threshold for Edit > Refine > Advanced	guest	3	closed	4.1
+347	Todo	Skyline	More work on full-scan graph for ion labels in unzoomed mode	guest	2	closed	
+346	Todo	Skyline	Make multi-peptide graphs clickable	guest	2	closed	3.1
+345	Defect	Skyline	Import Peptide Search wizard should show full-scan settings no matter what	guest	2	closed	3.1
+344	Defect	Skyline	Exclude spectrum source files checkbox present in ImportResultsControl but not functional	guest	2	closed	3.1
+343	Todo	Skyline	Tool store display order	guest	4	closed	
+342	Defect	Skyline	Spectral Library Explorer and MS1 Analysis	guest	3	closed	
+341	Defect	Skyline	Centroided spectra show up with profile lines in full-scan graph	guest	3	closed	2.6
+340	Todo	Skyline	Support pasting a list of protein accession numbers directly into Skyline when the document has a background proteome	guest	3	closed	
+339	Todo	Skyline	Support charged loss from precursor ions	guest	3	closed	
+338	Todo	Skyline	Support Thermo Crystal library format	guest	3	closed	3.1
+337	Defect	Skyline	mascot v2.4 MS1 import raw data	guest	2	closed	2.6
+335	Todo	Skyline	Improve access to optimization values in Skyline UI	guest	3	closed	22.1
+334	Defect	Skyline	RT prediction not working for all decoy types	guest	3	closed	2.6
+333	Todo	Skyline	"Add ""Exclude precursor isolation window"" checkbox to Transition Settings - Filter"	guest	3	closed	2.6
+332	Defect	Skyline	Skyline crashes while uploading document to a Panorama server with no disk space	guest	3	closed	2.6
+331	Todo	Skyline	Improve Import Results form	guest	3	closed	
+330	Todo	Topograph	Group fly peptides by CG number	guest	3	closed	2.6
+329	Defect	Topograph	Workaround for replicates with 100% turnover to prevent ValueOutOfRange error	guest	3	closed	2.6
+328	Todo	Skyline	Implement support for associating protein FASTA after a document exists as a set of peptide lists	guest	3	closed	
+327	Defect	Skyline	File | Import | TransitionList... always gives charge state 1 if there is a peptide mass column to the left of the actual m/z column	guest	3	closed	19.2
+326	Defect	Skyline	Group by peak area graphs should not stack when showing all transitions	guest	3	closed	4.3
+325	Todo	BiblioSpec	Add support for .idXML as an a search result format for BlibBuild	guest	3	closed	
+324	Todo	Skyline	Improve unexpected error UI to solicit more information	guest	3	closed	3.1
+323	Defect	Skyline	Fix PeptideDocNode.CalcBestResult() to use current peak scoring algorithm	guest	3	closed	
+322	Defect	Skyline	Changing selected file in GraphChromatogram does not update Targets view	guest	3	closed	
+321	Todo	Skyline	Add relative ion abundance columns to reports	guest	3	closed	
+320	Todo	Skyline	Add support for .sptxt as an a search result format for BlibBuild	guest	3	closed	2.6
+319	Todo	Skyline	Add support for SpectraST retention times to Skyline	guest	3	closed	3.1
+318	Todo	Skyline	Add multi-peptide RT graph	guest	3	closed	
+317	Todo	Skyline	Add UI to Accept Peptides form to allow specifying a list of proteins	guest	2	closed	3.2
+316	Defect	Skyline	Saving a minimized skyline doc which uses an XHunter library doesn't work if peptide ranking is turned on	guest	3	closed	
+315	Todo	Skyline	Improve support for library scores in Skyline	guest	3	closed	
+314	Defect	Skyline	Support modifications not associated with an amino acid in SSL format for spectral library building	guest	2	closed	3.1
+313	Todo	Skyline	Add separate groups for Live Report views	guest	3	closed	3.1
+312	Todo	Skyline	Add Tools > Options - Language tab to v2.5 branch	guest	0	closed	2.5
+311	Defect	Skyline	IndexOutOfRangeException UniquePrefixGenerator.GetUniquePrefix	guest	3	closed	2.5
+310	Defect	Skyline	IndexOutOfRangeException in GraphChromatogram.DisplayPeptides	guest	3	closed	2.5
+309	Defect	Skyline	Problems running R for MSstats on computers that report successful installation	guest	2	closed	2.5
+308	Defect	Skyline	Missing R.exe after MSstats installation	guest	3	closed	3.1
+307	Todo	Skyline	Get Skyline window on screen faster	guest	2	closed	3.1
+306	Defect	Skyline	Message box timeout code should be disabled when pausing a test	guest	1	closed	2.6
+305	Defect	Skyline	Columns appear multiple times in PrescursorResults view	guest	1	closed	2.5
+304	Defect	Skyline	Proteins added to an existing protDB don't get digested	guest	3	closed	
+303	Localization	Skyline	"LOCALIZATION: Create build tool that scans the source for strings without ""Not L10N"""	guest	3	closed	2.6
+302	Localization	Skyline	LOCALIZATION: Make SkylineRunner command-line interface localizable	guest	3	closed	2.6
+301	Localization	Skyline	LOCALIZATION: Several strings have been added since .resx files were given to Language Scientific	guest	3	closed	2.5
+300	Defect	Skyline	Change encoding of filepaths in .skyd files from Default to UTF-8	guest	3	closed	2.6
+299	Defect	Skyline	chromatogram extraction with .wiff data in TestMS1Tutorial is about 2x slower when run in French or Japanese	guest	3	closed	2.6
+298	Todo	Skyline	Add accession number and human readable protein name to proteins	guest	2	closed	2.6
+297	Localization	Skyline	LOCALIZATION: Live reports toolbar not localized	guest	3	closed	2.5
+296	Defect	Skyline	IrtDb can prevent document from being saveable.	guest	2	closed	2.5
+295	Defect	Skyline	InvalidOperationException in TransitionGroupDocNode.CalcMatchingPeak	guest	2	closed	2.5
+294	Defect	Skyline	peak splitting	guest	3	closed	2.6
+293	Defect	Skyline	Unhandled exception	guest	3	closed	2.6
+292	Todo	Skyline	Add Replicate Comparison order for View > Arrange Graphs > Grouped	guest	3	closed	3.6
+291	Defect	Skyline	Results grid last selected customized view needs to be remembered	guest	3	closed	2.5
+290	Todo	Skyline	Add in-place filtering to Live Reports	guest	3	closed	3.1
+289	Localization	Skyline	LOCALIZATION: Report headers cannot be translated	guest	3	closed	2.6
+288	Defect	Skyline	InvalidOperationException in AdlerChecksum.MakeForString if type filename into Import Results File Open Dialog	guest	2	closed	2.5
+287	Defect	Skyline	ArgumentOutOfRangeException in ChromDataSet.SetBestPeak	guest	2	closed	2.5
+286	Defect	Skyline	NRE in TransitionPeakPairData<TData>.GetMatchingReferencePairs	guest	2	closed	2.5
+285	Defect	Skyline	"""An item with the same key has already been added"" exception in TargetDecoyGenerator.PopulateDictionary"	guest	2	closed	2.5
+284	Defect	Skyline	"Fix sluggish update of multiple peptides graph after ""Select All"" on a large document"	guest	1	closed	3.2
+283	Defect	Skyline	Synchronized zooming should work for tabbed graphs	guest	4	closed	
+282	Todo	Skyline	Add new TotalArea values to reports	guest	3	closed	2.6
+281	Defect	Skyline	MSStats (Skyline External Tool) installation is noisy and full of scary warnings	guest	3	closed	
+280	Defect	Skyline	"""External Tools | Add""  UI is mildly confusing - presents a picklist where it should be a simple textbox"	guest	4	closed	
+279	Documentation	Skyline	Merge QuaSAR GenePattern documentation with Tool Store version	guest	3	closed	2.2
+278	Defect	Skyline	BiblioSpec bug parsing pep.xml from Prospector	guest	3	closed	2.5
+277	Defect	Skyline	Add ByOnic support to BiblioSpec	guest	3	closed	2.5
+276	Defect	Skyline	MaxQuant no matching mod error in BiblioSpec	guest	3	closed	2.5
+275	Documentation	Skyline	Create External Tools examples for Web Sites and Java Tools	guest	4	closed	
+274	Defect	Skyline	Refactor new Live Reports class names to stop using the product name Skyline	guest	3	closed	3.1
+273	Defect	Skyline	Dot-product labels clipped in peak area graphs	guest	3	closed	3.1
+272	Defect	Skyline	NRE in MS1Probe external tool	guest	3	closed	2.1
+271	Todo	Skyline	Add group-by queries to exported reports	guest	1	closed	4.1
+270	Todo	Skyline	Save window layouts in a way that allows them to be used across documents	guest	4	closed	
+269	Todo	Skyline	Allow m/z or ppm tolerance for chromatogram extraction	guest	3	closed	3.1
+268	Todo	Skyline	Create UI to allow hiding/showing replicates	guest	3	closed	
+267	Todo	Skyline	Change Skyline File > Share file extension to .sky.zip	guest	3	closed	2.2
+266	Defect	Skyline	Fail to create peptide library by using .mzid file from MSGF+ searching result!	guest	2	closed	2.5
+265	Defect	Skyline	Skyline won't recognize precursor transitions in certain RAW files	guest	3	closed	2.1
+264	Todo	BiblioSpec	Clarify limitation on BlibBuild reading vendor raw files and consider lifting it	guest	3	closed	
+263	Defect	Skyline	Too strict about choosing only one precursor for every MS/MS scan in Targeted MS/MS	guest	3	closed	2.1
+262	Todo	Skyline	Add way to specify charge state when pasting peptide lists	guest	3	closed	
+261	Todo	Skyline	Add a raw intensity filter for peaks to Edit > Refine > Advanced	guest	3	closed	
+260	Defect	Skyline	ArgumentOutOfRangeException pasting into calibrate window	guest	2	closed	2.1
+259	Defect	Skyline	Near isobars in spectral library building getting merged	guest	2	closed	4.1
+258	Defect	Skyline	InvalidOperationException clicking on column to sort rows in EditIrtCalcDlg.Calibrate	guest	2	closed	2.1
+257	Defect	Skyline	DIA isolation scheme editor needs an instrument method mode	guest	3	closed	2.6
+256	Defect	Skyline	Fix normalized CE column for Q Exactive isolation list export	guest	2	closed	2.1
+255	Todo	Skyline	Create ToolReportCache class to make repeated analysis faster	guest	2	closed	2.1
+254	Todo	Skyline	Peak Areas > Peptide Comparison graph should have stacked all transitions display	guest	3	closed	
+253	Todo	Skyline	Create Document Settings form and implement fold-change statistics	guest	2	closed	
+252	Defect	Skyline	Light and heavy transitions can be different for several cases	guest	3	closed	3.1
+251	Defect	BiblioSpec	BlibFilter crashes, if it cannot find :redundant: in the library LSID	guest	3	closed	2.1
+250	Todo	Skyline	Method and transition list export for Waters Xevo uses a constant cone voltage of 35	guest	4	closed	
+249	Todo	Skyline	Add support for storing optimized CE values in a database file like iRT	guest	3	closed	2.6
+248	Todo	Skyline	Add light to heavy dot-products	guest	3	closed	2.2
+247	Todo	Skyline	Add modification sites field to Skyline custom reports	guest	4	closed	
+246	Todo	Skyline	Enable scheduled targeted-MS/MS method export on Orbitrap Elite, etc.	guest	4	closed	
+245	Todo	Skyline	Support MSGF+ pepXML in BlibBuild	guest	2	closed	2.1
+244	Todo	Skyline	Add Thermo Quantiva to Export > Transition List options	guest	3	closed	2.1
+243	Todo	Skyline	Add tool tips to some of the graphs	guest	4	closed	
+242	Todo	Skyline	Add option to show only chromatograms for transitions that contribute to total peak area	guest	4	closed	4.2
+241	Defect	Skyline	Improve BlibFilter best spectrum picking for targeted MS/MS data	guest	2	closed	2.1
+240	Todo	Skyline	Add Row and Column to View > Arrange menu	guest	4	closed	3.1
+239	Defect	Skyline	Raw data for certain transitions not being imported from Xevo into Skyline	guest	3	closed	2.1
+238	Todo	Skyline	Add ability to import peptide search to SkylineRunner	guest	3	closed	3.2
+237	Defect	Skyline	Popup pick lists can end up inserting nodes that are out of sync with the settings	guest	3	closed	
+236	Defect	Skyline	error in building spectral library	guest	3	closed	2.1
+235	Todo	Skyline	Auto-check HTTPS for Panorama server configuration when HTTP is specified and fails	guest	3	closed	2.1
+234	Todo	Skyline	Preserve tree expansion in PublishDocumentDlg	guest	3	closed	2.1
+233	Defect	Skyline	Move from dictionary to array in pwiz.Skyline.Model.Results.ChromDataCollectorSet.ProcessExtractedSpectrum(Double, ExtractedSpectrum)	guest	3	closed	2.5
+232	Defect	Skyline	Improve chromatogram read performance for large full-scan files	guest	3	closed	3.1
+231	Defect	Skyline	Fix MSGraph to include annotation boundaries in graph scaling	guest	3	closed	2.1
+230	Todo	Skyline	Add Filter By... menu item with Group By and Order By	guest	3	closed	3.1
+229	Todo	Skyline	Add ability to specify a list of peptide sequences to BlibBuild	guest	2	closed	2.1
+228	Defect	Skyline	When re-importing, peak boundaries that have been manually set should recompute integration	guest	2	closed	21.2
+227	Todo	Skyline	Show more complete list of error transitions on paste of transition list	guest	3	closed	
+226	Defect	Skyline	Need better error message when isolation windows conflict	guest	3	closed	2.6
+225	Todo	Skyline	Streamline File > Publish to Panorama first use	guest	3	closed	2.1
+224	Defect	Skyline	Fix SkylineRunner to support multiple instances running at the same time	guest	3	closed	2.1
+223	Todo	Skyline	Add PPM and resolution options to Transition Settings - Library - Ion match tolerance	guest	3	closed	
+222	Todo	Skyline	Prediction versus confidence intervals in peak area plots	guest	3	closed	
+221	Todo	Skyline	Add retention time prediction indicators to retention time summary graphs	guest	3	closed	
+220	Todo	Skyline	Enable sorting by annotation value in Replicate Comparison	guest	3	closed	2.1
+219	Defect	Skyline	Import results with folder selected does not work as expected	guest	3	closed	2.1
+218	Todo	Skyline	Add checkbox to Transition Settings - Filter to add neutral loss ions	guest	3	closed	
+217	Defect	Skyline	Importing a Document with the DIA analysis of same files, different peptides	guest	3	closed	
+216	Todo	Skyline	Add ragged end flag to the Peptide class and expose this value in reports	guest	4	closed	
+215	Todo	Skyline	Add graph properties to allow user control of axis label font size and orientation	guest	3	closed	3.1
+214	Todo	Skyline	Ambiguous peptide spectrum matches are removed during library building without any notification	guest	3	closed	3.1
+213	Defect	Skyline	Unhandled InvalidOperationException	guest	3	closed	
+212	Todo	Skyline	Add filter exclusion for peptide duplication	guest	3	closed	3.1
+211	Defect	Skyline	Unhandled System.NullReferenceException in pwiz.Skyline.Model.Find.BookmarkEnumerator.set_Current	guest	2	closed	1.4
+210	Defect	Skyline	Unhandled exception in RecordNavBar.UpdateAll()	guest	2	closed	2.1
+209	Todo	Skyline	Add Peptides.StructuralModifiedSequence to custom report fields in Skyline	guest	1	closed	1.4
+208	Todo	Skyline	Allow R scripts to act as external tools in Skyline	guest	3	closed	2.1
+207	Todo	Skyline	Add a Prompt for arguments check box to the External tools form in Skyline	guest	2	closed	2.1
+206	Todo	Skyline	Skyline should show progress in the status bar when a report is being generated for an external tool	guest	2	closed	2.1
+205	Todo	Skyline	Add Auto-zoom Y-axis sub-menu which includes Best Peak	guest	3	closed	
+204	Todo	Skyline	Add Min intensity value to Chromatogram Graph Properties form	guest	4	closed	
+203	Todo	Skyline	TargetedMSMS-BSA_Protea	guest	3	closed	2.1
+202	Defect	Skyline	Improve multiplexing detector to reject multi-precursor isolations that are not really multiplexed	guest	3	closed	2.1
+201	Defect	Skyline	Neutral loss ions lost in pivoted report when same non-neutral loss ions are present	guest	3	closed	1.4
+200	Todo	Skyline	Add File > Import > Replicate Annotations... menu item	guest	3	closed	2.1
+199	Defect	Skyline	Editing annotation values in Results Grid with protein selected has strange grid selection behavior	guest	2	closed	1.4
+198	Todo	Skyline	Add the ability to incorporate spectral library retention times into scheduling RT prediction	guest	3	closed	2.1
+197	Todo	Skyline	Add ability to annotate replicates	guest	3	closed	1.4
+196	Documentation	Skyline	Create a new instructional video on working with full-scan data	guest	3	closed	
+195	Documentation	Skyline	Write a Data Independent Acquisition tutorial	guest	3	closed	
+194	Documentation	Skyline	Write an Integration with External Tools tutorial	guest	3	closed	
+193	Documentation	Skyline	Write a Command-Line Automation tutorial	guest	3	closed	
+192	Documentation	Skyline	Write a Chromatogram Peak Integration tutorial	guest	3	closed	
+191	Documentation	Skyline	Write an Advanced Peptide Modifications tutorial	guest	3	closed	
+190	Todo	BiblioSpec	Add library building support for Proteome Discoverer native .msf files	guest	3	closed	
+189	Todo	BiblioSpec	Add library building support for PRIDE XML	guest	3	closed	2.1
+188	Documentation	Skyline	Tutorials using Thermo RAW data should mention need for English (US) number format settings	guest	4	closed	2.1
+187	Todo	Skyline	Plot Base Peak and TIC chromatograms	guest	3	closed	2.1
+186	Defect	Skyline	Fix multi-line error messages for Agilent method export	guest	2	closed	1.2
+185	Todo	Skyline	N- and C-terminal protease combinations	guest	4	closed	2.1
+184	Todo	Skyline	Levey-Jennings Chart for QC	guest	3	closed	
+183	Todo	Skyline	Save internal pane state in .sky.view	guest	3	closed	
+182	Defect	Skyline	Spiky chromatograms from MSFileReader when two targets have the same Q1 and Q3 but different scheduling windows	guest	3	closed	2.5
+181	Todo	Skyline	Add Edit > Refine > Rename Proteins form	guest	3	closed	
+180	Todo	Skyline	Add refinement support for merging repeated proteins	guest	2	closed	
+179	Defect	Skyline	local copy work-around error when importing thermo TSQ raw files	guest	3	closed	1.2
+178	Documentation	Skyline	Background	guest	3	closed	1.2
+177	Defect	Skyline	How to import WIFF files for SWATH data?	guest	3	closed	1.2
+176	Todo	BiblioSpec	Implement BiblioSpec library building support for MaxQuant Andromeda	guest	3	closed	2.1
+175	Todo	Skyline	Allow exporting multiple DIA methods to cover larger mass ranges, using smaller windows	guest	3	closed	
+174	Todo	Skyline	Add protein terminal modification support to Skyline	guest	3	closed	
+173	Todo	BiblioSpec	Support peak list files for ProteinProspector (UCSF)	guest	4	closed	
+172	Todo	Skyline	What time does the Skyline version 1.3 release?	guest	3	closed	1.2
+171	Defect	Skyline	Edit > Insert > Proteins should ignore white space on paste	guest	4	closed	
+170	Todo	Skyline	Correct peptide start and end indices to use 1-based indexing instead of 0-base indexing	guest	3	closed	
+169	Defect	BiblioSpec	BlibBuild status for ProteinPilot (.group.xml) is broken	guest	3	closed	
+168	Todo	Skyline	Copy Data on retention time copies time of end of peak, instead of peak apex	guest	3	closed	1.2
+167	Todo	Skyline	Add orthogonal peak ranking for MS1 and MS/MS filtering	guest	3	closed	3.5
+166	Defect	Skyline	Declustering potential abbreviated CE under the transition settings	guest	3	closed	1.2
+165	Defect	Topograph	Unhandled exception error message on half-lives results page	guest	3	closed	1.2
+164	Todo	Skyline	Add Max peptide rank field to Refine form	guest	3	closed	2.1
+163	Defect	Skyline	will/is SkyLine MS1 filtering be capable of peak picking in MS-only data?	guest	3	closed	1.2
+162	Todo	Skyline	Add new data file fields to Skyline reports	guest	3	closed	3.1
+161	Todo	Skyline	Store Spectral Library Explorer sort order in the library cache files	guest	3	closed	
+160	Todo	Skyline	Add customizable Tools menu	guest	3	closed	2.1
+159	Todo	Skyline	Spectral Library Explorer displays duplicate entries	guest	3	closed	1.2
+158	Defect	Skyline	When building a library from IdentityE (PLGS) search results the individual transitions are not listed	guest	3	closed	1.2
+157	Defect	Skyline	applying transition filter settings (precursor only) to peptides	guest	3	closed	1.1
+156	Defect	Skyline	DocNode missing results	guest	3	closed	1.2
+155	Todo	Topograph	"Depersonalize ""Evvie's Filter"""	guest	4	closed	1.2
+154	Defect	Skyline	cannot import/merge documents in skyline 1.2	guest	3	closed	1.2
+153	Defect	Topograph	Error message during generation of Results by Cohort output	guest	2	closed	1.2
+152	Defect	Topograph	"Manual ""reject"" is not working"	guest	4	closed	1.2
+151	Defect	Skyline	Problem with MANAGE RESULTS > UP/DOWN function	guest	3	closed	1.2
+150	Defect	Skyline	exporting scheduled method using results for peptides with and without previous retention times	guest	3	closed	22.1
+149	Defect	Topograph	Peptides with only one Leu have average turnover scores lower than 1 when out of range	guest	4	closed	1.2
+148	Defect	Topograph	"Please correct Y-axis label of half-life graphs to read ""ln"" rather than ""log"""	guest	3	closed	1.2
+147	Todo	Skyline	Replace isolation width on full-scan settings tab with isolation scheme	guest	2	closed	2.1
+146	Defect	Skyline	cannot install skyline software	guest	3	closed	1.2
+145	Defect	Skyline	Write automated test for iRT tutorial	guest	2	closed	1.2
+144	Todo	Skyline	Write automated test for MS1 Filtering tutorial	guest	2	closed	1.2
+143	Todo	Skyline	Write automated test for Absolute Quantification tutorial	guest	2	closed	1.2
+142	Defect	Skyline	Q-Exactive data acquired using Xcalibur 2.2	guest	3	closed	1.2
+141	Defect	Topograph	Serious apparent discrepancies in half-life values	guest	1	closed	1.2
+140	Todo	Skyline	Add support to Edit > Insert > Peptides for not fully cleaved peptides, if protein name is given	guest	3	closed	
+139	Defect	Skyline	Regarding building spectral library which Skyline can recognise using Mascot(Proteome Discoverer 1.3)	guest	3	closed	1.2
+138	Todo	Skyline	Add report value for spectral library retention time	guest	3	closed	22.1
+137	Defect	Skyline	export of scheduled methods to waters xevo	guest	3	closed	1.2
+136	Todo	Topograph	Add Average Turnover Score cutoff to Half-Lives and Results by Cohort forms	guest	2	closed	1.2
+135	Todo	Topograph	"Implement ""decrease in old protein"" method of calculating half-life"	guest	2	closed	1.2
+134	Defect	Topograph	Topograph fails to generate Results by Cohort output	guest	1	closed	1.2
+133	Defect	Topograph	Topograph tries to load peptide analysis when I click on Status drop-down	guest	3	closed	1.2
+132	Defect	Skyline	peak integration and annotation missing after document merging	guest	3	closed	1.2
+131	Defect	Skyline	absolute quantification of mTRAQ-modified peptides	guest	3	closed	1.2
+130	Defect	Topograph	Topograph stops in the middle of generating replicates w/o MS2 IDs, with no error message	guest	1	closed	1.2
+129	Defect	Skyline	Clipboard failure in DataGridView	guest	2	closed	2.1
+128	Defect	Topograph	Topograph throws exceptions during search for replicates w/o MS2 IDs, and those replicates are not accessible	guest	2	closed	1.2
+127	Defect	Skyline	Expecting only one period	guest	4	closed	1.2
+126	Defect	Skyline	Annotations	guest	3	closed	1.2
+125	Defect	Topograph	Topograph threw exception and crashed during recalculation of results	guest	3	closed	1.2
+124	Defect	Skyline	Skyline saved file won't open probably because replicates rearranged	guest	3	closed	1.2
+123	Todo	Skyline	CE,DP optimizing: step number and increment value	guest	3	closed	1.2
+122	Todo	Skyline	Collision Cell Exit Potential (CXP) optimization	guest	3	closed	
+121	Todo	Skyline	enzyme combinations (N and C terminal)	guest	3	closed	1.4
+120	Todo	Skyline	Add original measurement times to .skyd file	guest	3	closed	
+119	Todo	Skyline	Chromatograms display suggestion	guest	3	closed	1.2
+118	Todo	Skyline	Make Skyline graph colors customizable	guest	3	closed	3.7
+117	Todo	Skyline	Add a SkylineRunner command-line parameter to import QC data from a directory	guest	2	closed	1.2
+116	Defect	Topograph	"Topograph failed and gave ""contact manufacturer"" message on home computer"	guest	2	closed	1.2
+115	Todo	Skyline	Add feature to make multiple selection graph multiple precursor or transition chromatogram together	guest	3	closed	
+114	Todo	Skyline	Add ability to overlay all heavy and light transitions	guest	4	closed	1.2
+113	Todo	Skyline	Strict scientific notation for y-axis intensity scale	guest	3	closed	3.1
+112	Defect	Skyline	Add PrecursorResults.MaxHeight value to reports	guest	3	closed	1.2
+111	Todo	Skyline	Implement Edit / Refine / Reintegrate	guest	2	closed	2.1
+110	Defect	Skyline	Building spectral libraries from Mascot results slower than before?	guest	3	closed	1.2
+109	Defect	Topograph	AUC cutoff value set on the HalfLivesForm is not transmitted to individual half-life tabs	guest	3	closed	1.2
+108	Defect	Skyline	Inserting a medium-large transition list with a background proteome can appear to hang Skyline	guest	4	closed	
+107	Todo	Skyline	Add gene name property to proteins and UI to support it	guest	3	closed	2.6
+106	Todo	Skyline	Support new columns in Thermo TSQ transition list user interface	guest	3	closed	1.2
+105	Todo	Topograph	Create ultra-simple outlier filter (>2 SD)	guest	2	closed	1.2
+104	Todo	Skyline	Add flexible custom naming for Analyst transition lists	guest	3	closed	
+103	Todo	Skyline	Implement support for MS3 full-scan filtering for neutral losses	guest	3	closed	
+102	Todo	Skyline	Add Minimize... button to Edit / Manage Results form	guest	2	closed	2.1
+101	Todo	Topograph	"Add ""minimum area under curve"" cutoff to Acceptance Criteria dialog"	guest	3	closed	1.2
+100	Defect	Skyline	Attempted row add in Results Grid without any columns	guest	2	closed	2.1
+99	Defect	Skyline	InvalidOperationException in PreviewReportDlg.SetResults	guest	3	closed	2.1
+98	Defect	Skyline	NullReferenceException in ResultsGrid.UpdateGridNotReplicate	guest	3	closed	1.2
+97	Todo	Topograph	Incorporate protein identification/localization info from spreadsheet into Topograph	guest	3	closed	1.2
+96	Defect	Topograph	Percent turnover in Results by Cohort does not match value from Half-Life tab	guest	1	closed	1.2
+95	Defect	Topograph	"Half-Lives view sometimes comes up ""blank"" (all zero/NaN values)"	guest	2	closed	1.2
+94	Defect	Skyline	export image in .emf format can not be read by Adobe Illustrator	guest	3	closed	
+93	Todo	Skyline	Add custom finder to find transitions that overlap	guest	3	closed	
+92	Todo	Topograph	Create a feature to view % newly synthesized on the protein level	guest	2	closed	1.2
+91	Todo	Topograph	"Modify the ""Evvie's Filter"" algorithm to exclude extreme outliers first"	guest	2	closed	1.2
+90	Defect	Topograph	Duplicate entries in drop-down when using the Find box in the Half-Lives tab	guest	4	closed	1.2
+89	Defect	Skyline	File / Share minimal needs to be aware of retention time information	guest	3	closed	1.2
+88	Defect	Skyline	Add peptide ID flag to results peak attributes	guest	3	closed	1.2
+87	Defect	Skyline	Zoom stops responding during analysis of multiple peptides and replicates	guest	3	closed	2.6
+86	Defect	Skyline	Unhandled exception in DataGridViewRowCollection.RowComparer.CompareObjects	guest	2	closed	1.2
+85	Defect	Skyline	Results grid hangs trying to set annotations	guest	1	closed	1.2
+84	Defect	Skyline	Cant export MRM transition list to Analyst method file	guest	3	closed	1.2
+83	Defect	Skyline	Can't export .exp method file for Xevo MassLynx	guest	3	closed	1.2
+82	Defect	Skyline	global setting for synchronizing isotope types	guest	3	closed	1.2
+81	Defect	Skyline	MethodEdit.zip	guest	3	closed	1.2
+80	Todo	Skyline	Add support for opening File / Share ZIP files directly	guest	3	closed	1.2
+79	Defect	Skyline	Find of an annotation name should find all items with the annotation set	guest	2	closed	1.2
+78	Todo	Skyline	Add Advanced button to Find dialog with checkbox list of things to find	guest	2	closed	1.2
+77	Defect	Skyline	NullReferenceException in Results Grid	guest	2	closed	1.2
+76	Todo	BiblioSpec	BlibBuild needs to store file names with same basename as original instrument data files	guest	2	closed	1.2
+75	Todo	Skyline	Skyline should have document-wide grid view (live report)	guest	3	closed	
+74	Defect	Skyline	Improvements to exception posting	guest	3	closed	1.2
+73	Defect	Skyline	Add error message when incompatible isotope modifications are chosen	guest	4	closed	
+72	Todo	Skyline	Implement MS1 isotope values in reports	guest	3	closed	1.2
+71	Todo	Skyline	Implement File / Print Graphs	guest	3	closed	
+70	Defect	Skyline	Overlapping transitions causes unpredictable results during CE optimization	guest	3	closed	
+69	Defect	Skyline	"""Pick Children"" causes exception when there is only a peptide list (no proteins)"	guest	3	closed	1.2
+68	Defect	Skyline	PasteTest does not test intended automanage case	guest	4	closed	1.2
+67	Defect	Skyline	Before shrinking font in replicate plots truncate names when possible	guest	3	closed	1.2
+66	Todo	Skyline	Find View for Skyline	guest	2	closed	1.2
+65	Todo	Skyline	Allow multiple note flags per node attached to specific users	guest	3	closed	
+64	Defect	Skyline	Summary plots should not reset zooming on selection change	guest	3	closed	3.1
+63	Todo	Skyline	Add quick menu access to custom annotations	guest	3	closed	
+62	Defect	Skyline	Document must be fully loaded before it can be saved	guest	2	closed	1.2
+61	Todo	Skyline	Should be possible to view a list of files from which a library was created	guest	4	closed	1.2
+60	Defect	Skyline	Import transition list can pick unlikely ions when more likely ions are with m/z match tolerance	guest	4	closed	1.2
+59	Defect	Skyline	Synchronized zooming can make it hard to Undo All Zoom/Pan	guest	3	closed	
+58	Todo	Skyline	Implement Experiment Templates in Skyline	guest	3	closed	
+57	Defect	Skyline	Peptide highlighting in tips problems with variable modifications	guest	3	closed	
+56	Defect	Skyline	Paste with missing library message strange	guest	3	closed	1.2
+55	Todo	Skyline	Add option to show both heavy and light transitions as split graph in same view	guest	3	closed	
+54	Defect	Skyline	Force matching boundaries between light-heavy precursors with Matching modifications	guest	2	closed	2.1
+53	Defect	Skyline	Library spectrum chart does not always rank ions correctly	guest	3	closed	1.2
+52	Defect	Skyline	Copy data in multi-paned graph only copies first pane	guest	3	closed	
+51	Defect	Skyline	CE Optimization mass shifts limited to m/z match tolerance	guest	4	closed	
+50	Todo	Skyline	Consider allowing separate scheduling of peptide precursors for CE optimization	guest	4	closed	
+49	Defect	Skyline	background database with two enzymes doesn't work for first enzyme	guest	3	closed	2.6
+48	Todo	Skyline	Add Audit algorithm for detecting transition interference	guest	3	closed	
+47	Todo	Skyline	Add isoelectric point as peptide filter	guest	4	closed	
+46	Defect	Skyline	move transition selection box so it doesn't cover transition rankings in tree view (please)	guest	4	closed	1.2
+45	Todo	Skyline	Support unlabeled internal standards	guest	3	closed	
+44	Todo	Skyline	"Add ""Show All"" right-click menu to tree view"	guest	3	closed	
+43	Todo	Skyline	Need an easier way to review transitions not integrated	guest	3	closed	1.2
+42	Todo	Skyline	Add ability to assign meaning and structure to the replicates in a Skyline document	guest	3	closed	
+41	Defect	Skyline	"Editing protein names for ""fully backed"" fasta proteins."	guest	3	closed	1.2
+40	Todo	Skyline	Allow user to specify new location for missing result files	guest	3	closed	
+39	Todo	Skyline	Richer Graph Properties	guest	4	closed	3.1
+38	Todo	Skyline	Make skyline support case-control experiment analysis	guest	3	closed	
+37	Defect	Skyline	Multi-select drag-drop does not work as expected	guest	3	closed	1.2
+36	Todo	BiblioSpec	Import spectral libraries in .csv format (e.g. created from SRM atlas)	guest	3	closed	2.6
+35	Todo	Skyline	Make it possible to find note/annotation text from Find dialog	guest	3	closed	1.2
+34	Todo	Skyline	Add immonium ion support for ion highlighting options in spectral library graph	guest	3	closed	
+33	Defect	Skyline	Chemical formula ordering should not effect warning about existing Unimod modification	guest	3	closed	1.2
+32	Todo	Skyline	Delete results for invidiual peptides	guest	3	closed	
+31	Todo	Skyline	Export inclusion lists for Skyline documents with only MS1 full--scan filtering	guest	3	closed	1.2
+30	Todo	Skyline	Use retention time regression to better predict peptide peaks over multiple replicates	guest	3	closed	1.2
+29	Todo	Skyline	Implement support for overlapping light-heavy isotope envelopes in MS1 filtering	guest	3	closed	
+28	Todo	Skyline	Use MS/MS with peptide IDs in MS1-only full-scan filtering	guest	3	closed	1.2
+27	Todo	Skyline	Implement full-scan method export for QSTAR and Triple-TOF 5600	guest	3	closed	1.2
+26	Todo	Skyline	Implement full-scan method export for Waters Q-TOF instruments	guest	2	closed	3.1
+25	Todo	Skyline	Make Thermo EZ Method transition list format the default even for unscheduled runs	guest	3	closed	
+24	Todo	Skyline	Implement targeted MS/MS methods for Agilent Q-TOF	guest	3	closed	1.2
+23	Todo	Skyline	Interesting scenarios for Thermo tools require precursor mass shifts	guest	3	closed	
+22	Todo	Skyline	Make fragment ion labeling in spectral library not limited to two labels.	guest	3	closed	
+21	Todo	Skyline	Add refinement option to add missing product ions with matching data	guest	3	closed	
+20	Todo	Skyline	Implement command-line interface for Skyline	guest	2	closed	1.2
+19	Todo	Skyline	Add a tip somewhere that shows the ion table for the library spectrum	guest	4	closed	
+18	Defect	Skyline	Chosing the number of unscheduled methods	guest	3	closed	1.2
+17	Todo	Skyline	Dynamically size position/count indicators based on transition counts	guest	4	closed	3.1
+16	Defect	Skyline	Data import dialog scans drives unnecessarily	guest	3	closed	1.2
+15	Defect	Skyline	Export modification assignemt	guest	3	closed	1.2
+14	Defect	Skyline	Export method error Xevo TQ-S	guest	3	closed	2.1
+13	Defect	Skyline	Missing filtered ion types can have surprising effect on the dot-product	guest	3	closed	22.1
+12	Todo	Skyline	Add signal-to-noise value in reports	guest	4	closed	
+11	Defect	Skyline	Background proteome build fails with large FASTA file	guest	4	closed	
+10	Todo	Skyline	Add reporter ion type for measuring constant mass ions like ITRAQ	guest	3	closed	2.6
+9	Todo	Skyline	Library spectrum graph should offer UI to choose manually specturm matches	guest	3	closed	
+8	Todo	Skyline	Add an Apply To All action to the chromatogram graphs	guest	3	closed	
+7	Todo	Skyline	Make all Results Grid columns available in column picking UI always	guest	3	closed	2.2
+6	Defect	Skyline	Results columns should get #N/A when no results available	guest	2	closed	2.1
+5	Todo	Skyline	Implement full-scan method export for Agilent QTOF instruments	guest	3	closed	
+4	Todo	Skyline	Implement custom neutral losses	guest	3	closed	
+3	Todo	Skyline	Add a way to specificy document level information	guest	3	closed	1.2
+2	Todo	Skyline	Support second round CE optimization	guest	4	closed	
+1	Todo	Skyline	Implement custom ion support	guest	2	closed	3.1
