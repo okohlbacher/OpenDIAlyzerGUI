@@ -18,6 +18,7 @@ import { buildMetadataIndex, type MetadataIndex } from "../src/spectra.ts";
 import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 import { byProtein, byRun, type ProteinRow, type RunRow } from "../src/aggregate.ts";
+import { sortIndices, applyColumnFilters, type Cell } from "../src/table.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -105,6 +106,59 @@ async function archiveFor(run: string): Promise<OpenArchive | null> {
 
 export type Grain = "precursors" | "proteins" | "runs";
 
+export interface TableView {
+  sort?: { key: string; dir: "asc" | "desc" };
+  /** Per-column filter text, keyed by the same column keys. */
+  columns?: Record<string, string>;
+}
+
+/**
+ * How each grain's columns are read.
+ *
+ * One place, so a sort and a filter on the same column can never disagree about
+ * what that column contains — and so the header, the sorter and the filter all
+ * speak the same keys.
+ */
+function readers(g: Grain): Record<string, (row: number) => Cell> {
+  const t = session!.report;
+  if (g === "proteins") {
+    return {
+      proteinGroup: (i) => proteins[i]?.proteinGroup,
+      gene: (i) => proteins[i]?.genes,
+      precursors: (i) => proteins[i]?.precursors,
+      peptides: (i) => proteins[i]?.peptides,
+      runs: (i) => proteins[i]?.runs,
+      q: (i) => proteins[i]?.qValue,
+      quant: (i) => proteins[i]?.quantity,
+    };
+  }
+  if (g === "runs") {
+    return {
+      run: (i) => runRows[i]?.name,
+      precursors: (i) => runRows[i]?.precursors,
+      peptides: (i) => runRows[i]?.peptides,
+      proteins: (i) => runRows[i]?.proteins,
+      q: (i) => runRows[i]?.medianQ,
+      fwhm: (i) => runRows[i]?.medianFwhmSec,
+      rt: (i) => runRows[i]?.rtRange[0],
+    };
+  }
+  const num = (c: string) => {
+    const col = t.numeric(c);
+    return (i: number) => col?.[i];
+  };
+  return {
+    seq: (i) => t.cell(CANONICAL.strippedSequence, i),
+    z: num(CANONICAL.charge),
+    mz: num(CANONICAL.precursorMz),
+    rt: num(CANONICAL.rt),
+    im: num(CANONICAL.im),
+    q: num(CANONICAL.qValue),
+    quant: num(CANONICAL.quantity),
+    gene: (i) => t.cell(CANONICAL.genes, i) || t.cell(CANONICAL.proteinGroup, i),
+  };
+}
+
 /** Precursor rows matching the current filter. Recomputed on every change. */
 let visible: Uint32Array = new Uint32Array(0);
 /** The current grain's rows. For precursors this mirrors `visible`. */
@@ -112,12 +166,7 @@ let grain: Grain = "precursors";
 let proteins: ProteinRow[] = [];
 let runRows: RunRow[] = [];
 
-/** How many rows the current grain has. */
-function grainCount(): number {
-  return grain === "proteins" ? proteins.length
-    : grain === "runs" ? runRows.length
-    : visible.length;
-}
+
 
 /**
  * Every grain aggregates the *filtered* precursor set, so the FDR slider moves
@@ -125,9 +174,36 @@ function grainCount(): number {
  * list they came from — which is the disagreement DIA-NN's matrices are famous
  * for (#1056).
  */
-function regrain(): void {
+/** Row order within the current grain, after column filters and sorting. */
+let order: Uint32Array = new Uint32Array(0);
+
+function regrain(view: TableView = {}): void {
   proteins = grain === "proteins" ? byProtein(session!.report, visible) : [];
   runRows = grain === "runs" ? byRun(session!.report, visible) : [];
+
+  // For the coarse grains the index is into the aggregate array; for precursors
+  // it is into `visible`, so the readers take a *report* row there.
+  const n = grain === "precursors" ? visible.length
+    : grain === "proteins" ? proteins.length : runRows.length;
+  let idx = new Uint32Array(n);
+  for (let i = 0; i < n; i++) idx[i] = grain === "precursors" ? visible[i]! : i;
+
+  const read = readers(grain);
+  const cols = view.columns ?? {};
+  const filters = Object.entries(cols)
+    .filter(([k, v]) => v.trim() !== "" && read[k])
+    .map(([k, v]) => ({ text: v, read: read[k]! }));
+  if (filters.length) idx = applyColumnFilters(idx, filters);
+
+  if (view.sort && read[view.sort.key]) {
+    idx = sortIndices(idx, read[view.sort.key]!, view.sort.dir);
+  }
+  order = idx;
+}
+
+/** How many rows the current view has, after column filters. */
+function viewCount(): number {
+  return order.length;
 }
 
 /**
@@ -166,6 +242,20 @@ async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
   if (grill) {
     await win.webContents.executeJavaScript(`interrogate(state.sel, ${Number(grill)})`);
     await new Promise((r) => setTimeout(r, 6000));
+  }
+  // ODIA_SMOKE_VIEW='{"sort":{"key":"q","dir":"desc"},"columns":{"gene":"ALB"}}'
+  const view = process.env.ODIA_SMOKE_VIEW;
+  if (view) {
+    const v = JSON.parse(view);
+    await win.webContents.executeJavaScript(
+      `(async () => { state.sort = ${JSON.stringify(v.sort ?? null)};
+         state.colFilters = ${JSON.stringify(v.columns ?? {})};
+         await refresh(); })()`);
+    await new Promise((r) => setTimeout(r, 2500));
+    const probed = await win.webContents.executeJavaScript(
+      `JSON.stringify({ total: state.total,
+        first3: state.rows.slice(0,3).map(r => [r.seq ?? r.proteinGroup ?? r.run, r.q, r.gene]) })`);
+    console.log("view:", probed);
   }
   const probe = await win.webContents.executeJavaScript(
     `JSON.stringify({ scrollHeight: document.getElementById("scroller").scrollHeight,
@@ -297,28 +387,31 @@ function statsPaths(reportPath: string): string[] {
  * not re-run the predicate, and re-filtering must not depend on scroll position.
  */
 ipcMain.handle("rows:filter",
-  (_e, spec: FilterSpec, offset = 0, limit = 200, g: Grain = "precursors") => {
+  (_e, spec: FilterSpec, offset = 0, limit = 200, g: Grain = "precursors",
+   view: TableView = {}) => {
     if (!session) return { total: 0, rows: [], filterMs: 0, grain: g };
     const t0 = performance.now();
     grain = g;
     visible = filterRows(session.report, spec);
-    regrain();
+    regrain(view);
     const ms = performance.now() - t0;
-    return { total: grainCount(), rows: page(offset, limit), filterMs: ms, grain };
+    return { total: viewCount(), rows: page(offset, limit), filterMs: ms, grain };
   });
 
 /** A window of the current filtered set. Pure paging — no predicate re-run. */
 ipcMain.handle("rows:page", (_e, offset: number, limit: number) => {
   if (!session) return { total: 0, rows: [] };
-  return { total: grainCount(), rows: page(offset, limit) };
+  return { total: viewCount(), rows: page(offset, limit) };
 });
 
 function page(offset: number, limit: number) {
   if (!session) return [];
   const t = session.report;
 
+  const slice = Array.from(order.subarray(offset, offset + limit));
+
   if (grain === "proteins") {
-    return proteins.slice(offset, offset + limit).map((p, n) => ({
+    return slice.map((gi, n) => proteins[gi]!).map((p, n) => ({
       k: offset + n, i: p.exemplar,
       proteinGroup: p.proteinGroup, gene: p.genes,
       precursors: p.precursors, peptides: p.peptides, runs: p.runs,
@@ -326,7 +419,7 @@ function page(offset: number, limit: number) {
     }));
   }
   if (grain === "runs") {
-    return runRows.slice(offset, offset + limit).map((r, n) => ({
+    return slice.map((gi) => runRows[gi]!).map((r, n) => ({
       k: offset + n, i: r.exemplar,
       run: r.name, runIndex: r.index,
       precursors: r.precursors, peptides: r.peptides, proteins: r.proteins,
@@ -346,10 +439,9 @@ function page(offset: number, limit: number) {
   const im = t.numeric(CANONICAL.im);
 
   const rows = [];
-  const from = Math.max(0, Math.min(offset, visible.length));
-  const to = Math.min(from + limit, visible.length);
-  for (let k = from; k < to; k++) {
-    const i = visible[k]!;
+  for (let n = 0; n < slice.length; n++) {
+    const k = offset + n;
+    const i = slice[n]!;
     rows.push({
       k,
       i,
@@ -513,9 +605,11 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
 
 /** The report row a grain row stands for. */
 function rowOf(k: number): number {
-  if (grain === "proteins") return proteins[k]?.exemplar ?? -1;
-  if (grain === "runs") return runRows[k]?.exemplar ?? -1;
-  return k >= 0 && k < visible.length ? visible[k]! : -1;
+  if (k < 0 || k >= order.length) return -1;
+  const gi = order[k]!;
+  if (grain === "proteins") return proteins[gi]?.exemplar ?? -1;
+  if (grain === "runs") return runRows[gi]?.exemplar ?? -1;
+  return gi;   // precursors: `order` already holds report rows
 }
 
 ipcMain.handle("evidence:for", async (_e, k: number) => {

@@ -56,6 +56,16 @@
      at narrow widths, but at the default size nothing should be clipped. */
   tbody td, thead th{padding-left:7px;padding-right:7px}
   td.seq-cell{max-width:210px;overflow:hidden;text-overflow:ellipsis}
+  thead th.sortable{cursor:pointer;user-select:none}
+  thead th.sortable:hover{color:var(--ink)}
+  thead th.sorted{color:var(--accent)}
+  thead tr.filters th{padding:0 4px 4px;border-bottom:1px solid var(--line);
+    position:sticky;top:29px;z-index:2;background:var(--panel)}
+  thead tr.filters input{width:100%;box-sizing:border-box;border:1px solid var(--line);
+    border-radius:5px;background:var(--sunk);color:var(--ink);
+    font:inherit;font-size:11px;padding:2px 5px;min-width:0}
+  thead tr.filters input::placeholder{color:var(--muted);opacity:.65}
+  thead tr.filters input.on{border-color:var(--accent-line);color:var(--accent)}
 </style>
 
 <div class="app">

@@ -17,6 +17,8 @@ const OVERSCAN = 40;   // rows kept beyond the viewport, so a nudge never blanks
 const state = {
   open: false,
   grain: "precursors",
+  sort: null,          // {key, dir}
+  colFilters: {},      // key -> text
   fdr: 0.01,
   run: undefined,
   search: "",
@@ -100,7 +102,8 @@ const currentFilter = () => ({
 
 async function refresh() {
   if (!state.open) return;
-  const r = await window.api.filter(currentFilter(), 0, WINDOW, state.grain);
+  const r = await window.api.filter(currentFilter(), 0, WINDOW, state.grain,
+    { sort: state.sort, columns: state.colFilters });
 
   state.total = r.total;
   state.rows = r.rows;
@@ -109,23 +112,65 @@ async function refresh() {
   if (state.sel >= state.total) state.sel = Math.max(0, state.total - 1);
   $("scroller").scrollTop = 0;
 
-  $("thead").innerHTML = HEAD[state.grain];
+  $("thead").innerHTML = headHtml();
+  wireHeader();
   paint();
   scheduleEvidence();
 }
 
-const HEAD = {
-  precursors: `<tr><th>Peptide</th><th class="num">z</th><th class="num">m/z</th>
-      <th class="num">RT</th><th class="num">1/K0</th><th class="num">q</th>
-      <th class="num">Quantity</th><th>Gene</th></tr>`,
-  proteins: `<tr><th>Protein group</th><th>Genes</th><th class="num">Precursors</th>
-      <th class="num">Peptides</th><th class="num">Runs</th><th class="num">q</th>
-      <th class="num">Quantity</th></tr>`,
-  runs: `<tr><th>Run</th><th class="num">Precursors</th><th class="num">Peptides</th>
-      <th class="num">Proteins</th><th class="num">Median q</th>
-      <th class="num">FWHM</th><th class="num">RT range</th><th>Raw</th></tr>`,
+/**
+ * Columns, once. The header, the sort key and the filter box all read from
+ * here, so they cannot drift apart — and `hint` teaches the filter syntax in
+ * the place it is used rather than in documentation nobody opens.
+ */
+const COLUMNS = {
+  precursors: [
+    { key: "seq", label: "Peptide", hint: "text" },
+    { key: "z", label: "z", num: true, hint: "2" },
+    { key: "mz", label: "m/z", num: true, hint: "400-600" },
+    { key: "rt", label: "RT", num: true, hint: ">10" },
+    { key: "im", label: "1/K0", num: true, hint: "" },
+    { key: "q", label: "q", num: true, hint: "<0.01" },
+    { key: "quant", label: "Quantity", num: true, hint: ">1e4" },
+    { key: "gene", label: "Gene", hint: "text" },
+  ],
+  proteins: [
+    { key: "proteinGroup", label: "Protein group", hint: "text" },
+    { key: "gene", label: "Genes", hint: "text" },
+    { key: "precursors", label: "Precursors", num: true, hint: ">10" },
+    { key: "peptides", label: "Peptides", num: true, hint: "" },
+    { key: "runs", label: "Runs", num: true, hint: "6" },
+    { key: "q", label: "q", num: true, hint: "<0.01" },
+    { key: "quant", label: "Quantity", num: true, hint: "" },
+  ],
+  runs: [
+    { key: "run", label: "Run", hint: "text" },
+    { key: "precursors", label: "Precursors", num: true, hint: "" },
+    { key: "peptides", label: "Peptides", num: true, hint: "" },
+    { key: "proteins", label: "Proteins", num: true, hint: "" },
+    { key: "q", label: "Median q", num: true, hint: "" },
+    { key: "fwhm", label: "FWHM", num: true, hint: "" },
+    { key: "rt", label: "RT range", num: true, hint: "" },
+    { key: "archive", label: "Raw", hint: "" },
+  ],
 };
-const COLS = { precursors: 8, proteins: 7, runs: 8 };
+
+function headHtml() {
+  const cols = COLUMNS[state.grain];
+  const th = cols.map((c) => {
+    const sorted = state.sort?.key === c.key;
+    const arrow = sorted ? (state.sort.dir === "asc" ? " ▲" : " ▼") : "";
+    return `<th class="${c.num ? "num " : ""}sortable${sorted ? " sorted" : ""}"
+      data-sort="${c.key}" title="click to sort">${esc(c.label)}${arrow}</th>`;
+  }).join("");
+  const filt = cols.map((c) => {
+    const v = state.colFilters[c.key] ?? "";
+    return `<th class="filt"><input data-filter="${c.key}" value="${esc(v)}"
+      placeholder="${esc(c.hint)}" aria-label="filter ${esc(c.label)}"
+      class="${v ? "on" : ""}"></th>`;
+  }).join("");
+  return `<tr>${th}</tr><tr class="filters">${filt}</tr>`;
+}
 
 /** One row of the current grain. */
 function rowHtml(row) {
@@ -171,7 +216,7 @@ function paint() {
   const before = state.first * ROW_H;
   const after = Math.max(0, (state.total - state.first - state.rows.length) * ROW_H);
 
-  const cols = COLS[state.grain];
+  const cols = COLUMNS[state.grain].length;
   $("tbody").innerHTML =
     (before ? `<tr class="spacer" style="height:${before}px"><td colspan="${cols}"></td></tr>` : "") +
     state.rows.map(rowHtml).join("") +
@@ -458,12 +503,46 @@ function chart(x) {
 
 // ── events ───────────────────────────────────────────────────────────────────
 
+/** Sorting and per-column filtering live in the header itself. */
+function wireHeader() {
+  $("thead").querySelectorAll("th.sortable").forEach((th) =>
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      state.sort = state.sort?.key === key
+        ? (state.sort.dir === "asc" ? { key, dir: "desc" } : null)  // third click clears
+        : { key, dir: "asc" };
+      state.sel = 0;
+      refresh();
+    }));
+
+  let t;
+  $("thead").querySelectorAll("input[data-filter]").forEach((el) => {
+    el.addEventListener("click", (e) => e.stopPropagation());   // do not sort
+    el.addEventListener("input", () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        state.colFilters[el.dataset.filter] = el.value;
+        state.sel = 0;
+        refresh().then(() => {
+          // Re-focus the box the user is typing in; refresh rebuilds the header.
+          const again = $("thead").querySelector(`input[data-filter="${el.dataset.filter}"]`);
+          if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
+        });
+      }, 220);
+    });
+  });
+}
+
 document.querySelectorAll(".grain button").forEach((b) =>
   b.addEventListener("click", () => {
     if (b.disabled || b.dataset.grain === state.grain) return;
     document.querySelectorAll(".grain button")
       .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     state.grain = b.dataset.grain;
+    // Column keys differ per grain, so a carried-over sort or filter would
+    // silently refer to a column that is no longer there.
+    state.sort = null;
+    state.colFilters = {};
     state.sel = 0;
     refresh();
   }));

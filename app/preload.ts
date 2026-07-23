@@ -5,8 +5,8 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("api", {
   pick: () => ipcRenderer.invoke("session:pick"),
   open: (report: string, archive?: string) => ipcRenderer.invoke("session:open", report, archive),
-  filter: (spec: unknown, offset?: number, limit?: number, grain?: string) =>
-    ipcRenderer.invoke("rows:filter", spec, offset, limit, grain),
+  filter: (spec: unknown, offset?: number, limit?: number, grain?: string, view?: unknown) =>
+    ipcRenderer.invoke("rows:filter", spec, offset, limit, grain, view),
   page: (offset: number, limit: number) => ipcRenderer.invoke("rows:page", offset, limit),
   evidence: (k: number) => ipcRenderer.invoke("evidence:for", k),
   presence: (k: number) => ipcRenderer.invoke("evidence:presence", k),
