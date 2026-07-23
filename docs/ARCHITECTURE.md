@@ -104,6 +104,16 @@ That trade is genuinely close. It is deliberately *not* being decided from an
 armchair: `RangeReader` and the tier boundary make the swap contained, and
 spike 2 decides it with a number.
 
+**Spike 2's number, for the query that matters:** `test/peaks.test.ts`'s "RT-
+bounded XIC meets the 350 ms budget" runs the exact query the evidence panel
+issues — bounded m/z × RT, real fragments, on the real 1.53 GB / 507 M-peak
+timsTOF archive — against a 350 ms budget and has passed since M0-M2
+(`1f88876`). Current measurement: **147 ms**, close to the 105 ms native
+reference above it in this document. For the app's actual drilldown path,
+the pure-JS tier already meets budget; this does not by itself resolve the
+*random* spectrum fetch case (~500 ms pure JS, cited above), but that
+pattern is not one the evidence panel's bounded queries exercise.
+
 `// ponytail: WASM first because it is one build and one codebase. Escalate to
 // napi-rs only on a measured miss, not because native sounds faster.`
 
