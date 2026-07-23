@@ -11,6 +11,7 @@ import { app, BrowserWindow, ipcMain, dialog, nativeImage } from "electron";
 import { join, dirname, basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+import os from "node:os";
 import { loadReport, filterRows, seekKey, reportedFragments, CANONICAL,
   type ReportTable, type FilterSpec } from "../src/report.ts";
 import { MzPeakArchive } from "../src/archive.ts";
@@ -19,6 +20,8 @@ import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 import { byProtein, byRun, type ProteinRow, type RunRow } from "../src/aggregate.ts";
 import { sortIndices, applyColumnFilters, type Cell } from "../src/table.ts";
+import { detect, verify, plan, PRESETS, countFasta, estimateMemoryGb,
+  type Install, type PresetId, type Stage } from "../src/engine.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -295,6 +298,20 @@ function createWindow(): void {
   });
   win.loadFile(join(here, "index.html"));
 
+  // ODIA_SMOKE_SETUP shows screen 1 instead of opening a session.
+  if (process.env.ODIA_SMOKE_SETUP) {
+    win.webContents.once("did-finish-load", async () => {
+      await new Promise((r) => setTimeout(r, 2500));
+      await win.webContents.executeJavaScript("showSetup(true)");
+      await new Promise((r) => setTimeout(r, 1500));
+      writeFileSync(process.env.ODIA_SMOKE_OUT ?? "/tmp/setup.png",
+        (await win.webContents.capturePage()).toPNG());
+      console.log("setup capture written");
+      app.exit(0);
+    });
+    return;
+  }
+
   const smokeTarget = process.env.ODIA_SMOKE;
   if (smokeTarget) {
     win.webContents.once("did-finish-load", () => void smoke(win, smokeTarget));
@@ -329,6 +346,110 @@ app.on("window-all-closed", () => {
 });
 
 // ── IPC ──────────────────────────────────────────────────────────────────────
+
+// ── Setup (screen 1) ─────────────────────────────────────────────────────────
+
+/** What is installed, and what it can read here. */
+ipcMain.handle("setup:engines", async (_e, extraPaths: string[] = []) => {
+  const installs = await detect(extraPaths);
+  return {
+    installs,
+    platform: process.platform,
+    // DIA-NN ships no macOS build at all, so "not found" on darwin is a
+    // property of the vendor rather than of this machine, and saying which is
+    // the difference between a useful message and a wild goose chase.
+    platformSupported: process.platform !== "darwin",
+    cores: os.cpus().length,
+    totalMemGb: Math.round(os.totalmem() / 2 ** 30),
+  };
+});
+
+ipcMain.handle("setup:pickRuns", async () => {
+  const r = await dialog.showOpenDialog({
+    title: "Choose raw files or converted archives",
+    properties: ["openFile", "openDirectory", "multiSelections"],
+    filters: [{ name: "MS data", extensions: ["raw", "d", "mzML", "dia", "mzpeak"] }],
+  });
+  return r.canceled ? [] : r.filePaths;
+});
+
+ipcMain.handle("setup:pickFile", async (_e, kind: "fasta" | "lib" | "out") => {
+  if (kind === "out") {
+    const r = await dialog.showOpenDialog({ properties: ["openDirectory", "createDirectory"] });
+    return r.canceled ? null : r.filePaths[0]!;
+  }
+  const r = await dialog.showOpenDialog({
+    title: kind === "fasta" ? "Choose a FASTA" : "Choose a spectral library",
+    properties: ["openFile"],
+    filters: kind === "fasta"
+      ? [{ name: "FASTA", extensions: ["fasta", "fa", "fas", "faa"] }]
+      : [{ name: "Library", extensions: ["parquet", "speclib", "tsv"] }],
+  });
+  return r.canceled ? null : r.filePaths[0]!;
+});
+
+/** Summarises dropped inputs — what they are, and what reading them will need. */
+ipcMain.handle("setup:inspect", async (_e, paths: string[], enginePath?: string) => {
+  const formats = new Set<string>();
+  const runs: { path: string; name: string; format: string; bytes: number }[] = [];
+  for (const p of paths) {
+    const ext = /\.(raw|d|mzML|dia|mzpeak)$/i.exec(p)?.[1]?.toLowerCase() ?? "";
+    if (!ext) continue;
+    formats.add("." + ext);
+    let bytes = 0;
+    try {
+      const st = statSync(p);
+      bytes = st.isDirectory() ? dirSize(p) : st.size;
+    } catch { /* unreadable inputs are reported by the requirement check */ }
+    runs.push({ path: p, name: basename(p), format: "." + ext, bytes });
+  }
+
+  let requirements: Awaited<ReturnType<typeof verify>> = [];
+  if (enginePath) {
+    const installs = await detect([dirname(enginePath)]);
+    const chosen = installs.find((i) => i.path === enginePath) ?? installs[0];
+    if (chosen) requirements = await verify(chosen, [...formats]);
+  }
+  return { runs, formats: [...formats], requirements };
+});
+
+function dirSize(dir: string): number {
+  let n = 0;
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    try { n += e.isDirectory() ? dirSize(p) : statSync(p).size; } catch { /* skip */ }
+  }
+  return n;
+}
+
+/**
+ * Builds the plan and returns it without running anything.
+ *
+ * Previewable even with no engine installed, which matters: DIA-NN has no macOS
+ * build, so on a Mac this screen can still assemble a plan to run elsewhere.
+ */
+ipcMain.handle("setup:plan", async (_e, job: {
+  runs: string[]; fasta?: string; library?: string; outputDir: string;
+  preset: PresetId; threads: number;
+}) => {
+  const stages = plan(job);
+  let sequences: number | null = null;
+  if (job.fasta) { try { sequences = await countFasta(job.fasta); } catch { /* reported below */ } }
+  // Very rough: DIA-NN's own ~0.5 GB per million library precursors, and a
+  // library-free search generates far more precursors than FASTA entries.
+  const precursors = sequences ? sequences * 200 : 1e6;
+  return {
+    stages: stages.map((s: Stage) => ({ id: s.id, label: s.label, cfgPath: s.cfgPath,
+                                        argv: s.argv, cfg: s.cfg, runs: s.runs })),
+    sequences,
+    estimatedMemGb: estimateMemoryGb(precursors, job.runs.length, false),
+    hostMemGb: Math.round(os.totalmem() / 2 ** 30),
+    presets: Object.entries(PRESETS).map(([id, p]) => ({ id, label: p.label, note: p.note })),
+  };
+});
+
+ipcMain.handle("setup:presets", () =>
+  Object.entries(PRESETS).map(([id, p]) => ({ id, label: p.label, note: p.note })));
 
 ipcMain.handle("session:pick", async () => {
   const r = await dialog.showOpenDialog({
