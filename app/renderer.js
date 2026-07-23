@@ -176,7 +176,18 @@ async function showEvidence() {
   }
   ev.classList.add("busy");
   const token = (state.pending = Symbol());
-  const e = await window.api.evidence(state.sel);
+  let e;
+  try {
+    e = await window.api.evidence(state.sel);
+  } catch (err) {
+    // A rejected handler must not leave the pane silently blank — that reads as
+    // "no evidence" when it means "we failed to look".
+    ev.classList.remove("busy");
+    ev.innerHTML = `<div class="banner"><div><b>Evidence failed.</b>
+      ${esc(String(err?.message ?? err))}</div></div>`;
+    $("evsrc").textContent = "error";
+    return;
+  }
   if (token !== state.pending) return; // a newer selection won
   ev.classList.remove("busy");
   if (!e) { ev.innerHTML = ""; return; }
@@ -223,12 +234,15 @@ async function showEvidence() {
           <span class="hint">${x.frames} frames · ${x.rowGroups} row groups</span></div>
         ${chart(x)}
         <div class="legend">${x.fragments.map((f, i) =>
-          `<span><i style="background:${ionColour(i)}"></i>${esc(x.labels?.[i] ?? "y?")} ${f.toFixed(2)}</span>`).join("")}</div>
+          `<span><i style="background:${ionColour(i, x.series)}"></i>${esc(x.labels?.[i] ?? "?")} ${f.toFixed(2)}</span>`).join("")}</div>
         <p class="note-inline">
           Extracted from raw data in <b>${x.ms.toFixed(0)} ms</b> —
           ${(x.rowsDecoded / 1e6).toFixed(2)} M rows decoded,
           ${(x.rowsScanned / 1e3).toFixed(0)}k touched.
-          Fragments are theoretical y-ions from the sequence,
+          ${x.measured
+            ? "Fragments are the ions the engine itself scored, with its own m/z"
+            : '<span class="err">Fragments are theoretical y-ions from the sequence</span>' +
+              " — this report was written without <span class=\"mono\">--export-quant</span>"},
           read from <span class="mono">${esc(x.archive)}</span>.
           ${sig ? "" : '<span class="err">No signal in this window.</span>'}
         </p>
@@ -317,14 +331,16 @@ async function interrogate(k, runIndex) {
         <span class="hint">${x.frames} frames · ${x.rowGroups} row groups</span></div>
       ${chart(x)}
       <div class="legend">${x.fragments.map((f, i) =>
-        `<span><i style="background:${ionColour(i)}"></i>${esc(x.labels?.[i] ?? "y?")} ${f.toFixed(2)}</span>`).join("")}</div>
+        `<span><i style="background:${ionColour(i, x.series)}"></i>${esc(x.labels?.[i] ?? "?")} ${f.toFixed(2)}</span>`).join("")}</div>
       <p class="note-inline">
         <b>${esc(r.sequence)} ${r.charge}+</b> was not identified in this run.
         Evidence above was computed from the sequence and read from raw data in
         <b>${x.ms.toFixed(0)} ms</b> — no engine wrote a chromatogram for it.
         Retention time <b>${r.borrowedRt.toFixed(2)} min</b> ±${r.margin.toFixed(2)}
-        is borrowed from the ${r.donors} run${r.donors === 1 ? "" : "s"} that did
-        find it, so it is an assumption, not a measurement here.
+        ${x.measured ? "and the fragment list are" : "is"} borrowed from the
+        ${r.donors} run${r.donors === 1 ? "" : "s"} that did find it, so
+        ${x.measured ? "they are assumptions" : "it is an assumption"}, not
+        measurements here.
         ${call}
       </p>`;
   }
@@ -332,10 +348,20 @@ async function interrogate(k, runIndex) {
   box.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
-const ionColour = (i) => [
-  "var(--ion-y)", "var(--ion-y)", "var(--ion-y)",
-  "var(--ion-b)", "var(--ion-b)", "var(--ion-b)",
-][i % 6];
+/**
+ * Colour by ion series, not by position.
+ *
+ * `docs/UI-DESIGN.md` assigns b-ions the OpenMS blue and y-ions its magenta, so
+ * a trace's colour tells you which series it is. That only works once the real
+ * series is known — with theoretical y-ions everything was one colour and the
+ * distinction was decorative.
+ */
+const ionColour = (i, series) => {
+  const s = series?.[i];
+  if (s === "b" || s === "a" || s === "c") return "var(--ion-b)";
+  if (s === "y" || s === "z" || s === "x") return "var(--ion-y)";
+  return i % 2 ? "var(--ion-b)" : "var(--ion-y)";
+};
 
 function chart(x) {
   const W = 420, H = 140, L = 38, B = 20, T = 8, R = 6;
@@ -362,7 +388,7 @@ function chart(x) {
   const paths = x.traces.map((t, i) => {
     let d = "";
     for (let j = 0; j < n; j++) d += (j ? "L" : "M") + px(x.rt[j]).toFixed(1) + " " + py(t[j]).toFixed(1);
-    return `<path d="${d}" fill="none" stroke="${ionColour(i)}" stroke-width="1.35"
+    return `<path d="${d}" fill="none" stroke="${ionColour(i, x.series)}" stroke-width="1.35"
       stroke-linejoin="round" opacity=".92"/>`;
   }).join("");
 

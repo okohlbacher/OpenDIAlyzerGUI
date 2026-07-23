@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { loadReport, filterRows, seekKey, CANONICAL } from "../src/report.ts";
+import { loadReport, filterRows, seekKey, reportedFragments, CANONICAL } from "../src/report.ts";
 
 // Real DIA-NN 2.6.1 Academia output from a six-run liver diaPASEF cohort — not
 // a synthetic fixture. The data is unpublished and lives outside the repo, so
@@ -113,4 +113,44 @@ test("seek keys give an RT-bounded window for the drilldown", { skip: !have }, a
       `${bounded} tighter than 2 min`,
   );
   assert.ok(bounded > 400, "engine-measured bounds are tight, not fallbacks");
+});
+
+// --export-quant writes the engine's own fragments into the report:
+// `y6^1/704.372620` is series, ordinal, charge and exact m/z. Using them beats
+// computing theoretical ions, which for a long peptide picks the wrong series
+// entirely — DIA-NN scored b14++ and short y-ions where a naive y-series guess
+// reached for y17-y22.
+test("parses the engine's own fragments", { skip: !have }, async () => {
+  const t = await report();
+  if (!t.columnNames.includes("Fr.0.Id")) return; // report written without --export-quant
+  const rows = filterRows(t, { maxQValue: 0.01, hideDecoys: true });
+
+  const f = reportedFragments(t, rows[0]!);
+  assert.ok(f && f.length > 0, "fragments recovered");
+  for (const x of f!) {
+    assert.ok(x.mz > 0, `${x.label} has an m/z`);
+    assert.ok(/^[a-z]$/.test(x.series), `series is a letter: ${x.series}`);
+    assert.ok(x.ordinal >= 1 && x.charge >= 1);
+    assert.ok(/^[a-z]\d+(²⁺)?$/.test(x.label), `label reads as an ion: ${x.label}`);
+  }
+  // Sorted most intense first — those are the traces worth drawing.
+  for (let i = 1; i < f!.length; i++) {
+    assert.ok(f![i]!.quantity <= f![i - 1]!.quantity, "descending by quantity");
+  }
+  console.log(`    ${f!.length} fragments: ${f!.slice(0, 5).map((x) => x.label).join(", ")}…`);
+});
+
+// A lookup must not decode the column. Twelve Fr.N.Id columns over a cohort
+// report are 4.5 M strings, and materialising them to read twelve values stalled
+// the evidence pane long enough to look like a failure.
+test("single-cell reads do not materialise the column", { skip: !have }, async () => {
+  const t = await report();
+  if (!t.columnNames.includes("Fr.0.Id")) return;
+  const before = t.columns.size;
+  const t0 = performance.now();
+  for (let i = 0; i < 200; i++) t.cell("Fr.0.Id", i);
+  const ms = performance.now() - t0;
+  assert.equal(t.columns.size, before, "column was not materialised");
+  assert.ok(ms < 50, `200 cell reads took ${ms.toFixed(1)} ms`);
+  console.log(`    200 cell reads in ${ms.toFixed(1)} ms, column still lazy`);
 });

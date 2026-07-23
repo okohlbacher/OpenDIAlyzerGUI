@@ -116,6 +116,18 @@ We do **not** generate matrices (`--matrices`) — they are derivable from the
 report, and two sources of truth is precisely what produced
 [#1056](https://github.com/vdemichev/DiaNN/issues/1056).
 
+**Always `--export-quant`.** It writes the engine's own fragments into the
+report: `Fr.N.Id` is `y6^1/704.372620` — series, ordinal, charge and exact m/z —
+alongside each fragment's measured quantity and score. That removes any need to
+read a spectral library, and it is strictly better than computing theoretical
+ions, which for a long peptide picks the wrong series entirely. On the AGXT
+G170R variant (23-mer, 3+) DIA-NN scored `y6`, `y7`, `b14²⁺`, `y8`, `y6²⁺` and
+`y19²⁺`; a naive y-series guess reached for `y17`–`y22` at 1800–2386 Th, above
+the instrument's 1700 Th ceiling, and saw nothing at all.
+
+`.speclib` stays unread — it is undocumented, and with `--export-quant` there is
+nothing left in it that we need.
+
 **Never `--xic`.** We do not ask DIA-NN for chromatograms at all. We read raw
 data ourselves through mzPeak, which is faster to produce, costs no disk, and —
 unlike `.xic.parquet` — can answer questions about precursors DIA-NN rejected.
@@ -233,6 +245,7 @@ else upgrades the experience; nothing else gates it.
 | Confidence | `Q.Value`, `PEP`, `Global.Q.Value`, `Lib.Q.Value`, `PG.Q.Value`, `Global.PG.Q.Value`, `Protein.Q.Value` |
 | Quantity | `Precursor.Quantity`, `Precursor.Normalised`, `Ms1.Area`, `PG.MaxLFQ`, `Genes.MaxLFQ`, `Genes.MaxLFQ.Unique` |
 | Evidence | `Evidence`, `Mass.Evidence`, `Ms1.Profile.Corr`, `Averagine`, `Quantity.Quality`, `Empirical.Quality` |
+| **Fragments** (needs `--export-quant`) | `Fr.N.Id`, `Fr.N.Quantity`, `Fr.N.Score`, `Best.Fr.Mz` |
 | Peptidoform | `Peptidoform.Q.Value`, `PTM.Site.Confidence`, `Site.Occupancy.Probabilities`, `Protein.Sites` |
 
 `RT.Start` / `RT.Stop` / `Precursor.Mz` / `IM` matter most: they are the seek

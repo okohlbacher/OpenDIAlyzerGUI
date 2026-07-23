@@ -99,6 +99,15 @@ export interface ReportTable {
   /** Canonical names the file does not have. Absence is never fatal. */
   readonly missing: readonly string[];
   column(name: string): ColumnData | undefined;
+  /**
+   * One text cell, without decoding the column.
+   *
+   * `text()` materialises every row, which is right when scanning and badly
+   * wrong for a lookup: the twelve `Fr.N.Id` columns hold 4.5 M strings in a
+   * cohort report, and building all of them to read twelve values stalls the
+   * evidence pane for seconds.
+   */
+  cell(name: string, row: number): string | null;
   /** Numeric accessor that tolerates absence — returns null, never throws. */
   numeric(name: string): NumericColumn | null;
   text(name: string): string[] | null;
@@ -221,6 +230,14 @@ export function fromArrow(tbl: Table): ReportTable {
     column(n) {
       return columns.get(n) ?? materialise(n);
     },
+    cell(n, row) {
+      const done = columns.get(n);
+      if (done) return Array.isArray(done) ? (done[row] ?? null) : null;
+      const vec = lazy.get(n);
+      if (!vec) return null;
+      const v = vec.get(row);
+      return v === null || v === undefined ? null : String(v);
+    },
     numeric(n) {
       const c = columns.get(n);
       return c && !Array.isArray(c) ? c : null;
@@ -321,4 +338,60 @@ export function seekKey(t: ReportTable, row: number, fallbackMargin = 2): SeekKe
     im: im && Number.isFinite(im[row]!) ? im[row]! : null,
     qValue: q?.[row] ?? NaN,
   };
+}
+
+/** A fragment the engine actually used, with its measured quantity. */
+export interface ReportedFragment {
+  label: string;
+  mz: number;
+  series: string;
+  ordinal: number;
+  charge: number;
+  /** Measured intensity in this run. */
+  quantity: number;
+  /** The engine's own confidence in this fragment, 0–1. */
+  score: number;
+}
+
+/**
+ * Fragments as reported by the engine, when `--export-quant` was used.
+ *
+ * `Fr.N.Id` carries everything needed: `y6^1/704.372620` is ion series,
+ * ordinal, charge and exact m/z. That is strictly better than computing
+ * theoretical ions, because it is what the engine actually scored — including
+ * b-ions and short y-ions that a naive y-series guess misses entirely.
+ *
+ * Returns null when the columns are absent, which is the normal case for a
+ * report written without `--export-quant`; the caller then falls back to
+ * theoretical fragments and the UI says so.
+ */
+export function reportedFragments(t: ReportTable, row: number): ReportedFragment[] | null {
+  const out: ReportedFragment[] = [];
+  for (let i = 0; i < 24; i++) {
+    const raw = t.cell(`Fr.${i}.Id`, row);
+    if (raw === null) {
+      // No such column at all — stop. A blank value on an existing column just
+      // means this precursor used fewer fragments, so keep going.
+      if (!t.columnNames.includes(`Fr.${i}.Id`)) break;
+      continue;
+    }
+    if (!raw) continue;
+    // e.g. "y6^1/704.372620", "b14^2/720.380066"
+    const m = /^([a-z]+)(\d+)\^(\d+)\/([\d.]+)$/i.exec(raw.trim());
+    if (!m) continue;
+    const mz = Number(m[4]);
+    if (!Number.isFinite(mz) || mz <= 0) continue;
+    const charge = Number(m[3]);
+    const ordinal = Number(m[2]);
+    const series = m[1]!.toLowerCase();
+    out.push({
+      label: `${series}${ordinal}${charge > 1 ? "²⁺" : ""}`,
+      mz, series, ordinal, charge,
+      quantity: t.numeric(`Fr.${i}.Quantity`)?.[row] ?? 0,
+      score: t.numeric(`Fr.${i}.Score`)?.[row] ?? 0,
+    });
+  }
+  if (!out.length) return null;
+  // Most intense first — those are the traces worth showing.
+  return out.sort((a, b) => b.quantity - a.quantity);
 }

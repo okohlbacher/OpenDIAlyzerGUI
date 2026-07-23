@@ -11,8 +11,8 @@ import { app, BrowserWindow, ipcMain, dialog, nativeImage } from "electron";
 import { join, dirname, basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync, readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
-import { loadReport, filterRows, seekKey, CANONICAL, type ReportTable, type FilterSpec }
-  from "../src/report.ts";
+import { loadReport, filterRows, seekKey, reportedFragments, CANONICAL,
+  type ReportTable, type FilterSpec } from "../src/report.ts";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, type MetadataIndex } from "../src/spectra.ts";
 import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts";
@@ -415,7 +415,16 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
     return { sequence: seq, charge: z, run: target, xic: null, reason: "no-archive-for-run" };
   }
 
-  const frags = fragmentsFor(seq, z, src.meta.spectra.ms2MzRange);
+  // Borrow the fragment list too, not just the retention time: the runs that
+  // identified it know which ions the engine actually scored, and a theoretical
+  // guess for a long peptide can miss them entirely.
+  let donorRow = -1;
+  for (let i = 0; i < t.rowCount; i++) {
+    if (seqs[i] === seq && (!zs || zs[i] === z) && t.runOf[i] !== runIndex) { donorRow = i; break; }
+  }
+  const measured = donorRow >= 0 ? reportedFragments(t, donorRow) : null;
+  const frags = measured?.slice(0, 6) ??
+    fragmentsFor(seq, z, src.meta.spectra.ms2MzRange);
   const fragments = frags.map((f) => f.mz);
   const t0 = performance.now();
   try {
@@ -431,6 +440,8 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
         traces: xic.traces.map((tr) => Array.from(tr)),
         fragments,
         labels: frags.map((f) => f.label),
+        series: frags.map((f) => f.series),
+        measured: !!measured,
         frames: xic.frames.length,
         rowGroups: xic.rowGroupsRead,
         rowsDecoded: xic.rowsDecoded,
@@ -473,9 +484,13 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
   }
   if (!src) return { key, extras, xic: null, reason: "no-archive-for-run" };
 
-  // Theoretical y-ions, restricted to what the instrument actually recorded.
-  // A real library would give measured fragments; this is the flagged fallback.
-  const frags = fragmentsFor(key.sequence, key.charge, src.meta.spectra.ms2MzRange);
+  // The engine's own fragments when the report carries them: exact m/z, the
+  // right ion series, and the ones it actually scored. Theoretical y-ions are
+  // the fallback for reports written without --export-quant, and the UI says
+  // which is in use.
+  const measured = reportedFragments(session.report, row);
+  const frags = measured?.slice(0, 6) ??
+    fragmentsFor(key.sequence, key.charge, src.meta.spectra.ms2MzRange);
   const fragments = frags.map((f) => f.mz);
   const margin = 0.15;
   const t0 = performance.now();
@@ -507,6 +522,8 @@ ipcMain.handle("evidence:for", async (_e, k: number) => {
       traces: xic.traces.map((t) => Array.from(t)),
       fragments,
       labels: frags.map((f) => f.label),
+      series: frags.map((f) => f.series),
+      measured: !!measured,
       frames: xic.frames.length,
       rowGroups: xic.rowGroupsRead,
       rowsDecoded: xic.rowsDecoded,
