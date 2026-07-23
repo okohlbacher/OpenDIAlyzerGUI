@@ -1,0 +1,4 @@
+node_modules/
+app/main.mjs
+app/preload.cjs
+app/logo.svg.html

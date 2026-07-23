@@ -9,12 +9,19 @@
   },
   "scripts": {
     "test": "node --test \"test/**/*.test.ts\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:app": "esbuild app/main.ts --bundle --platform=node --format=esm --packages=external --outfile=app/main.mjs && esbuild app/preload.ts --bundle --platform=node --format=cjs --packages=external --outfile=app/preload.cjs && node scripts/inject-logo.mjs",
+    "app": "npm run build:app && electron app/main.mjs"
   },
   "dependencies": {
     "apache-arrow": "^21.2.0",
     "hyparquet": "^1.26.2",
     "hyparquet-compressors": "^1.1.1",
     "parquet-wasm": "^0.7.2"
-  }
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "esbuild": "^0.28.1"
+  },
+  "main": "app/main.mjs"
 }

@@ -56,8 +56,25 @@ contract in `docs/ARCHITECTURE.md` honest.
 
 ## Status
 
-**M0–M3 are done** — 25 tests green against real files, including real DIA-NN
-2.6.1 output.
+**M0–M4 are done.** 25 tests green, and the app runs on real DIA-NN 2.6.1
+output: three panes, FDR slider, run filter, search, keyboard stepping, and an
+evidence pane that reads raw data on selection.
+
+```bash
+npm run app
+```
+
+### One deliberate deviation from the architecture
+
+`docs/ARCHITECTURE.md` puts the data layer in a renderer Web Worker so it also
+runs in a browser. For M4 it lives in the **Electron main process** instead:
+main is plain Node, so `parquet-wasm`, `openAsBlob` and `fs` work with no
+bundling at all. The renderer only ever sees message passing, so relocating it
+to a worker later is a swap rather than a rewrite. The browser build is deferred,
+not designed out.
+
+Second, smaller one: main is bundled as **ESM** (`main.mjs`) because hyparquet
+is ESM-only and a CJS bundle cannot require it. Preload stays CJS.
 
 ### The demo dataset
 
