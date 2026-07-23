@@ -86,6 +86,31 @@ It is a better exercise than a benchmark corpus would have been, because the
 study's own question *is* question 2: **is a specific variant peptide present
 in this sample, and if not, what is actually at that coordinate?**
 
+### M6 — Proteins and Runs grains
+
+Both were visible-but-disabled since M4. They aggregate the **filtered**
+precursor set, so the FDR slider moves all three grains together — which is the
+design's claim and the thing DIA-NN's matrices famously do not do
+([#1056](https://github.com/vdemichev/DiaNN/issues/1056) took three rounds with
+the author to reconstruct which filter produced the matrix). Protein numbers are
+derived here, never read from `report.pg_matrix.tsv`. One source of truth.
+
+**QC is the Runs grain, not a separate screen** — the claim `docs/UI-DESIGN.md`
+made and could not previously back. On this cohort it immediately shows one run
+is shallower than the rest:
+
+| | precursors | proteins | FWHM |
+|---|---|---|---|
+| S30 | 49,213 | 6,223 | 3.7 s |
+| S26 | 48,885 | 6,193 | 3.6 s |
+| **S23** | **38,613** | **4,669** | 3.6 s |
+
+Peak width is uniform, so that is depth rather than chromatography.
+
+A test asserts the runs partition the filtered set exactly and that no precursor
+is counted twice or dropped across protein groups — the arithmetic that has to
+hold for the grains to be the same evidence rather than three different answers.
+
 ### M5 — Interrogate
 
 Question 2 — *why is my peptide missing?* — in the form it actually takes: a

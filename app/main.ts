@@ -17,6 +17,7 @@ import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, type MetadataIndex } from "../src/spectra.ts";
 import { PeakReader, extractXic, coelution, fragmentsFor } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
+import { byProtein, byRun, type ProteinRow, type RunRow } from "../src/aggregate.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -102,8 +103,32 @@ async function archiveFor(run: string): Promise<OpenArchive | null> {
   return entry;
 }
 
-/** Row indices matching the current filter. Recomputed on every filter change. */
+export type Grain = "precursors" | "proteins" | "runs";
+
+/** Precursor rows matching the current filter. Recomputed on every change. */
 let visible: Uint32Array = new Uint32Array(0);
+/** The current grain's rows. For precursors this mirrors `visible`. */
+let grain: Grain = "precursors";
+let proteins: ProteinRow[] = [];
+let runRows: RunRow[] = [];
+
+/** How many rows the current grain has. */
+function grainCount(): number {
+  return grain === "proteins" ? proteins.length
+    : grain === "runs" ? runRows.length
+    : visible.length;
+}
+
+/**
+ * Every grain aggregates the *filtered* precursor set, so the FDR slider moves
+ * all three at once. Protein counts therefore always agree with the precursor
+ * list they came from — which is the disagreement DIA-NN's matrices are famous
+ * for (#1056).
+ */
+function regrain(): void {
+  proteins = grain === "proteins" ? byProtein(session!.report, visible) : [];
+  runRows = grain === "runs" ? byRun(session!.report, visible) : [];
+}
 
 /**
  * `ODIA_SMOKE=<report.parquet>` opens that session, waits for first paint, writes
@@ -113,6 +138,7 @@ let visible: Uint32Array = new Uint32Array(0);
 async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
   const jump = Number(process.env.ODIA_SMOKE_ROW ?? "3");
   const search = process.env.ODIA_SMOKE_SEARCH;
+  const smokeGrain = process.env.ODIA_SMOKE_GRAIN;
   // ODIA_SMOKE_STEP=N simulates holding an arrow key: N selections in quick
   // succession, which is what floods the extractor.
   const step = Number(process.env.ODIA_SMOKE_STEP ?? "0");
@@ -120,6 +146,10 @@ async function smoke(win: BrowserWindow, reportPath: string): Promise<void> {
     `openSession(${JSON.stringify(reportPath)}).then(async () => {
        ${search ? `state.search = ${JSON.stringify(search)};
                    state.fdr = 0.5; await refresh();` : ""}
+       ${smokeGrain ? `state.grain = ${JSON.stringify(smokeGrain)};
+                       document.querySelectorAll(".grain button").forEach(
+                         x => x.setAttribute("aria-pressed", String(x.dataset.grain === state.grain)));
+                       await refresh();` : ""}
        select(${search ? 0 : jump});
      })`);
   // select() is async — it may have to load the window the row lives in — so
@@ -266,23 +296,45 @@ function statsPaths(reportPath: string): string[] {
  * Filtering and paging are separate calls: scrolling a 377,000-row result must
  * not re-run the predicate, and re-filtering must not depend on scroll position.
  */
-ipcMain.handle("rows:filter", (_e, spec: FilterSpec, offset = 0, limit = 200) => {
-  if (!session) return { total: 0, rows: [], filterMs: 0 };
-  const t0 = performance.now();
-  visible = filterRows(session.report, spec);
-  const ms = performance.now() - t0;
-  return { total: visible.length, rows: page(offset, limit), filterMs: ms };
-});
+ipcMain.handle("rows:filter",
+  (_e, spec: FilterSpec, offset = 0, limit = 200, g: Grain = "precursors") => {
+    if (!session) return { total: 0, rows: [], filterMs: 0, grain: g };
+    const t0 = performance.now();
+    grain = g;
+    visible = filterRows(session.report, spec);
+    regrain();
+    const ms = performance.now() - t0;
+    return { total: grainCount(), rows: page(offset, limit), filterMs: ms, grain };
+  });
 
 /** A window of the current filtered set. Pure paging — no predicate re-run. */
 ipcMain.handle("rows:page", (_e, offset: number, limit: number) => {
   if (!session) return { total: 0, rows: [] };
-  return { total: visible.length, rows: page(offset, limit) };
+  return { total: grainCount(), rows: page(offset, limit) };
 });
 
 function page(offset: number, limit: number) {
   if (!session) return [];
   const t = session.report;
+
+  if (grain === "proteins") {
+    return proteins.slice(offset, offset + limit).map((p, n) => ({
+      k: offset + n, i: p.exemplar,
+      proteinGroup: p.proteinGroup, gene: p.genes,
+      precursors: p.precursors, peptides: p.peptides, runs: p.runs,
+      q: p.qValue, quant: p.quantity, quantityIsSum: p.quantityIsSum,
+    }));
+  }
+  if (grain === "runs") {
+    return runRows.slice(offset, offset + limit).map((r, n) => ({
+      k: offset + n, i: r.exemplar,
+      run: r.name, runIndex: r.index,
+      precursors: r.precursors, peptides: r.peptides, proteins: r.proteins,
+      q: r.medianQ, fwhm: r.medianFwhmSec, quant: r.totalQuantity,
+      rtRange: r.rtRange,
+      archive: !!session.resolved.get(r.name),
+    }));
+  }
   const seq = t.text(CANONICAL.strippedSequence);
   const genes = t.text(CANONICAL.genes);
   const prot = t.text(CANONICAL.proteinGroup);
@@ -325,9 +377,10 @@ function page(offset: number, limit: number) {
  * keeps the query RT-bounded and therefore cheap.
  */
 ipcMain.handle("evidence:presence", (_e, k: number) => {
-  if (!session || k < 0 || k >= visible.length) return null;
+  if (!session) return null;
   const t = session.report;
-  const row = visible[k]!;
+  const row = rowOf(k);
+  if (row < 0) return null;
   const seqs = t.text(CANONICAL.strippedSequence);
   const zs = t.numeric(CANONICAL.charge);
   if (!seqs) return null;
@@ -372,9 +425,10 @@ ipcMain.handle("evidence:presence", (_e, k: number) => {
  * see which one was made.
  */
 ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) => {
-  if (!session || k < 0 || k >= visible.length) return null;
+  if (!session) return null;
   const t = session.report;
-  const row = visible[k]!;
+  const row = rowOf(k);
+  if (row < 0) return null;
   const seqs = t.text(CANONICAL.strippedSequence);
   const zs = t.numeric(CANONICAL.charge);
   const rts = t.numeric(CANONICAL.rt);
@@ -457,9 +511,17 @@ ipcMain.handle("evidence:interrogate", async (_e, k: number, runIndex: number) =
   }
 });
 
+/** The report row a grain row stands for. */
+function rowOf(k: number): number {
+  if (grain === "proteins") return proteins[k]?.exemplar ?? -1;
+  if (grain === "runs") return runRows[k]?.exemplar ?? -1;
+  return k >= 0 && k < visible.length ? visible[k]! : -1;
+}
+
 ipcMain.handle("evidence:for", async (_e, k: number) => {
-  if (!session || k < 0 || k >= visible.length) return null;
-  const row = visible[k]!;
+  if (!session) return null;
+  const row = rowOf(k);
+  if (row < 0) return null;
   const key = seekKey(session.report, row);
   if (!key) return null;
 

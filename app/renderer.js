@@ -16,6 +16,7 @@ const OVERSCAN = 40;   // rows kept beyond the viewport, so a nudge never blanks
 
 const state = {
   open: false,
+  grain: "precursors",
   fdr: 0.01,
   run: undefined,
   search: "",
@@ -99,7 +100,7 @@ const currentFilter = () => ({
 
 async function refresh() {
   if (!state.open) return;
-  const r = await window.api.filter(currentFilter(), 0, WINDOW);
+  const r = await window.api.filter(currentFilter(), 0, WINDOW, state.grain);
 
   state.total = r.total;
   state.rows = r.rows;
@@ -108,13 +109,61 @@ async function refresh() {
   if (state.sel >= state.total) state.sel = Math.max(0, state.total - 1);
   $("scroller").scrollTop = 0;
 
-  $("thead").innerHTML =
-    `<tr><th>Peptide</th><th class="num">z</th><th class="num">m/z</th>
-      <th class="num">RT</th><th class="num">1/K0</th><th class="num">q</th>
-      <th class="num">Quantity</th><th>Gene</th></tr>`;
-
+  $("thead").innerHTML = HEAD[state.grain];
   paint();
   scheduleEvidence();
+}
+
+const HEAD = {
+  precursors: `<tr><th>Peptide</th><th class="num">z</th><th class="num">m/z</th>
+      <th class="num">RT</th><th class="num">1/K0</th><th class="num">q</th>
+      <th class="num">Quantity</th><th>Gene</th></tr>`,
+  proteins: `<tr><th>Protein group</th><th>Genes</th><th class="num">Precursors</th>
+      <th class="num">Peptides</th><th class="num">Runs</th><th class="num">q</th>
+      <th class="num">Quantity</th></tr>`,
+  runs: `<tr><th>Run</th><th class="num">Precursors</th><th class="num">Peptides</th>
+      <th class="num">Proteins</th><th class="num">Median q</th>
+      <th class="num">FWHM</th><th class="num">RT range</th><th>Raw</th></tr>`,
+};
+const COLS = { precursors: 8, proteins: 7, runs: 8 };
+
+/** One row of the current grain. */
+function rowHtml(row) {
+  const sel = row.k === state.sel;
+  const open = `<tr data-k="${row.k}" class="${sel ? "sel" : ""}" aria-selected="${sel}">`;
+  const qcls = row.q <= 0.001 ? "ok" : row.q <= 0.01 ? "mid" : "bad";
+
+  if (state.grain === "proteins") {
+    return open +
+      `<td class="seq-cell" title="${esc(row.proteinGroup)}"><span class="mono seq">${esc(row.proteinGroup)}</span></td>
+       <td>${esc(row.gene)}</td>
+       <td class="num mono">${row.precursors}</td>
+       <td class="num mono">${row.peptides}</td>
+       <td class="num mono">${row.runs}</td>
+       <td class="num mono qv ${qcls}">${fmtQ(row.q)}</td>
+       <td class="num mono" title="${row.quantityIsSum ? "summed precursor quantity — no MaxLFQ" : "MaxLFQ"}">${
+         row.quant ? row.quant.toExponential(1) : "—"}${row.quantityIsSum ? "*" : ""}</td></tr>`;
+  }
+  if (state.grain === "runs") {
+    return open +
+      `<td class="seq-cell" title="${esc(row.run)}"><span class="mono seq">${esc(shortRun(row.run))}</span></td>
+       <td class="num mono">${row.precursors.toLocaleString()}</td>
+       <td class="num mono">${row.peptides.toLocaleString()}</td>
+       <td class="num mono">${row.proteins.toLocaleString()}</td>
+       <td class="num mono">${fmtQ(row.q)}</td>
+       <td class="num mono">${Number.isFinite(row.fwhm) ? row.fwhm.toFixed(1) + " s" : "—"}</td>
+       <td class="num mono">${row.rtRange[0].toFixed(0)}–${row.rtRange[1].toFixed(0)}</td>
+       <td><span class="dot ${row.archive ? "ok" : "warnd"}"></span></td></tr>`;
+  }
+  return open +
+    `<td class="seq-cell" title="${esc(row.seq)}"><span class="mono seq">${esc(row.seq)}</span></td>
+     <td class="num mono">${row.z}+</td>
+     <td class="num mono">${row.mz.toFixed(3)}</td>
+     <td class="num mono">${row.rt.toFixed(2)}</td>
+     <td class="num mono">${row.im ? row.im.toFixed(3) : "—"}</td>
+     <td class="num mono qv ${qcls}">${fmtQ(row.q)}</td>
+     <td class="num mono">${row.quant ? row.quant.toExponential(1) : "—"}</td>
+     <td>${esc(row.gene)}</td></tr>`;
 }
 
 /** Renders the current window, padded above and below to the full scroll height. */
@@ -122,25 +171,15 @@ function paint() {
   const before = state.first * ROW_H;
   const after = Math.max(0, (state.total - state.first - state.rows.length) * ROW_H);
 
+  const cols = COLS[state.grain];
   $("tbody").innerHTML =
-    (before ? `<tr class="spacer" style="height:${before}px"><td colspan="8"></td></tr>` : "") +
-    state.rows.map((row) => {
-    const cls = row.q <= 0.001 ? "ok" : row.q <= 0.01 ? "mid" : "bad";
-    return `<tr data-k="${row.k}" class="${row.k === state.sel ? "sel" : ""}"
-        aria-selected="${row.k === state.sel}">
-      <td class="seq-cell" title="${esc(row.seq)}"><span class="mono seq">${esc(row.seq)}</span></td>
-      <td class="num mono">${row.z}+</td>
-      <td class="num mono">${row.mz.toFixed(3)}</td>
-      <td class="num mono">${row.rt.toFixed(2)}</td>
-      <td class="num mono">${row.im ? row.im.toFixed(3) : "—"}</td>
-      <td class="num mono qv ${cls}">${fmtQ(row.q)}</td>
-      <td class="num mono">${row.quant ? row.quant.toExponential(1) : "—"}</td>
-      <td>${esc(row.gene)}</td></tr>`;
-    }).join("") +
-    (after ? `<tr class="spacer" style="height:${after}px"><td colspan="8"></td></tr>` : "");
+    (before ? `<tr class="spacer" style="height:${before}px"><td colspan="${cols}"></td></tr>` : "") +
+    state.rows.map(rowHtml).join("") +
+    (after ? `<tr class="spacer" style="height:${after}px"><td colspan="${cols}"></td></tr>` : "");
 
   $("count").textContent = state.total
-    ? `row ${(state.sel + 1).toLocaleString()} of ${state.total.toLocaleString()}` +
+    ? `${state.grain === "precursors" ? "row" : state.grain === "proteins" ? "protein" : "run"} ` +
+      `${(state.sel + 1).toLocaleString()} of ${state.total.toLocaleString()}` +
       (state.filterMs !== undefined ? ` · filtered in ${state.filterMs.toFixed(1)} ms` : "")
     : "nothing matches this filter";
 }
@@ -200,7 +239,21 @@ async function showEvidence() {
     ["1/K0", k.im ? k.im.toFixed(4) : "—"],
   ];
 
+  // In a coarser grain the evidence is still a precursor's — say whose, or the
+  // panel silently swaps a protein for a peptide.
+  const row = state.rows.find((r) => r.k === state.sel);
+  const context = state.grain === "proteins" && row
+    ? `<p class="note-inline" style="margin:0 0 8px">Best precursor of
+        <span class="mono">${esc(row.proteinGroup)}</span>${row.gene ? " · " + esc(row.gene) : ""},
+        ${row.precursors} precursors across ${row.runs} run${row.runs === 1 ? "" : "s"}</p>`
+    : state.grain === "runs" && row
+      ? `<p class="note-inline" style="margin:0 0 8px">First precursor of
+          <span class="mono">${esc(shortRun(row.run))}</span> —
+          ${row.precursors.toLocaleString()} precursors, ${row.proteins.toLocaleString()} proteins</p>`
+      : "";
+
   let body = `
+    ${context}
     <div class="ev-title">
       <span class="s mono">${esc(k.sequence)}</span>
       <span class="z mono">${k.charge}+ · ${k.precursorMz.toFixed(4)} m/z</span>
@@ -404,6 +457,16 @@ function chart(x) {
 }
 
 // ── events ───────────────────────────────────────────────────────────────────
+
+document.querySelectorAll(".grain button").forEach((b) =>
+  b.addEventListener("click", () => {
+    if (b.disabled || b.dataset.grain === state.grain) return;
+    document.querySelectorAll(".grain button")
+      .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    state.grain = b.dataset.grain;
+    state.sel = 0;
+    refresh();
+  }));
 
 $("openBtn").addEventListener("click", async () => {
   const p = await window.api.pick();
