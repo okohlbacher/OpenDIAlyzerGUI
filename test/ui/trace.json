@@ -13,7 +13,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 915 ms",
+      "evidenceSource": "from raw · 977 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -28,7 +28,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 268,166 · filtered in 4.0 ms",
+      "countText": "row 1 of 268,166 · filtered in 4.2 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -50,7 +50,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 915 ms",
+      "evidenceSource": "from raw · 977 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -65,7 +65,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 210,663 · filtered in 7.5 ms",
+      "countText": "row 1 of 210,663 · filtered in 5.7 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -87,7 +87,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 915 ms",
+      "evidenceSource": "from raw · 977 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -102,7 +102,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 2.8 ms",
+      "countText": "row 1 of 314,655 · filtered in 2.9 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -124,7 +124,7 @@
         "AAYLHGR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1273 ms",
+      "evidenceSource": "from raw · 1366 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -139,7 +139,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 937 · filtered in 20.1 ms",
+      "countText": "row 1 of 937 · filtered in 20.8 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -161,7 +161,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1273 ms",
+      "evidenceSource": "from raw · 1366 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -176,7 +176,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 5.9 ms",
+      "countText": "row 1 of 314,655 · filtered in 3.0 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -198,7 +198,7 @@
         "AAAGEFADDPCSSVK"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1273 ms",
+      "evidenceSource": "from raw · 1366 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -213,7 +213,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 61.0 ms",
+      "countText": "row 1 of 314,655 · filtered in 63.6 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -235,7 +235,7 @@
         "ECCHGDLLECADDR"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1273 ms",
+      "evidenceSource": "from raw · 1366 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -250,7 +250,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 597 · filtered in 13.3 ms",
+      "countText": "row 1 of 597 · filtered in 13.7 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -272,7 +272,7 @@
         "AAAGEFADDPCSSVK"
       ],
       "evidenceTitle": "AAYLHGR",
-      "evidenceSource": "from raw · 1273 ms",
+      "evidenceSource": "from raw · 1366 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -287,7 +287,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 61.4 ms",
+      "countText": "row 1 of 314,655 · filtered in 68.1 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -299,17 +299,17 @@
     "step": "grain",
     "state": {
       "grain": "proteins",
-      "total": 12254,
+      "total": 12008,
       "loaded": 120,
       "sel": 0,
       "fdr": 0.05,
       "firstRows": [
+        "AGXT",
         "Q15149",
-        "Q09666",
-        "Q14204"
+        "Q09666"
       ],
-      "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 1329 ms",
+      "evidenceTitle": "AAYLHGR",
+      "evidenceSource": "from raw · 1366 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -318,13 +318,13 @@
         "hit",
         "hit",
         "hit",
-        "miss"
+        "hit"
       ],
       "runXicCharts": 0,
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "protein 1 of 12,254 · filtered in 76.8 ms",
+      "countText": "protein 1 of 12,008 · filtered in 101.2 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -345,23 +345,23 @@
         "run-05",
         "run-06"
       ],
-      "evidenceTitle": "AAAAAAAAVPSAGPAGPAPTSAAGR",
-      "evidenceSource": "from raw · 858 ms",
+      "evidenceTitle": "AAYLHGR",
+      "evidenceSource": "from raw · 1366 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
         "hit",
-        "miss",
-        "miss",
         "hit",
         "hit",
-        "miss"
+        "hit",
+        "hit",
+        "hit"
       ],
       "runXicCharts": 0,
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "run 1 of 6 · filtered in 193.5 ms",
+      "countText": "run 1 of 6 · filtered in 219.5 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -373,32 +373,32 @@
     "step": "grain",
     "state": {
       "grain": "tree",
-      "total": 12254,
+      "total": 12008,
       "loaded": 120,
       "sel": 0,
       "fdr": 0.05,
       "firstRows": [
+        "AGXT",
         "Q15149",
-        "Q09666",
-        "Q14204"
+        "Q09666"
       ],
-      "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 700 ms",
+      "evidenceTitle": "ALNAPPGTSLISFSEKAK",
+      "evidenceSource": "from raw · 1118 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
+        "miss",
         "hit",
         "hit",
         "hit",
         "hit",
-        "hit",
-        "miss"
+        "hit"
       ],
       "runXicCharts": 0,
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "run 1 of 12,254 · filtered in 400.2 ms",
+      "countText": "run 1 of 12,008 · filtered in 404.5 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -410,32 +410,32 @@
     "step": "expand",
     "state": {
       "grain": "tree",
-      "total": 190934,
+      "total": 190688,
       "loaded": 120,
       "sel": 0,
       "fdr": 0.05,
       "firstRows": [
-        "Q15149",
-        "AALAHSEEVTASQVAATK",
-        "595.3110+++"
+        "AGXT",
+        "AAYLHGR",
+        "394.2141++"
       ],
-      "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 700 ms",
+      "evidenceTitle": "ALNAPPGTSLISFSEKAK",
+      "evidenceSource": "from raw · 1118 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
+        "miss",
         "hit",
         "hit",
         "hit",
         "hit",
-        "hit",
-        "miss"
+        "hit"
       ],
       "runXicCharts": 0,
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "run 1 of 190,934 · filtered in 400.2 ms",
+      "countText": "run 1 of 190,688 · filtered in 404.5 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -447,32 +447,32 @@
     "step": "expand",
     "state": {
       "grain": "tree",
-      "total": 12254,
+      "total": 12008,
       "loaded": 120,
       "sel": 0,
       "fdr": 0.05,
       "firstRows": [
+        "AGXT",
         "Q15149",
-        "Q09666",
-        "Q14204"
+        "Q09666"
       ],
-      "evidenceTitle": "AALAHSEEVTASQVAATK",
-      "evidenceSource": "from raw · 700 ms",
+      "evidenceTitle": "ALNAPPGTSLISFSEKAK",
+      "evidenceSource": "from raw · 1118 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
+        "miss",
         "hit",
         "hit",
         "hit",
         "hit",
-        "hit",
-        "miss"
+        "hit"
       ],
       "runXicCharts": 0,
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "run 1 of 12,254 · filtered in 400.2 ms",
+      "countText": "run 1 of 12,008 · filtered in 404.5 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -494,7 +494,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAPAAAATAPTTAATTAATAAQ",
-      "evidenceSource": "from raw · 870 ms",
+      "evidenceSource": "from raw · 923 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -509,7 +509,7 @@
       "specPeaksShown": 400,
       "specShowAllVisible": true,
       "banners": [],
-      "countText": "row 1 of 314,655 · filtered in 11.4 ms",
+      "countText": "row 1 of 314,655 · filtered in 5.9 ms",
       "screen": "results",
       "sdrfRows": 0,
       "sdrfCols": 0,
@@ -531,7 +531,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAVSR",
-      "evidenceSource": "from raw · 803 ms",
+      "evidenceSource": "from raw · 863 ms",
       "charts": 2,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -568,7 +568,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAVSR",
-      "evidenceSource": "from raw · 803 ms",
+      "evidenceSource": "from raw · 863 ms",
       "charts": 3,
       "hasHeatmap": true,
       "presenceRuns": [
@@ -605,7 +605,7 @@
         "AAAAAAAAAVSR"
       ],
       "evidenceTitle": "AAAAAAAAAVSR",
-      "evidenceSource": "from raw · 803 ms",
+      "evidenceSource": "from raw · 863 ms",
       "charts": 3,
       "hasHeatmap": true,
       "presenceRuns": [
