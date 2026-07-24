@@ -47,6 +47,59 @@ test("run counts dedupe precursor rows and preserve modified forms", () => {
   assert.equal(run!.peptides, 2, "modified and unmodified forms remain separate");
 });
 
+test("protein grain consolidates only matching point-mutant accessions", () => {
+  const columns = new Map<string, ColumnData>([
+    [CANONICAL.strippedSequence, ["PEPTIDEA", "PEPTIDEN", "OTHER", "UNKNOWN"]],
+    [CANONICAL.modifiedSequence, ["PEPTIDEA", "PEPTIDEN", "OTHER", "UNKNOWN"]],
+    [CANONICAL.proteinGroup,
+      ["AGXTVARA210V", "AGXTVARN22Q", "P99999", "NO_GENE"]],
+    [CANONICAL.genes, ["", "", "OTHER1", ""]],
+    [CANONICAL.charge, new Int32Array([2, 2, 3, 2])],
+    [CANONICAL.qValue, new Float64Array([0.001, 0.002, 0.003, 0.004])],
+  ]);
+  const t: ReportTable = {
+    rowCount: 4,
+    columns,
+    columnNames: [...columns.keys()],
+    runs: ["run-1"],
+    runOf: new Int32Array([0, 0, 0, 0]),
+    extra: [],
+    missing: [],
+    column: (name) => columns.get(name),
+    cell: (name, row) => {
+      const column = columns.get(name);
+      return Array.isArray(column) ? column[row] ?? null : null;
+    },
+    numeric: (name) => {
+      const column = columns.get(name);
+      return column && !Array.isArray(column) ? column : null;
+    },
+    text: (name) => {
+      const column = columns.get(name);
+      return Array.isArray(column) ? column : null;
+    },
+  };
+
+  const proteins = byProtein(t, new Uint32Array([0, 1, 2, 3]));
+  assert.equal(proteins.length, 3);
+
+  const agxt = proteins.find((protein) => protein.proteinGroup === "AGXT");
+  assert.ok(agxt);
+  assert.equal(agxt.genes, "AGXT");
+  assert.equal(agxt.peptides, 2);
+  assert.equal(agxt.precursors, 2);
+  assert.equal(agxt.observations, 2);
+
+  const unrelated = proteins.find((protein) => protein.proteinGroup === "P99999");
+  assert.ok(unrelated);
+  assert.equal(unrelated.genes, "OTHER1");
+  assert.equal(unrelated.peptides, 1);
+
+  const blankGene = proteins.find((protein) => protein.proteinGroup === "NO_GENE");
+  assert.ok(blankGene);
+  assert.equal(blankGene.genes, "", "blank Genes is not invented for a non-variant");
+});
+
 // The design's claim is that grains are the same evidence counted differently.
 // If aggregation read anything other than the filtered set, the FDR slider would
 // move the precursor list and leave the protein list behind — which is exactly

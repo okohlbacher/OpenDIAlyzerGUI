@@ -63,6 +63,59 @@ test("a finite q replaces a NaN incumbent for exemplars and run leaves", () => {
   assert.equal(precursor.children[0]!.exemplar, 1);
 });
 
+test("point mutants share one target while unrelated proteins stay unchanged", () => {
+  const columns = new Map<string, ColumnData>([
+    [CANONICAL.modifiedSequence, ["PEP[Oxidation]TIDEA", "PEPTIDEN", "OTHER"]],
+    [CANONICAL.strippedSequence, ["PEPTIDEA", "PEPTIDEN", "OTHER"]],
+    [CANONICAL.proteinGroup, ["AGXTVARA210V", "AGXTVARN22Q", "P99999"]],
+    [CANONICAL.genes, ["", "", "OTHER1"]],
+    [CANONICAL.charge, new Float64Array([2, 2, 3])],
+    [CANONICAL.precursorMz, new Float64Array([500, 600, 700])],
+    [CANONICAL.qValue, new Float64Array([0.001, 0.002, 0.003])],
+    [CANONICAL.rt, new Float64Array([10, 11, 12])],
+  ]);
+  const t: ReportTable = {
+    rowCount: 3,
+    columns,
+    columnNames: [...columns.keys()],
+    runs: ["run-1"],
+    runOf: new Int32Array([0, 0, 0]),
+    extra: [],
+    missing: [],
+    column: (name) => columns.get(name),
+    cell: (name, row) => {
+      const value = columns.get(name);
+      return Array.isArray(value) ? (value[row] ?? null) : null;
+    },
+    numeric: (name) => {
+      const value = columns.get(name);
+      return value && !Array.isArray(value) ? value : null;
+    },
+    text: (name) => {
+      const value = columns.get(name);
+      return Array.isArray(value) ? value : null;
+    },
+  };
+
+  const tree = buildTree(t, new Uint32Array([0, 1, 2]));
+  assert.equal(tree.length, 2);
+
+  const agxt = tree.find((node) => node.label === "AGXT");
+  assert.ok(agxt);
+  assert.equal(agxt.children.length, 2);
+  const peptideA = agxt.children.find((node) => node.label === "PEPTIDEA");
+  const peptideN = agxt.children.find((node) => node.label === "PEPTIDEN");
+  assert.equal(peptideA?.detail, "PEP[Oxidation]TIDEA · variant A210V");
+  assert.equal(peptideN?.detail, "variant N22Q");
+
+  const unrelated = tree.find((node) => node.label === "P99999");
+  assert.ok(unrelated);
+  assert.equal(unrelated.id, "P:P99999");
+  assert.equal(unrelated.detail, "OTHER1");
+  assert.deepEqual(unrelated.children.map((node) => node.label), ["OTHER"]);
+  assert.equal(unrelated.children[0]!.detail, "");
+});
+
 // The point of the tree. If this ratio is ~1 the tree is doing nothing.
 test("every sequence appears once", { skip: !have }, async () => {
   const t = await report();

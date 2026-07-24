@@ -15,6 +15,7 @@
  * the table uses applies unchanged: only expanded nodes are materialised.
  */
 import { CANONICAL, type ReportTable } from "./report.ts";
+import { parseVariant, targetOf } from "./variant.ts";
 
 export type Level = "protein" | "peptide" | "precursor" | "run";
 
@@ -38,6 +39,7 @@ export interface TreeNode {
 }
 
 const CHARGE = ["", "+", "++", "+++", "++++"];
+const VARIANT_DETAIL_LIMIT = 5;
 /** Skyline's convention, which both tools' users already read. */
 export const chargeLabel = (z: number): string =>
   z >= 1 && z <= 4 ? CHARGE[z]! : z > 0 ? `, +${z}` : "";
@@ -66,13 +68,22 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
   const nRuns = t.runs.length;
 
   interface P { node: TreeNode; peptides: Map<string, Pep>; runs: Set<number> }
-  interface Pep { node: TreeNode; precursors: Map<number, Pre>; runs: Set<number> }
+  interface Pep {
+    node: TreeNode;
+    precursors: Map<number, Pre>;
+    runs: Set<number>;
+    variantCodes: Set<string>;
+  }
   interface Pre { node: TreeNode; runs: Map<number, TreeNode> }
 
   const proteins = new Map<string, P>();
 
   for (const i of rows) {
-    const gk = pg?.[i] || "(unassigned)";
+    const proteinGroup = pg?.[i] || "";
+    const variant = parseVariant(proteinGroup);
+    // Variant FASTA entries have no Genes value. Consolidate only their exact
+    // accession convention; all ordinary protein-group identities stay intact.
+    const gk = targetOf(proteinGroup) || "(unassigned)";
     let p = proteins.get(gk);
     if (!p) {
       p = {
@@ -94,11 +105,12 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
           detail: mk !== stripped[i] ? mk : "",
           seen: 0, total: nRuns, children: [], exemplar: i,
         },
-        precursors: new Map(), runs: new Set(),
+        precursors: new Map(), runs: new Set(), variantCodes: new Set(),
       };
       p.peptides.set(mk, pep);
       p.node.children.push(pep.node);
     }
+    if (variant) pep.variantCodes.add(variant.code);
 
     const zi = z?.[i] ?? 0;
     let pre = pep.precursors.get(zi);
@@ -159,6 +171,14 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
     for (const pep of p.peptides.values()) {
       pep.node.seen = pep.runs.size;
       pep.node.counts = `${pep.precursors.size} precursor${pep.precursors.size === 1 ? "" : "s"}`;
+      if (pep.variantCodes.size) {
+        const variants = [...pep.variantCodes].sort();
+        const shown = variants.slice(0, VARIANT_DETAIL_LIMIT);
+        const more = variants.length - shown.length;
+        const variantDetail = `${variants.length === 1 ? "variant" : "variants"} ` +
+          shown.join(", ") + (more ? `, +${more} more` : "");
+        pep.node.detail += `${pep.node.detail ? " · " : ""}${variantDetail}`;
+      }
       for (const pre of pep.precursors.values()) {
         pre.node.seen = pre.runs.size;
         pre.node.detail = `q ${fmtQ(q?.[pre.node.exemplar] ?? NaN)}`;

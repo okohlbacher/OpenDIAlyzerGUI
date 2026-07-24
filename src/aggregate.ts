@@ -12,6 +12,7 @@
  * answer involved an undocumented threshold. One source of truth.
  */
 import { CANONICAL, type ReportTable } from "./report.ts";
+import { parseVariant, targetOf } from "./variant.ts";
 
 export interface ProteinRow {
   proteinGroup: string;
@@ -108,15 +109,22 @@ export function byProtein(t: ReportTable, rows: Uint32Array): ProteinRow[] {
   const acc = new Map<string, Acc>();
 
   for (const i of rows) {
-    const key = pg[i] || "";
+    const proteinGroup = pg[i] || "";
+    const variant = parseVariant(proteinGroup);
+    // Variant accessions are target-rooted by their embedded gene. No other
+    // protein group is re-keyed, even when it happens to share a Genes value.
+    const key = targetOf(proteinGroup);
     if (!key) continue;
     let a = acc.get(key);
     if (!a) {
       a = { peptides: new Set(), precursorKeys: new Set(), runs: new Set(),
             observations: 0, qValue: Infinity, lfq: 0, sum: 0, exemplar: i,
-            genes: genes?.[i] || "" };
+            genes: genes?.[i] || variant?.gene || "" };
       acc.set(key, a);
     }
+    // A non-variant row may have created this target first with no Genes value.
+    // Fill that blank only when a matching variant later supplies a parsed gene.
+    if (!a.genes && variant) a.genes = variant.gene;
     a.observations++;
     a.peptides.add(seqs[i]!);
     a.precursorKeys.add(`${forms![i]}|${charge?.[i] ?? 0}`);
