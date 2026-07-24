@@ -32,6 +32,16 @@ export function parseVariant(proteinGroup: string): VariantTag | null {
 }
 
 /**
+ * True only when the full Protein.Ids candidate list contains one entry.
+ * A variant-shaped Protein.Group is merely DIA-NN's representative pick when
+ * this list also contains the wildtype or another variant, so it is not
+ * diagnostic for that specific substitution.
+ */
+export function isDiagnostic(proteinIds: string): boolean {
+  return proteinIds.trim() !== "" && !proteinIds.includes(";");
+}
+
+/**
  * The target identity for one Protein.Group. Only the exact variant convention
  * is consolidated; every other value is returned byte-for-byte unchanged.
  */

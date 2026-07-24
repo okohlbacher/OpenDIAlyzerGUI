@@ -65,21 +65,24 @@ test("a finite q replaces a NaN incumbent for exemplars and run leaves", () => {
 
 test("point mutants share one target while unrelated proteins stay unchanged", () => {
   const columns = new Map<string, ColumnData>([
-    [CANONICAL.modifiedSequence, ["PEP[Oxidation]TIDEA", "PEPTIDEN", "OTHER"]],
-    [CANONICAL.strippedSequence, ["PEPTIDEA", "PEPTIDEN", "OTHER"]],
-    [CANONICAL.proteinGroup, ["AGXTVARA210V", "AGXTVARN22Q", "P99999"]],
-    [CANONICAL.genes, ["", "", "OTHER1"]],
-    [CANONICAL.charge, new Float64Array([2, 2, 3])],
-    [CANONICAL.precursorMz, new Float64Array([500, 600, 700])],
-    [CANONICAL.qValue, new Float64Array([0.001, 0.002, 0.003])],
-    [CANONICAL.rt, new Float64Array([10, 11, 12])],
+    [CANONICAL.modifiedSequence, ["PEP[Oxidation]TIDEA", "PEPTIDEN", "SHARED", "OTHER"]],
+    [CANONICAL.strippedSequence, ["PEPTIDEA", "PEPTIDEN", "SHARED", "OTHER"]],
+    [CANONICAL.proteinGroup,
+      ["AGXTVARA210V", "AGXTVARN22Q", "AGXTVARG170R", "P99999"]],
+    [CANONICAL.proteinIds,
+      ["AGXTVARA210V", "AGXTVARN22Q", "AGXTVARG170R;P21549", "P99999"]],
+    [CANONICAL.genes, ["", "", "", "OTHER1"]],
+    [CANONICAL.charge, new Float64Array([2, 2, 2, 3])],
+    [CANONICAL.precursorMz, new Float64Array([500, 600, 650, 700])],
+    [CANONICAL.qValue, new Float64Array([0.001, 0.002, 0.0025, 0.003])],
+    [CANONICAL.rt, new Float64Array([10, 11, 11.5, 12])],
   ]);
   const t: ReportTable = {
-    rowCount: 3,
+    rowCount: 4,
     columns,
     columnNames: [...columns.keys()],
     runs: ["run-1"],
-    runOf: new Int32Array([0, 0, 0]),
+    runOf: new Int32Array([0, 0, 0, 0]),
     extra: [],
     missing: [],
     column: (name) => columns.get(name),
@@ -97,16 +100,19 @@ test("point mutants share one target while unrelated proteins stay unchanged", (
     },
   };
 
-  const tree = buildTree(t, new Uint32Array([0, 1, 2]));
+  const tree = buildTree(t, new Uint32Array([0, 1, 2, 3]));
   assert.equal(tree.length, 2);
 
   const agxt = tree.find((node) => node.label === "AGXT");
   assert.ok(agxt);
-  assert.equal(agxt.children.length, 2);
+  assert.equal(agxt.children.length, 3);
   const peptideA = agxt.children.find((node) => node.label === "PEPTIDEA");
   const peptideN = agxt.children.find((node) => node.label === "PEPTIDEN");
+  const shared = agxt.children.find((node) => node.label === "SHARED");
   assert.equal(peptideA?.detail, "PEP[Oxidation]TIDEA · variant A210V");
   assert.equal(peptideN?.detail, "variant N22Q");
+  assert.equal(shared?.detail, "shared/ambiguous — not substitution-specific");
+  assert.doesNotMatch(shared!.detail, /G170R|variant/);
 
   const unrelated = tree.find((node) => node.label === "P99999");
   assert.ok(unrelated);

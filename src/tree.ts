@@ -15,7 +15,7 @@
  * the table uses applies unchanged: only expanded nodes are materialised.
  */
 import { CANONICAL, type ReportTable } from "./report.ts";
-import { parseVariant, targetOf } from "./variant.ts";
+import { isDiagnostic, parseVariant, targetOf } from "./variant.ts";
 
 export type Level = "protein" | "peptide" | "precursor" | "run";
 
@@ -57,6 +57,7 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
   const modSeq = t.text(CANONICAL.modifiedSequence) ?? t.text(CANONICAL.strippedSequence);
   const stripped = t.text(CANONICAL.strippedSequence);
   const pg = t.text(CANONICAL.proteinGroup);
+  const proteinIds = t.text(CANONICAL.proteinIds);
   const genes = t.text(CANONICAL.genes);
   if (!modSeq || !stripped) return [];
 
@@ -73,6 +74,7 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
     precursors: Map<number, Pre>;
     runs: Set<number>;
     variantCodes: Set<string>;
+    sharedEvidence: boolean;
   }
   interface Pre { node: TreeNode; runs: Map<number, TreeNode> }
 
@@ -106,11 +108,18 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
           seen: 0, total: nRuns, children: [], exemplar: i,
         },
         precursors: new Map(), runs: new Set(), variantCodes: new Set(),
+        sharedEvidence: false,
       };
       p.peptides.set(mk, pep);
       p.node.children.push(pep.node);
     }
-    if (variant) pep.variantCodes.add(variant.code);
+    // Protein.Group is only DIA-NN's representative candidate. A variant
+    // accession there is substitution-specific evidence only when the full
+    // Protein.Ids list has no wildtype or other variant candidate alongside it.
+    if (variant) {
+      if (isDiagnostic(proteinIds?.[i] ?? "")) pep.variantCodes.add(variant.code);
+      else pep.sharedEvidence = true;
+    }
 
     const zi = z?.[i] ?? 0;
     let pre = pep.precursors.get(zi);
@@ -178,6 +187,10 @@ export function buildTree(t: ReportTable, rows: Uint32Array): TreeNode[] {
         const variantDetail = `${variants.length === 1 ? "variant" : "variants"} ` +
           shown.join(", ") + (more ? `, +${more} more` : "");
         pep.node.detail += `${pep.node.detail ? " · " : ""}${variantDetail}`;
+      }
+      if (pep.sharedEvidence) {
+        const sharedDetail = "shared/ambiguous — not substitution-specific";
+        pep.node.detail += `${pep.node.detail ? " · " : ""}${sharedDetail}`;
       }
       for (const pre of pep.precursors.values()) {
         pre.node.seen = pre.runs.size;

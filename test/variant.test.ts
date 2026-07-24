@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseVariant, targetOf } from "../src/variant.ts";
+import { isDiagnostic, parseVariant, targetOf } from "../src/variant.ts";
 
 test("point-mutant accessions expose their gene and short code", () => {
   assert.deepEqual(parseVariant("AGXTVARA210V"), {
@@ -25,4 +25,12 @@ test("ordinary and multi-gene protein groups stay byte-for-byte unchanged", () =
     assert.equal(parseVariant(proteinGroup), null);
     assert.equal(targetOf(proteinGroup), proteinGroup);
   }
+});
+
+test("only a single Protein.Ids candidate is diagnostic", () => {
+  assert.equal(isDiagnostic("AGXTVARA210V"), true);
+  assert.equal(isDiagnostic(" AGXTVARA210V "), true);
+  assert.equal(isDiagnostic("AGXTVARA210V;P21549"), false);
+  assert.equal(isDiagnostic(""), false);
+  assert.equal(isDiagnostic("   "), false);
 });
