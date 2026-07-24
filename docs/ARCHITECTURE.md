@@ -490,13 +490,20 @@ genuine unknown — the engine run plan. Corrected.
    escalation is closed, parquet-wasm stays (`test/peaks.test.ts`).
 3. **Cold-open a report** — 576 ms for 268,948 × 72 (`test/report.test.ts`).
 
-**Spike 0 — the one that actually matters, and is not yet run.** Does the
-`calibrate → per-run → aggregate` split reproduce a monolithic DIA-NN run? Every
-Phase-1 value claim (per-file isolation, checkpoint, order-independence, cluster
-re-queue) inherits from it, and it is **untestable on this machine** — DIA-NN has
-no macOS build. It must run on Linux/Windows or in CI: search two files
-monolithically, then split, diff the reports. Until it passes, `docs/DIANN-COMPAT.md`'s
-run plan is a design, not a guarantee.
+**Spike 0 — the one that actually mattered, now run and passed, both
+halves.** Does the `calibrate → per-run → aggregate` split reproduce a
+monolithic DIA-NN run? Every Phase-1 value claim (per-file isolation,
+checkpoint, order-independence, cluster re-queue) inherits from it, and it
+was untestable on this machine — DIA-NN has no macOS build — so it ran on
+spock: 6 real AGXT runs, monolithic vs split, diffed. Non-MBR (2026-07-23):
+identical row counts, identical precursor/protein-group keysets,
+byte-identical quantities. MBR (2026-07-24, `--reanalyse` added to stage
+4): the two `report.parquet` files are **byte-identical by SHA-256** — not
+just equivalent content, the literal same file. `docs/DIANN-COMPAT.md` has
+the full numbers. The one thing this didn't test: MBR pinned from stage 2
+onward in a single continuous pipeline run, as opposed to added at
+aggregation time the way this spike did it — a narrower, lower-risk gap
+than "does split+MBR reproduce monolithic at all," which is now answered.
 
 **Still ahead:**
 

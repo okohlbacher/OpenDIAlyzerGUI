@@ -170,20 +170,28 @@ construction.
 > of the 268,166 shared rows. `.quant` discovery and library re-prediction —
 > two of the three risks below — are no longer theoretical.
 >
-> **Still unproven: MBR.** This run did not pass `--reanalyse`, which is
-> inherently cross-run and lives entirely in stage 4. Whether a
-> per-run-then-aggregate split reproduces a monolithic **MBR** result is
-> still untested and plausibly *not* equal — re-run this same diff with
-> `--reanalyse` added to stage 4 before relying on split+MBR in production.
+> **Settled for MBR too (spike 0b, run 2026-07-24, same 6 runs, same pin,
+> `--reanalyse` added to stage 4 only — reusing the `.quant` files spike 0
+> already produced):** a monolithic `--reanalyse` run and the per-run +
+> `--use-quant --reanalyse` aggregate produced **byte-identical**
+> `report.parquet` files — same SHA-256, not just same row-level content.
+> All three risks below are now settled, not just two.
 >
-> - **`.quant` discovery — settled above.** `--use-quant` finds files by
+> - **`.quant` discovery — settled.** `--use-quant` finds files by
 >   raw-file name in the temp/output dir; the stage-4 config lists `--f` for
 >   every run, so the raw files must still be reachable at aggregation — the
 >   checkpoint is not "the `.quant` files alone". If the raw files moved,
 >   stage 4 needs dummy placeholders (DIA-NN #1909), which the plan does not
 >   yet create.
-> - **MBR — still open,** see above.
-> - **Library re-prediction — settled above.** Pinning mass accuracy (stage 2)
+> - **MBR — settled.** `--reanalyse`'s cross-run second pass reproduces
+>   byte-for-byte whether it runs monolithically or over per-run `.quant`
+>   files at aggregation. The one caveat: this was tested by re-running
+>   aggregation with `--reanalyse` added after the fact, not by a run that
+>   had MBR pinned from stage 2 onward — if MBR is meant to be decided
+>   before the per-run stage in a real pipeline (rather than added at
+>   aggregation time as done here), that specific ordering hasn't itself
+>   been separately tested.
+> - **Library re-prediction — settled.** Pinning mass accuracy (stage 2)
 >   before the per-run stage is what made the aggregate stage's results
 >   identical rather than merely similar.
 
