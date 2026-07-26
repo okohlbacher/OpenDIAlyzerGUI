@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OpenDIAlyzer — Tauri port (Phase 0)</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; font: 14px/1.5 -apple-system, system-ui, sans-serif;
+    background: #14171c; color: #e6e9ee; padding: 28px 32px;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+  .sub { color: #8b95a3; margin: 0 0 24px; }
+  .card { background: #1b1f26; border: 1px solid #2a2f38; border-radius: 10px;
+          padding: 18px 20px; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+  input {
+    flex: 1; background: #0f1216; border: 1px solid #2a2f38; color: #e6e9ee;
+    border-radius: 7px; padding: 8px 10px; font: inherit;
+  }
+  button {
+    background: #2d6cdf; color: #fff; border: 0; border-radius: 7px;
+    padding: 8px 16px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 4px 10px 4px 0; }
+  td:first-child { color: #8b95a3; white-space: nowrap; }
+  .ok { color: #46c07a; } .bad { color: #e0636a; }
+  .gate { font-weight: 700; font-size: 15px; }
+  code { color: #b6c2d2; }
+  .targets { color: #8b95a3; font-size: 13px; margin-top: 8px; word-break: break-all; }
+</style>
+</head>
+<body>
+  <h1>OpenDIAlyzer <span style="color:#8b95a3;font-weight:400">· Tauri port</span></h1>
+  <p class="sub">Phase 0 walking skeleton — the report open + target-list path,
+     read entirely in Rust and returned to this webview. No Electron, no Node.</p>
+
+  <div class="card">
+    <div class="row">
+      <input id="path" placeholder="Path to a DIA-NN report.parquet…" />
+      <button id="openBtn">Open</button>
+    </div>
+    <div id="status" style="color:#8b95a3">Ready.</div>
+  </div>
+
+  <div class="card" id="results" hidden>
+    <table>
+      <tr><td>Report</td><td id="r-name"></td></tr>
+      <tr><td>Rows</td><td id="r-rows"></td></tr>
+      <tr><td>Columns</td><td id="r-cols"></td></tr>
+      <tr><td>Runs</td><td id="r-runs"></td></tr>
+      <tr><td>Load time (Rust)</td><td id="r-load"></td></tr>
+      <tr><td>Distinct targets</td><td id="r-targets"></td></tr>
+      <tr><td>AGXT present</td><td id="r-agxt"></td></tr>
+      <tr><td>AGXT2 present</td><td id="r-agxt2"></td></tr>
+    </table>
+    <div class="gate" id="gate" style="margin-top:14px"></div>
+    <div class="targets" id="sample"></div>
+    <datalist id="targetOptions"></datalist>
+  </div>
+
+<script>
+  // The eventual window.api adapter shim, in embryo: the existing renderer talks
+  // to `window.api.*`; here each method is Tauri invoke() instead of Electron IPC.
+  // Phase 1+ grows this to the full 30-method surface.
+  const invoke = window.__TAURI__.core.invoke;
+  window.api = {
+    open: (path) => invoke("open_report", { path }),
+    targets: () => invoke("distinct_targets"),
+    autoload: () => invoke("autoload_path"),
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const status = (msg) => { $("status").textContent = msg; };
+
+  async function open(path) {
+    if (!path) return;
+    $("openBtn").disabled = true;
+    status("Opening in Rust…");
+    try {
+      const t0 = performance.now();
+      const s = await window.api.open(path);
+      const targets = await window.api.targets();
+      const wall = Math.round(performance.now() - t0);
+
+      $("r-name").textContent = s.name || "(root)";
+      $("r-rows").textContent = s.rowCount.toLocaleString();
+      $("r-cols").textContent = s.columns;
+      $("r-runs").textContent = s.runs.map((r) => r.name).join(", ") || "—";
+      $("r-load").textContent = s.loadMs.toFixed(0) + " ms (round-trip " + wall + " ms)";
+      $("r-targets").textContent = targets.length.toLocaleString();
+
+      const hasAgxt = targets.includes("AGXT");
+      const hasAgxt2 = targets.includes("AGXT2");
+      $("r-agxt").innerHTML = hasAgxt ? '<span class="ok">yes</span>'
+                                      : '<span class="bad">no</span>';
+      $("r-agxt2").innerHTML = hasAgxt2 ? '<span class="bad">yes</span>'
+                                        : '<span class="ok">no</span>';
+
+      // The same real-data gate the headless `verify` bin asserts.
+      const pass = s.rowCount === 377775 && targets.length === 16133 && hasAgxt && !hasAgxt2;
+      $("gate").innerHTML = pass
+        ? '<span class="ok">✓ Phase-0 gate PASS</span> — Rust reproduces the TypeScript ground truth.'
+        : '<span class="bad">✗ gate mismatch</span> — different dataset, or a port regression.';
+
+      $("targetOptions").innerHTML =
+        targets.slice(0, 2000).map((t) => `<option value="${t}">`).join("");
+      $("sample").innerHTML = "sample: <code>" +
+        targets.slice(0, 12).join("</code>, <code>") + "</code>, …";
+
+      $("results").hidden = false;
+      status("Done.");
+    } catch (e) {
+      status("Error: " + e);
+    } finally {
+      $("openBtn").disabled = false;
+    }
+  }
+
+  $("openBtn").addEventListener("click", () => open($("path").value.trim()));
+  $("path").addEventListener("keydown", (e) => { if (e.key === "Enter") open($("path").value.trim()); });
+
+  // Auto-load a report path passed on the command line.
+  window.api.autoload().then((p) => { if (p) { $("path").value = p; open(p); } });
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+[package]
+name = "opendialyzer"
+version = "0.1.0"
+edition = "2021"
+description = "OpenDIAlyzer — Tauri port"
+default-run = "opendialyzer"
+
+# The data layer is a plain library so it can be unit-tested and reused by the
+# `verify` bin without pulling in the Tauri/webview stack.
+[lib]
+name = "opendialyzer_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "opendialyzer"
+path = "src/main.rs"
+
+# Headless real-data check: same code path as the app, no window. Phase 0 gate.
+[[bin]]
+name = "verify"
+path = "src/bin/verify.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+parquet = "54"
+arrow = "54"
+regex = "1"
+
+# A release-ish opt level even in dev: reading 377k rows unoptimised is slow.
+[profile.dev]
+opt-level = 2
