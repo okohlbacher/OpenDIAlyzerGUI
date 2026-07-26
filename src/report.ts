@@ -18,6 +18,7 @@ import { ParquetFile } from "parquet-wasm";
 import { FileRangeReader } from "./range.ts";
 import { RangeBlob } from "./peaks.ts";
 import { tableFromIPC, type Table, type Vector } from "apache-arrow";
+import { targetOf } from "./variant.ts";
 
 /** Columns the UI depends on, and the names it knows them by. */
 export const CANONICAL = {
@@ -122,6 +123,9 @@ export interface FilterSpec {
   proteotypicOnly?: boolean;
   /** Restrict to one run, by index into `runs`. */
   run?: number;
+  /** Restrict to one consolidated target (see src/variant.ts's targetOf) —
+   *  exact match, not the fuzzy substring matching `search` does. */
+  target?: string;
   /** Free-text match against sequence, gene, or protein. */
   search?: string;
 }
@@ -265,6 +269,7 @@ export function filterRows(t: ReportTable, f: FilterSpec): Uint32Array<ArrayBuff
   const seq = f.search ? t.text(CANONICAL.strippedSequence) : null;
   const genes = f.search ? t.text(CANONICAL.genes) : null;
   const prot = f.search ? t.text(CANONICAL.proteinGroup) : null;
+  const targetProtein = f.target !== undefined ? t.text(CANONICAL.proteinGroup) : null;
   const needle = f.search?.trim().toUpperCase() ?? "";
 
   // A requested filter whose column is absent must not silently become a no-op:
@@ -283,6 +288,7 @@ export function filterRows(t: ReportTable, f: FilterSpec): Uint32Array<ArrayBuff
     if (decoy && decoy[i] !== 0) continue;
     if (proteo && proteo[i] === 0) continue;
     if (f.run !== undefined && t.runOf[i] !== f.run) continue;
+    if (f.target !== undefined && targetOf(targetProtein?.[i] ?? "") !== f.target) continue;
     if (needle) {
       const hit =
         (seq && seq[i]!.toUpperCase().includes(needle)) ||

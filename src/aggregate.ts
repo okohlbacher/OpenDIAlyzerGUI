@@ -79,6 +79,17 @@ const median = (xs: number[]): number => {
   return xs.length % 2 ? xs[m]! : (xs[m - 1]! + xs[m]!) / 2;
 };
 
+/** Every distinct target identity in the report, sorted, for a filter picker.
+ *  Unfiltered by design — this lists what's searchable, not what currently
+ *  passes the FDR slider. */
+export function distinctTargets(t: ReportTable): string[] {
+  const pg = t.text(CANONICAL.proteinGroup);
+  if (!pg) return [];
+  const targets = new Set<string>();
+  for (let i = 0; i < t.rowCount; i++) targets.add(targetOf(pg[i] ?? ""));
+  return [...targets].sort();
+}
+
 /** Groups filtered precursor rows by protein group. */
 export function byProtein(t: ReportTable, rows: Uint32Array): ProteinRow[] {
   const pg = t.text(CANONICAL.proteinGroup);

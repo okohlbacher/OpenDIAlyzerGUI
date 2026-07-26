@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld("api", {
   buildPlan: (job: unknown) => ipcRenderer.invoke("setup:plan", job),
   presets: () => ipcRenderer.invoke("setup:presets"),
   open: (report: string, archive?: string) => ipcRenderer.invoke("session:open", report, archive),
+  targets: () => ipcRenderer.invoke("targets:list"),
   filter: (spec: unknown, offset?: number, limit?: number, grain?: string, view?: unknown) =>
     ipcRenderer.invoke("rows:filter", spec, offset, limit, grain, view),
   page: (offset: number, limit: number) => ipcRenderer.invoke("rows:page", offset, limit),

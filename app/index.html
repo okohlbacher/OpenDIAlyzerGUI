@@ -265,6 +265,12 @@
           <input id="q" placeholder="peptide, gene, protein…" aria-label="Interrogate">
           <kbd>⌘K</kbd>
         </label>
+        <label class="search" style="margin-top:8px">
+          <span aria-hidden="true" style="color:var(--muted)">⊙</span>
+          <input id="targetFilter" list="targetOptions"
+            placeholder="Filter to one target…" aria-label="Target filter">
+        </label>
+        <datalist id="targetOptions"></datalist>
 
         <div class="grp">
           <span class="eyebrow">Runs</span>

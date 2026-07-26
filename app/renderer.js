@@ -21,6 +21,7 @@ const state = {
   colFilters: {},      // key -> text
   fdr: 0.01,
   run: undefined,
+  target: undefined,
   search: "",
   sel: 0,          // absolute index into the filtered set
   total: 0,
@@ -37,6 +38,9 @@ async function openSession(reportPath, archivePath) {
   state.open = true;
   state.sel = 0;
   state.run = undefined;
+  state.target = undefined;
+  $("targetFilter").value = "";
+  $("targetOptions").textContent = "";
 
   $("sessionName").textContent = s.name;
   $("sessionCtx").textContent =
@@ -74,6 +78,10 @@ async function openSession(reportPath, archivePath) {
          <span class="dot ${r.archive ? "ok" : "warnd"}"></span>
          <span class="mono">${esc(shortRun(r.name))}</span></li>`).join("");
 
+  const targets = await window.api.targets();
+  $("targetOptions").innerHTML = targets.map((target) =>
+    `<option value="${esc(target)}"></option>`).join("");
+
   await refresh();
 }
 
@@ -97,6 +105,7 @@ const currentFilter = () => ({
   hideDecoys: $("hidedecoy").checked,
   proteotypicOnly: $("proteotypic").checked,
   run: state.run,
+  target: state.target,
   search: state.search || undefined,
 });
 
@@ -882,6 +891,12 @@ $("q").addEventListener("input", (e) => {
   clearTimeout(searchTimer);
   const v = e.target.value;
   searchTimer = setTimeout(() => { state.search = v; state.sel = 0; refresh(); }, 140);
+});
+
+$("targetFilter").addEventListener("input", (e) => {
+  state.target = e.target.value || undefined;
+  state.sel = 0;
+  refresh();
 });
 
 $("tbody").addEventListener("click", async (e) => {

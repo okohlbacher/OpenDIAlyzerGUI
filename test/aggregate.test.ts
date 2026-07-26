@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import {
   loadReport, filterRows, CANONICAL, type ColumnData, type ReportTable,
 } from "../src/report.ts";
-import { byProtein, byRun } from "../src/aggregate.ts";
+import { byProtein, byRun, distinctTargets } from "../src/aggregate.ts";
 
 const REPORT = process.env.ODIA_TEST_REPORT ??
   "/path/to/mzpeak-example-data/diann/agxt-2026/qvalue50/report.parquet";
@@ -47,22 +47,25 @@ test("run counts dedupe precursor rows and preserve modified forms", () => {
   assert.equal(run!.peptides, 2, "modified and unmodified forms remain separate");
 });
 
-test("protein grain consolidates only matching point-mutant accessions", () => {
+function targetFixture(): ReportTable {
   const columns = new Map<string, ColumnData>([
-    [CANONICAL.strippedSequence, ["PEPTIDEA", "PEPTIDEN", "OTHER", "UNKNOWN"]],
-    [CANONICAL.modifiedSequence, ["PEPTIDEA", "PEPTIDEN", "OTHER", "UNKNOWN"]],
+    [CANONICAL.strippedSequence,
+      ["WILDTYPE", "PEPTIDEA", "PEPTIDEN", "LOOKALIKE", "OTHER", "UNKNOWN"]],
+    [CANONICAL.modifiedSequence,
+      ["WILDTYPE", "PEPTIDEA", "PEPTIDEN", "LOOKALIKE", "OTHER", "UNKNOWN"]],
     [CANONICAL.proteinGroup,
-      ["AGXTVARA210V", "AGXTVARN22Q", "P99999", "NO_GENE"]],
-    [CANONICAL.genes, ["", "", "OTHER1", ""]],
-    [CANONICAL.charge, new Int32Array([2, 2, 3, 2])],
-    [CANONICAL.qValue, new Float64Array([0.001, 0.002, 0.003, 0.004])],
+      ["AGXT", "AGXTVARA210V", "AGXTVARN22Q", "AGXT2", "P99999", "NO_GENE"]],
+    [CANONICAL.genes, ["AGXT", "", "", "AGXT2", "OTHER1", ""]],
+    [CANONICAL.charge, new Int32Array([2, 2, 2, 3, 3, 2])],
+    [CANONICAL.qValue,
+      new Float64Array([0.001, 0.002, 0.003, 0.004, 0.005, 0.006])],
   ]);
-  const t: ReportTable = {
-    rowCount: 4,
+  return {
+    rowCount: 6,
     columns,
     columnNames: [...columns.keys()],
     runs: ["run-1"],
-    runOf: new Int32Array([0, 0, 0, 0]),
+    runOf: new Int32Array([0, 0, 0, 0, 0, 0]),
     extra: [],
     missing: [],
     column: (name) => columns.get(name),
@@ -79,16 +82,19 @@ test("protein grain consolidates only matching point-mutant accessions", () => {
       return Array.isArray(column) ? column : null;
     },
   };
+}
 
-  const proteins = byProtein(t, new Uint32Array([0, 1, 2, 3]));
-  assert.equal(proteins.length, 3);
+test("protein grain consolidates only matching point-mutant accessions", () => {
+  const t = targetFixture();
+  const proteins = byProtein(t, new Uint32Array([0, 1, 2, 3, 4, 5]));
+  assert.equal(proteins.length, 4);
 
   const agxt = proteins.find((protein) => protein.proteinGroup === "AGXT");
   assert.ok(agxt);
   assert.equal(agxt.genes, "AGXT");
-  assert.equal(agxt.peptides, 2);
-  assert.equal(agxt.precursors, 2);
-  assert.equal(agxt.observations, 2);
+  assert.equal(agxt.peptides, 3);
+  assert.equal(agxt.precursors, 3);
+  assert.equal(agxt.observations, 3);
 
   const unrelated = proteins.find((protein) => protein.proteinGroup === "P99999");
   assert.ok(unrelated);
@@ -98,6 +104,21 @@ test("protein grain consolidates only matching point-mutant accessions", () => {
   const blankGene = proteins.find((protein) => protein.proteinGroup === "NO_GENE");
   assert.ok(blankGene);
   assert.equal(blankGene.genes, "", "blank Genes is not invented for a non-variant");
+});
+
+test("distinct targets are consolidated, deduplicated, sorted, and unfiltered", () => {
+  const t = targetFixture();
+  assert.deepEqual(distinctTargets(t), ["AGXT", "AGXT2", "NO_GENE", "P99999"]);
+});
+
+test("target filter exact-matches wildtype and variants without matching AGXT2", () => {
+  const t = targetFixture();
+  const exact = filterRows(t, { target: "AGXT" });
+  assert.deepEqual([...exact], [0, 1, 2]);
+  const proteinGroups = t.text(CANONICAL.proteinGroup)!;
+  assert.deepEqual([...exact].map((i) => proteinGroups[i]),
+    ["AGXT", "AGXTVARA210V", "AGXTVARN22Q"]);
+  assert.ok(![...exact].includes(3), "AGXT2 is not an exact target match for AGXT");
 });
 
 // The design's claim is that grains are the same evidence counted differently.

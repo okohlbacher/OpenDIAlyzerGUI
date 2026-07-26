@@ -20,7 +20,8 @@ import { PeakReader, extractXic, coelution, fragmentsFor, extractFramePeaks,
   heatmap, spectrum } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 import { measuredMs2Ppm, fragmentTolerancePpm } from "../src/stats.ts";
-import { byProtein, byRun, type ProteinRow, type RunRow } from "../src/aggregate.ts";
+import { byProtein, byRun, distinctTargets, type ProteinRow,
+  type RunRow } from "../src/aggregate.ts";
 import { sortIndices, applyColumnFilters, type Cell } from "../src/table.ts";
 import { buildTree, flatten, idsAtLevel, type TreeNode, type FlatRow } from "../src/tree.ts";
 import { detect, verify, plan, PRESETS, countFasta, estimateMemoryGb,
@@ -813,6 +814,11 @@ ipcMain.handle("session:open", async (_e, reportPath: string) => {
     paired,
     found: registry.entries.length,
   };
+});
+
+ipcMain.handle("targets:list", () => {
+  if (!session) return [];
+  return distinctTargets(session.report);
 });
 
 /**
