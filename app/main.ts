@@ -17,7 +17,7 @@ import { loadReport, filterRows, seekKey, reportedFragments, CANONICAL,
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, framesCovering, type MetadataIndex } from "../src/spectra.ts";
 import { PeakReader, extractXic, coelution, fragmentsFor, extractFramePeaks,
-  heatmap, spectrum } from "../src/peaks.ts";
+  heatmap, spectrum, extractTiles } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
 import { measuredMs2Ppm, fragmentTolerancePpm } from "../src/stats.ts";
 import { byProtein, byRun, distinctTargets, type ProteinRow,
@@ -1281,6 +1281,92 @@ ipcMain.handle("evidence:frame", async (
         mz: Array.from(sp.mz), intensity: Array.from(sp.intensity), total: sp.total,
       },
       fragments: (frags ?? []).slice(0, 12).map((f) => ({ label: f.label, mz: f.mz, series: f.series })),
+    };
+  } catch (e) {
+    return { reason: "extract-failed", detail: describe(e) };
+  }
+});
+
+/**
+ * The per-fragment evidence grid: one RT × 1/K0 tile per fragment, plus the
+ * precursor, all on one shared extent.
+ *
+ * The expected box is the engine's *own* claim — `RT.Start`/`RT.Stop` and the
+ * reported `IM` — so the picture asks whether the raw data agrees with the
+ * report rather than restating it. A tile carrying plenty of intensity, none of
+ * it inside that box, is what refutes an identification, which is why `inBox`
+ * and `outBox` come back per tile instead of being left to the eye.
+ */
+ipcMain.handle("evidence:grid", async (
+  _e, k: number, rtHalf?: number, imHalf?: number,
+) => {
+  if (!session) return null;
+  const row = rowOf(k);
+  if (row < 0) return null;
+  const key = seekKey(session.report, row);
+  if (!key) return null;
+
+  const src = await archiveFor(key.run).catch(() => null);
+  if (!src) return { reason: "no-archive-for-run" };
+
+  // Wide enough that the peak is not the whole picture — a tile cropped to the
+  // expectation can only ever agree with it.
+  const rtPad = rtHalf ?? Math.max(0.25, (key.rtStop - key.rtStart) * 1.5);
+  const rtRange: [number, number] = [key.rt - rtPad, key.rt + rtPad];
+  // ±0.05 1/K0 is roughly a full diaPASEF mobility peak, so half that on each
+  // side of the claim still shows the neighbourhood the claim sits in.
+  const imPad = imHalf ?? 0.09;
+  const mobilityRange: [number, number] =
+    key.im !== null ? [key.im - imPad, key.im + imPad] : [0.6, 1.6];
+
+  const frames = framesCovering(src.meta, key.precursorMz, rtRange[0], rtRange[1]);
+  if (!frames.length) return { reason: "no-frames-in-window" };
+
+  const frags = reportedFragments(session.report, row) ?? [];
+  const requests = [
+    { label: "precursor", mz: key.precursorMz },
+    ...frags.slice(0, 11).map((f) => ({ label: f.label, mz: f.mz })),
+  ];
+
+  const box = {
+    rtMin: key.rtStart, rtMax: key.rtStop,
+    imMin: key.im !== null ? key.im - 0.02 : mobilityRange[0],
+    imMax: key.im !== null ? key.im + 0.02 : mobilityRange[1],
+  };
+
+  const t0 = performance.now();
+  try {
+    const g = await extractTiles(src.archive, src.meta, src.peaks, frames, requests, {
+      rtRange, mobilityRange, nx: 96, ny: 64, box,
+      // The run's own measured MS2 accuracy, as everywhere else — a fixed
+      // window would either clip real fragments or admit neighbours.
+      ppm: fragmentTolerancePpm(
+        await measuredMs2Ppm(dirname(session.reportPath), key.run)),
+    });
+    return {
+      reason: null,
+      ms: performance.now() - t0,
+      sequence: key.sequence,
+      charge: key.charge,
+      rtRange, mobilityRange, box,
+      im: key.im,
+      frames: frames.length,
+      rowGroupsRead: g.rowGroupsRead,
+      rowsDecoded: g.rowsDecoded,
+      peaksKept: g.peaksKept,
+      // Null `cells` means the archive carries no mobility — a different fact
+      // from an all-zero tile, and the UI has to say so differently.
+      tiles: g.tiles.map((t) => ({
+        label: t.label,
+        mz: t.mz,
+        cells: t.map ? Array.from(t.map.cells) : null,
+        nx: t.map?.nx ?? 0,
+        ny: t.map?.ny ?? 0,
+        total: t.map?.total ?? 0,
+        maxIntensity: t.map?.maxIntensity ?? 0,
+        inBox: t.map?.inBox ?? 0,
+        outBox: t.map?.outBox ?? 0,
+      })),
     };
   } catch (e) {
     return { reason: "extract-failed", detail: describe(e) };

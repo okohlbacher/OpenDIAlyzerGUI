@@ -37,6 +37,8 @@ contextBridge.exposeInMainWorld("api", {
   presence: (k: number) => ipcRenderer.invoke("evidence:presence", k),
   frame: (k: number, mzWindow?: number, specLimit?: number) =>
     ipcRenderer.invoke("evidence:frame", k, mzWindow, specLimit),
+  grid: (k: number, rtHalf?: number, imHalf?: number) =>
+    ipcRenderer.invoke("evidence:grid", k, rtHalf, imHalf),
   interrogate: (k: number, runIndex: number) =>
     ipcRenderer.invoke("evidence:interrogate", k, runIndex),
   forRun: (k: number, runIndex: number) =>

@@ -456,6 +456,12 @@ async function showEvidence() {
     <div class="layer-head"><h3>Spectrum · apex frame</h3>
       <span class="hint">engine fragments annotated</span></div>
     <div id="specWrap"></div>
+  </div>
+  <div class="layer" id="gridLayer">
+    <div class="layer-head"><h3>Fragment evidence · RT × 1/K0</h3>
+      <span class="hint" id="gridHint">reading…</span></div>
+    <div id="gridWrap" class="tilegrid"></div>
+    <div class="axhint mono" id="gridAxes"></div>
   </div>`;
 
   const rows = Object.entries(e.extras).filter(([, v]) => Number.isFinite(v));
@@ -468,6 +474,116 @@ async function showEvidence() {
   ev.innerHTML = body;
   void paintPresence(state.sel);
   void paintFrame(state.sel);
+  void paintGrid(state.sel);
+}
+
+/**
+ * The per-fragment evidence grid: one RT × 1/K0 tile per fragment, plus the
+ * precursor, every tile on the same axes.
+ *
+ * The dashed rectangle is the engine's own claim — RT.Start/RT.Stop and the
+ * reported 1/K0 — and it is drawn on **every** tile, including empty ones.
+ * Without it a refuting tile is unreadable: the tiles that disprove an
+ * identification are rarely blank, they carry signal that simply sits somewhere
+ * else, and only the box makes "elsewhere" visible. It is stroked rather than
+ * filled because a translucent fill disappears exactly where points are dense,
+ * which is where it is needed.
+ */
+async function paintGrid(k) {
+  const wrap = $("gridWrap");
+  const hint = $("gridHint");
+  if (!wrap) return;
+  const g = await window.api.grid(k);
+  if (!g) return;
+  if (g.reason) {
+    wrap.innerHTML = "";
+    if (hint) hint.textContent = g.reason.replace(/-/g, " ");
+    return;
+  }
+
+  if (hint) {
+    hint.textContent = `${g.tiles.length} tiles · ${g.frames} frames · ` +
+      `${g.rowGroupsRead} row groups decoded once · ${g.ms.toFixed(0)} ms`;
+  }
+  const ax = $("gridAxes");
+  if (ax) {
+    ax.textContent = `RT ${g.rtRange[0].toFixed(2)}–${g.rtRange[1].toFixed(2)} min · ` +
+      `1/K0 ${g.mobilityRange[0].toFixed(3)}–${g.mobilityRange[1].toFixed(3)} · ` +
+      `dashed box = reported RT.Start–RT.Stop × 1/K0`;
+  }
+
+  const cs = getComputedStyle(document.documentElement);
+  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const ramp = ["--h0", "--h1", "--h2", "--h3", "--h4"]
+    .map((v) => rgb(cs.getPropertyValue(v).trim()));
+  const line = cs.getPropertyValue("--accent-line").trim();
+
+  // One scale across every tile. Per-tile autoscaling would make a noise tile
+  // and a real peak look identical, which is the opposite of the point.
+  const peak = g.tiles.reduce((m, t) => Math.max(m, t.maxIntensity), 0);
+
+  wrap.innerHTML = g.tiles.map((t) => {
+    const share = t.total > 0 ? (t.inBox / t.total) : 0;
+    const cls = t.cells === null ? "" : t.total === 0 ? " empty" : share < 0.2 ? " offbox" : "";
+    return `<figure class="tile${cls}">
+      <canvas data-tile="${esc(t.label)}"></canvas>
+      <figcaption><span class="mono">${esc(t.label)}</span>${
+        t.cells === null ? '<em class="muted">no mobility</em>'
+          : t.total === 0 ? '<em class="muted">no signal</em>'
+          : `<em>${(share * 100).toFixed(0)}% in box</em>`}</figcaption>
+    </figure>`;
+  }).join("");
+
+  const [rtLo, rtHi] = g.rtRange;
+  const [imLo, imHi] = g.mobilityRange;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  g.tiles.forEach((t) => {
+    const cv = wrap.querySelector(`canvas[data-tile="${cssEscape(t.label)}"]`);
+    if (!cv) return;
+    const W = cv.clientWidth || 150, H = 96;
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
+    const c = cv.getContext("2d");
+    c.scale(dpr, dpr);
+
+    if (t.cells) {
+      // Rescale each tile against the loudest tile in the grid, so relative
+      // intensity survives the per-tile log normalisation.
+      const rel = peak > 0 && t.maxIntensity > 0
+        ? Math.log1p(t.maxIntensity) / Math.log1p(peak) : 0;
+      const bw = W / t.nx, bh = H / t.ny;
+      for (let x = 0; x < t.nx; x++) {
+        for (let y = 0; y < t.ny; y++) {
+          const v = t.cells[x * t.ny + y] * rel;
+          if (v <= 0.002) continue;
+          const s = Math.min(1, v) * (ramp.length - 1);
+          const i = Math.min(ramp.length - 2, Math.floor(s)), fr = s - i;
+          const a = ramp[i], b = ramp[i + 1];
+          c.fillStyle = `rgb(${Math.round(a[0] + (b[0] - a[0]) * fr)},${
+            Math.round(a[1] + (b[1] - a[1]) * fr)},${Math.round(a[2] + (b[2] - a[2]) * fr)})`;
+          // y is drawn top-down but 1/K0 increases upward.
+          c.fillRect(x * bw, H - (y + 1) * bh, bw + 0.6, bh + 0.6);
+        }
+      }
+    }
+
+    // Always last, so nothing paints over it, and always drawn — an empty tile
+    // with no box is indistinguishable from a tile with nothing to say.
+    const bx = ((g.box.rtMin - rtLo) / (rtHi - rtLo)) * W;
+    const bw2 = ((g.box.rtMax - g.box.rtMin) / (rtHi - rtLo)) * W;
+    const by = H - ((g.box.imMax - imLo) / (imHi - imLo)) * H;
+    const bh2 = ((g.box.imMax - g.box.imMin) / (imHi - imLo)) * H;
+    c.strokeStyle = line;
+    c.setLineDash([4, 3]);
+    c.lineWidth = 1.25;
+    c.strokeRect(bx, by, Math.max(2, bw2), Math.max(2, bh2));
+    c.setLineDash([]);
+  });
+}
+
+/** Attribute-selector escaping; fragment labels carry +, ^ and similar. */
+function cssEscape(s) {
+  return String(s).replace(/["\\]/g, "\\$&");
 }
 
 /**

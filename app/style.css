@@ -245,3 +245,42 @@ footer .omslogo{width:74px; color:var(--muted); opacity:.85}
   .ph{padding-left:0}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Fragment evidence grid — small multiples on one shared RT × 1/K0 extent.
+   Tiles are only comparable when their axes and colour scale are identical,
+   so nothing here is allowed to autoscale per tile. */
+.tilegrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.tilegrid .tile {
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--plot-bg, #0d1017);
+}
+.tilegrid .tile canvas {
+  display: block;
+  width: 100%;
+}
+.tilegrid figcaption {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 6px;
+  font-size: 11px;
+  border-top: 1px solid var(--rule);
+  background: var(--panel, transparent);
+}
+.tilegrid figcaption em {
+  font-style: normal;
+  font-size: 10px;
+  opacity: .75;
+}
+/* A tile whose signal sits mostly outside the engine's claimed box is the
+   case that refutes an identification — worth marking, not just drawing. */
+.tilegrid .tile.offbox { border-color: var(--warn, #a86a12); }
+.tilegrid .tile.empty { opacity: .62; }
