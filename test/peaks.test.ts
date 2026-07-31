@@ -10,6 +10,7 @@ test("spectrum reports the centroided peak count before truncation", () => {
     mz: Float64Array.of(100, 200, 300),
     intensity: Float64Array.of(10, 30, 20),
     mobility: null,
+    frameOf: Int32Array.of(1, 1, 1),
     frames: [1],
     rowsScanned: 3,
     rowsDecoded: 3,

@@ -524,6 +524,14 @@ export interface FramePeaks {
   intensity: Float64Array;
   /** 1/K0, when the archive carries ion mobility. */
   mobility: Float64Array | null;
+  /**
+   * Which frame each peak came from, parallel to `mz`.
+   *
+   * The peaks of several frames arrive concatenated, so without this the
+   * retention time of an individual peak is unrecoverable — which is exactly
+   * what an RT × 1/K0 map needs. Spectrum and m/z × 1/K0 views ignore it.
+   */
+  frameOf: Int32Array;
   /** Frames actually read. */
   frames: number[];
   rowsScanned: number;
@@ -551,6 +559,7 @@ export async function extractFramePeaks(
 ): Promise<FramePeaks> {
   const empty: FramePeaks = {
     mz: new Float64Array(0), intensity: new Float64Array(0), mobility: null,
+    frameOf: new Int32Array(0),
     frames: [...frames], rowsScanned: 0, rowsDecoded: 0, rowGroupsRead: 0,
   };
   if (!frames.length) return empty;
@@ -566,6 +575,7 @@ export async function extractFramePeaks(
   const outMz: number[] = [];
   const outInt: number[] = [];
   const outMob: number[] = [];
+  const outFrame: number[] = [];
   let decoded = 0;
   let scanned = 0;
 
@@ -598,6 +608,7 @@ export async function extractFramePeaks(
         if (m < lo || m > hi) continue;
         outMz.push(m);
         outInt.push(intensity[i]!);
+        outFrame.push(f);
         if (mobility) outMob.push(mobility[i]!);
       }
     }
@@ -607,6 +618,7 @@ export async function extractFramePeaks(
     mz: Float64Array.from(outMz),
     intensity: Float64Array.from(outInt),
     mobility: outMob.length ? Float64Array.from(outMob) : null,
+    frameOf: Int32Array.from(outFrame),
     frames: [...frames],
     rowsScanned: scanned,
     rowsDecoded: decoded,
@@ -689,6 +701,177 @@ export function heatmap(
     mobilogram: marg,
     maxIntensity: max,
   };
+}
+
+/** The expected coordinates of an identification, in RT (min) and 1/K0. */
+export interface RtImBox {
+  rtMin: number;
+  rtMax: number;
+  imMin: number;
+  imMax: number;
+}
+
+export interface RtMobilityMap {
+  /** Column-major bins, `nx * ny`, log-scaled to [0,1]. */
+  cells: Float32Array;
+  nx: number;
+  ny: number;
+  rtRange: [number, number];
+  mobilityRange: [number, number];
+  /** Largest single bin, unscaled — so the panel can state absolute numbers. */
+  maxIntensity: number;
+  /** Every binned intensity, unscaled. */
+  total: number;
+  /** Intensity inside `box`, and outside it. Zero for both when no box given. */
+  inBox: number;
+  outBox: number;
+}
+
+/**
+ * Bins one m/z window's peaks over (retention time × 1/K0).
+ *
+ * This is the tile of the per-fragment grid, and it differs from `heatmap()` in
+ * exactly one respect — the x axis is retention time rather than m/z. That one
+ * difference is what turns a snapshot of a frame into evidence about elution.
+ *
+ * Both ranges are **required rather than derived from the data**, for two
+ * reasons. Small multiples are only comparable when every tile shares its axes.
+ * And a tile with no peaks at all still has to render — an empty tile inside a
+ * drawn expectation box is the finding, not an error — which is impossible if
+ * the extent comes from points that are not there.
+ *
+ * `inBox`/`outBox` are the absence-evidence counters. A fragment tile carrying
+ * plenty of intensity, all of it outside the box, is the case that refutes an
+ * identification, and it is indistinguishable from a genuine hit unless the
+ * split is measured rather than eyeballed.
+ *
+ * Returns `null` only when the archive carries no mobility at all, matching
+ * `heatmap()`. That is structurally different from "no signal here", which is a
+ * valid all-zero map.
+ */
+export function rtMobilityMap(
+  p: FramePeaks,
+  frameTime: Float64Array | readonly number[],
+  opts: {
+    rtRange: readonly [number, number];
+    mobilityRange: readonly [number, number];
+    nx?: number;
+    ny?: number;
+    box?: RtImBox;
+  },
+): RtMobilityMap | null {
+  if (!p.mobility) return null;
+
+  const nx = opts.nx ?? 120;
+  const ny = opts.ny ?? 90;
+  const [rtLo, rtHi] = opts.rtRange;
+  const [imLo, imHi] = opts.mobilityRange;
+  if (!(rtHi > rtLo) || !(imHi > imLo)) return null;
+
+  const cells = new Float32Array(nx * ny);
+  const sx = nx / (rtHi - rtLo);
+  const sy = ny / (imHi - imLo);
+  const box = opts.box;
+  let max = 0;
+  let total = 0;
+  let inBox = 0;
+  let outBox = 0;
+
+  for (let i = 0; i < p.mz.length; i++) {
+    const rt = frameTime[p.frameOf[i]!];
+    if (rt === undefined) continue;
+    const im = p.mobility[i]!;
+    if (rt < rtLo || rt > rtHi || im < imLo || im > imHi) continue;
+    const v = p.intensity[i]!;
+
+    // Clamping keeps a point sitting exactly on the upper bound in the last
+    // bin instead of one past the end of the row.
+    const x = Math.min(nx - 1, Math.max(0, ((rt - rtLo) * sx) | 0));
+    const y = Math.min(ny - 1, Math.max(0, ((im - imLo) * sy) | 0));
+    const k = x * ny + y;
+    cells[k]! += v;
+    total += v;
+    if (cells[k]! > max) max = cells[k]!;
+
+    if (box) {
+      if (rt >= box.rtMin && rt <= box.rtMax && im >= box.imMin && im <= box.imMax) inBox += v;
+      else outBox += v;
+    }
+  }
+
+  // Log scaling, as in `heatmap()`: DIA intensities span orders of magnitude, so
+  // a linear ramp shows the base peak and nothing else. `maxIntensity` is kept
+  // unscaled so the caller never has to invert this to quote a real number.
+  const norm = max > 0 ? 1 / Math.log1p(max) : 0;
+  for (let i = 0; i < cells.length; i++) cells[i] = Math.log1p(cells[i]!) * norm;
+
+  return {
+    cells, nx, ny,
+    rtRange: [rtLo, rtHi],
+    mobilityRange: [imLo, imHi],
+    maxIntensity: max,
+    total,
+    inBox,
+    outBox,
+  };
+}
+
+export interface CorrelationMatrix {
+  /** Row-major `n × n` Pearson coefficients in [-1,1]. */
+  r: Float32Array;
+  n: number;
+}
+
+/**
+ * Pairwise Pearson correlation between fragment traces.
+ *
+ * Substrate for the co-elution matrix: a coherent block is a peptide, an
+ * off-diagonal block is an interferent following its own elution profile. No
+ * published figure does this — see `docs/VIZ-PLAN.md` — so it reports numbers
+ * and attaches no verdict, deliberately unlike `coelution()`, whose own
+ * docstring warns its thresholds are uncalibrated.
+ *
+ * A trace with no variance — flat, or entirely absent — correlates with nothing.
+ * Pearson is undefined there (a zero denominator), and this returns 0 rather
+ * than `NaN` so one dead fragment cannot poison the matrix. Its diagonal is 0
+ * too, not 1: a blank row for a fragment that contributed nothing is the honest
+ * reading, where a unit diagonal would draw the eye to a self-similarity that
+ * carries no information.
+ */
+export function correlationMatrix(traces: readonly Float64Array[]): CorrelationMatrix {
+  const n = traces.length;
+  const r = new Float32Array(n * n);
+  if (n === 0) return { r, n };
+
+  const len = traces[0]?.length ?? 0;
+  const mean = new Float64Array(n);
+  const sd = new Float64Array(n);
+  for (let a = 0; a < n; a++) {
+    const t = traces[a]!;
+    let s = 0;
+    for (let i = 0; i < t.length; i++) s += t[i]!;
+    const m = t.length ? s / t.length : 0;
+    let q = 0;
+    for (let i = 0; i < t.length; i++) { const d = t[i]! - m; q += d * d; }
+    mean[a] = m;
+    sd[a] = Math.sqrt(q);
+  }
+
+  for (let a = 0; a < n; a++) {
+    if (sd[a] === 0) continue;                 // dead trace: whole row stays 0
+    for (let b = a; b < n; b++) {
+      if (sd[b] === 0) continue;
+      const ta = traces[a]!, tb = traces[b]!;
+      const m = Math.min(ta.length, tb.length, len || ta.length);
+      let cov = 0;
+      for (let i = 0; i < m; i++) cov += (ta[i]! - mean[a]!) * (tb[i]! - mean[b]!);
+      const v = cov / (sd[a]! * sd[b]!);
+      const c = v > 1 ? 1 : v < -1 ? -1 : v;   // guard float drift past ±1
+      r[a * n + b] = c;
+      r[b * n + a] = c;
+    }
+  }
+  return { r, n };
 }
 
 /**
