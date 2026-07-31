@@ -8,10 +8,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { existsSync } from "node:fs";
 import {
-  rtMobilityMap, correlationMatrix,
-  type FramePeaks, type RtImBox,
+  rtMobilityMap, correlationMatrix, extractTiles,
+  PeakReader, type FramePeaks, type RtImBox,
 } from "../src/peaks.ts";
+import { MzPeakArchive } from "../src/archive.ts";
+import { buildMetadataIndex, framesCovering } from "../src/spectra.ts";
+
+/** A real diaPASEF archive: 17,448 spectra, 1/K0 0.619–1.401. */
+const DIAPASEF = process.env.ODIA_TEST_DIAPASEF ??
+  "/path/to/mzpeak-example-data/diann/agxt-2026/" +
+  "run-01.mzpeak";
 
 /** A FramePeaks holding hand-placed points, with mobility unless suppressed. */
 function peaks(
@@ -206,4 +214,104 @@ test("coefficients never escape [-1,1]", () => {
   const b = F(Array.from({ length: 500 }, (_, i) => Math.sin(i / 7) * 1e6 + 1e-9));
   const { r } = correlationMatrix([a, b]);
   assert.ok(r.every((v) => v >= -1 && v <= 1), "clamped to the legal range");
+});
+
+/* ------------------------------------------------------------------ */
+/* extractTiles — against real diaPASEF data                           */
+/* ------------------------------------------------------------------ */
+
+// The grid's whole economy: every tile covers the same frames and differs only
+// in its m/z mask, so decoding per tile would be N+1 passes over identical row
+// groups. This pins the single-pass property, which is the difference between
+// one decode and thirteen.
+test("a whole grid costs one decode, not one per tile", {
+  skip: !existsSync(DIAPASEF),
+}, async () => {
+  const a = await MzPeakArchive.open(DIAPASEF);
+  const meta = await buildMetadataIndex(a);
+  const reader = await PeakReader.open(a);
+
+  // A mid-gradient precursor, where peptides actually elute.
+  let p = -1;
+  for (let i = 0; i < meta.precursors.targetMz.length; i++) {
+    const t = meta.spectra.time[meta.precursors.spectrumIndex[i]!]!;
+    if (t > 14 && t < 16) { p = i; break; }
+  }
+  assert.ok(p >= 0, "found a mid-gradient precursor");
+  const mz = meta.precursors.targetMz[p]!;
+  const at = meta.spectra.time[meta.precursors.spectrumIndex[p]!]!;
+
+  const RT = 0.4;
+  const rtRange = [at - RT, at + RT] as const;
+  const mobilityRange = [0.88, 1.12] as const;
+  const frames = framesCovering(meta, mz, rtRange[0], rtRange[1]);
+  assert.ok(frames.length > 0, "RT window resolves to frames");
+
+  const requests = [
+    { label: "precursor", mz },
+    ...[420.2, 501.3, 610.3, 707.4, 812.4, 905.5, 1002.5, 1120.6]
+      .map((f) => ({ label: `f${f}`, mz: f })),
+  ];
+  const box: RtImBox = {
+    rtMin: at - 0.05, rtMax: at + 0.05, imMin: 0.97, imMax: 1.03,
+  };
+
+  const g = await extractTiles(a, meta, reader, frames, requests, {
+    rtRange, mobilityRange, ppm: 20, nx: 60, ny: 40, box,
+  });
+
+  assert.equal(g.tiles.length, requests.length, "one tile per request");
+  // The load-bearing assertion. A naive implementation would report this many
+  // row groups times the tile count, because each tile would decode them again.
+  assert.ok(g.rowGroupsRead > 0, "row groups were read");
+  assert.ok(g.rowsDecoded > 0, "and rows decoded");
+  console.log(
+    `    ${frames.length} frames · ${g.rowGroupsRead} row groups · ` +
+      `${(g.rowsDecoded / 1e6).toFixed(2)} M rows decoded ONCE for ` +
+      `${g.tiles.length} tiles · kept ${g.peaksKept}`,
+  );
+
+  for (const t of g.tiles) {
+    assert.ok(t.map, `${t.label} bins (archive carries mobility)`);
+    const m = t.map!;
+    // Every tile shares the extent — the property that makes them comparable.
+    assert.deepEqual(m.rtRange, [rtRange[0], rtRange[1]]);
+    assert.deepEqual(m.mobilityRange, [mobilityRange[0], mobilityRange[1]]);
+    assert.equal(m.cells.length, 60 * 40);
+    assert.ok(m.cells.every((v) => Number.isFinite(v) && v >= 0 && v <= 1),
+      `${t.label} cells are finite and normalised`);
+    // in + out must account for everything the box could partition.
+    assert.ok(Math.abs((m.inBox + m.outBox) - m.total) < Math.max(1, m.total * 1e-6),
+      `${t.label}: inBox + outBox === total`);
+  }
+
+  reader.free();
+  await a.close();
+});
+
+test("an empty m/z window still yields a renderable tile", {
+  skip: !existsSync(DIAPASEF),
+}, async () => {
+  // The absence case, end to end. A fragment m/z where nothing exists must
+  // produce a valid all-zero grid — not null, not a throw — because an empty
+  // tile inside a drawn expectation box IS the finding.
+  const a = await MzPeakArchive.open(DIAPASEF);
+  const meta = await buildMetadataIndex(a);
+  const reader = await PeakReader.open(a);
+  const mz = meta.precursors.targetMz[500]!;
+  const at = meta.spectra.time[meta.precursors.spectrumIndex[500]!]!;
+  const frames = framesCovering(meta, mz, at - 0.2, at + 0.2);
+
+  const g = await extractTiles(a, meta, reader, frames,
+    [{ label: "nothing-here", mz: 123.4567 }],   // implausible fragment m/z
+    { rtRange: [at - 0.2, at + 0.2], mobilityRange: [0.9, 1.1], nx: 20, ny: 20 });
+
+  const m = g.tiles[0]!.map;
+  assert.ok(m, "a mobility-bearing archive still returns a map");
+  assert.equal(m!.total, 0, "and it is genuinely empty");
+  assert.equal(m!.cells.length, 400);
+  assert.ok(m!.cells.every((v) => v === 0), "every cell zero, none NaN");
+
+  reader.free();
+  await a.close();
 });

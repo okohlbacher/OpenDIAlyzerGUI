@@ -816,6 +816,138 @@ export function rtMobilityMap(
   };
 }
 
+/** One tile of the evidence grid: a labelled m/z to trace. */
+export interface TileRequest {
+  label: string;
+  mz: number;
+  /** Overrides the request-wide default when a tile needs its own tolerance. */
+  ppm?: number;
+}
+
+export interface Tile extends TileRequest {
+  /** Null only when the archive carries no mobility. */
+  map: RtMobilityMap | null;
+}
+
+export interface TileGrid {
+  tiles: Tile[];
+  rowsDecoded: number;
+  rowsScanned: number;
+  rowGroupsRead: number;
+  /** Peaks kept by any window — the fraction of the decode that was useful. */
+  peaksKept: number;
+}
+
+/**
+ * Bins many m/z windows over one shared (RT × 1/K0) extent, in a single pass.
+ *
+ * The obvious implementation — call `extractFramePeaks` once per fragment — is
+ * N+1 decodes of the *same* row groups, because every tile of a grid covers the
+ * same frames and differs only in its m/z mask. Row-group decode dominates the
+ * cost of a bounded query, so paying it per tile turns a 12-fragment grid into
+ * thirteen times the work for no extra information. This decodes once and tests
+ * each peak against every window, which is a handful of float comparisons
+ * against a cost measured in megabytes.
+ *
+ * Every tile shares `rtRange` and `mobilityRange`, which is what makes the
+ * result a small-multiple grid rather than twelve unrelated pictures: tiles are
+ * only comparable when their axes are identical. `box` is passed through to
+ * each tile so absence can be counted per fragment.
+ */
+export async function extractTiles(
+  a: MzPeakArchive,
+  meta: MetadataIndex,
+  reader: PeakReader,
+  frames: readonly number[],
+  requests: readonly TileRequest[],
+  opts: {
+    rtRange: readonly [number, number];
+    mobilityRange: readonly [number, number];
+    ppm?: number;
+    nx?: number;
+    ny?: number;
+    box?: RtImBox;
+  },
+): Promise<TileGrid> {
+  const defaultPpm = opts.ppm ?? 20;
+  const lo = requests.map((t) => t.mz - (t.mz * (t.ppm ?? defaultPpm)) / 1e6);
+  const hi = requests.map((t) => t.mz + (t.mz * (t.ppm ?? defaultPpm)) / 1e6);
+
+  // Per-tile accumulators. Only matching peaks are retained, and a ppm window
+  // keeps that to a few thousand even on a dense frame.
+  const mzs: number[][] = requests.map(() => []);
+  const ints: number[][] = requests.map(() => []);
+  const mobs: number[][] = requests.map(() => []);
+  const frameOfs: number[][] = requests.map(() => []);
+
+  let decoded = 0, scanned = 0, kept = 0, groupsRead = 0;
+  let sawMobility = false;
+
+  if (frames.length) {
+    const { rowStart } = meta.spectra;
+    const ranges = frames.map((f) => [rowStart[f]!, rowStart[f + 1]!] as const);
+    const groups = reader.rowGroupsForRanges(ranges);
+    groupsRead = groups.length;
+    const cal = a.imsCalibration;
+
+    for await (const cols of reader.scan(groups)) {
+      decoded += cols.rowCount;
+      const { tof, mz: mzCol, intensity, mobility } = cols;
+      if (mobility) sawMobility = true;
+      const useTof = mzCol === null;
+      if (useTof && !cal) throw new Error("archive has neither an mz column nor ims_calibration");
+      const ca = cal?.a ?? 0;
+      const cb = cal?.b ?? 0;
+
+      for (const f of frames) {
+        const begin = rowStart[f]! - cols.firstRow;
+        const end = rowStart[f + 1]! - cols.firstRow;
+        if (end <= 0 || begin >= cols.rowCount) continue;
+        const b = Math.max(0, begin);
+        const e = Math.min(cols.rowCount, end);
+        scanned += e - b;
+        for (let i = b; i < e; i++) {
+          let m: number;
+          // As elsewhere: a negative calibrated value must not be squared into a
+          // spurious positive m/z that could pass a window check.
+          if (useTof) {
+            const v = ca + cb * tof[i]!;
+            if (v <= 0) continue;
+            m = v * v;
+          } else {
+            m = mzCol[i]!;
+          }
+          for (let t = 0; t < requests.length; t++) {
+            if (m < lo[t]! || m > hi[t]!) continue;
+            mzs[t]!.push(m);
+            ints[t]!.push(intensity[i]!);
+            frameOfs[t]!.push(f);
+            if (mobility) mobs[t]!.push(mobility[i]!);
+            kept++;
+            break;                      // windows are disjoint in practice
+          }
+        }
+      }
+    }
+  }
+
+  const tiles: Tile[] = requests.map((req, t) => {
+    const fp: FramePeaks = {
+      mz: Float64Array.from(mzs[t]!),
+      intensity: Float64Array.from(ints[t]!),
+      // An empty tile in a mobility-bearing archive must still bin, so the
+      // capability is taken from the decode, not from whether this tile matched.
+      mobility: sawMobility ? Float64Array.from(mobs[t]!) : null,
+      frameOf: Int32Array.from(frameOfs[t]!),
+      frames: [...frames],
+      rowsScanned: 0, rowsDecoded: 0, rowGroupsRead: 0,
+    };
+    return { ...req, map: rtMobilityMap(fp, meta.spectra.time, opts) };
+  });
+
+  return { tiles, rowsDecoded: decoded, rowsScanned: scanned, rowGroupsRead: groupsRead, peaksKept: kept };
+}
+
 export interface CorrelationMatrix {
   /** Row-major `n × n` Pearson coefficients in [-1,1]. */
   r: Float32Array;
