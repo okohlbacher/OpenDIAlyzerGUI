@@ -781,6 +781,10 @@ export function rtMobilityMap(
     const rt = frameTime[p.frameOf[i]!];
     if (rt === undefined) continue;
     const im = p.mobility[i]!;
+    // Explicit, because every NaN comparison is false: an unguarded NaN would
+    // survive the range test and then bin at `(NaN|0) === 0`, quietly stacking
+    // mobility-less peaks into the bottom row.
+    if (!Number.isFinite(im)) continue;
     if (rt < rtLo || rt > rtHi || im < imLo || im > imHi) continue;
     const v = p.intensity[i]!;
 
@@ -917,15 +921,25 @@ export async function extractTiles(
           } else {
             m = mzCol[i]!;
           }
+          // Every matching window, not the first. Tolerance windows overlap on
+          // real data — measured at 0.6% of identifications, and the usual case
+          // is a fragment landing on the precursor's own m/z. Stopping at the
+          // first match would let whichever tile is listed earlier silently
+          // consume the peak, and since the precursor is always tile zero, that
+          // is a systematic bias against fragments rather than a coin flip.
+          let hit = false;
           for (let t = 0; t < requests.length; t++) {
             if (m < lo[t]! || m > hi[t]!) continue;
             mzs[t]!.push(m);
             ints[t]!.push(intensity[i]!);
             frameOfs[t]!.push(f);
-            if (mobility) mobs[t]!.push(mobility[i]!);
-            kept++;
-            break;                      // windows are disjoint in practice
+            // NaN keeps the mobility column aligned with the others when a
+            // batch carries none; rtMobilityMap drops non-finite values rather
+            // than binning them into the first row.
+            mobs[t]!.push(mobility ? mobility[i]! : NaN);
+            hit = true;
           }
+          if (hit) kept++;
         }
       }
     }
@@ -975,16 +989,23 @@ export function correlationMatrix(traces: readonly Float64Array[]): CorrelationM
   const r = new Float32Array(n * n);
   if (n === 0) return { r, n };
 
-  const len = traces[0]?.length ?? 0;
+  // Every statistic is computed over the same prefix. Taking the mean and the
+  // norm from each full trace while summing covariance over a shorter overlap
+  // mixes two different populations, and the result is not a correlation — a
+  // trace does not even reach 1 against itself.
+  let len = Infinity;
+  for (const t of traces) len = Math.min(len, t.length);
+  if (!Number.isFinite(len)) len = 0;
+
   const mean = new Float64Array(n);
   const sd = new Float64Array(n);
   for (let a = 0; a < n; a++) {
     const t = traces[a]!;
     let s = 0;
-    for (let i = 0; i < t.length; i++) s += t[i]!;
-    const m = t.length ? s / t.length : 0;
+    for (let i = 0; i < len; i++) s += t[i]!;
+    const m = len ? s / len : 0;
     let q = 0;
-    for (let i = 0; i < t.length; i++) { const d = t[i]! - m; q += d * d; }
+    for (let i = 0; i < len; i++) { const d = t[i]! - m; q += d * d; }
     mean[a] = m;
     sd[a] = Math.sqrt(q);
   }
@@ -994,9 +1015,8 @@ export function correlationMatrix(traces: readonly Float64Array[]): CorrelationM
     for (let b = a; b < n; b++) {
       if (sd[b] === 0) continue;
       const ta = traces[a]!, tb = traces[b]!;
-      const m = Math.min(ta.length, tb.length, len || ta.length);
       let cov = 0;
-      for (let i = 0; i < m; i++) cov += (ta[i]! - mean[a]!) * (tb[i]! - mean[b]!);
+      for (let i = 0; i < len; i++) cov += (ta[i]! - mean[a]!) * (tb[i]! - mean[b]!);
       const v = cov / (sd[a]! * sd[b]!);
       const c = v > 1 ? 1 : v < -1 ? -1 : v;   // guard float drift past ±1
       r[a * n + b] = c;

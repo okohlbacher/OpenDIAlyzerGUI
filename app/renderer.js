@@ -493,7 +493,15 @@ async function paintGrid(k) {
   const wrap = $("gridWrap");
   const hint = $("gridHint");
   if (!wrap) return;
-  const g = await window.api.grid(k);
+  let g;
+  try {
+    g = await window.api.grid(k);
+  } catch (e) {
+    // Without this an unexpected rejection leaves the panel on "reading…" and
+    // the failure only surfaces as an unhandled promise in the console.
+    if (hint) hint.textContent = "grid failed: " + (e && e.message ? e.message : e);
+    return;
+  }
   if (!g) return;
   if (g.reason) {
     wrap.innerHTML = "";
@@ -526,7 +534,7 @@ async function paintGrid(k) {
     const share = t.total > 0 ? (t.inBox / t.total) : 0;
     const cls = t.cells === null ? "" : t.total === 0 ? " empty" : share < 0.2 ? " offbox" : "";
     return `<figure class="tile${cls}">
-      <canvas data-tile="${esc(t.label)}"></canvas>
+      <canvas></canvas>
       <figcaption><span class="mono">${esc(t.label)}</span>${
         t.cells === null ? '<em class="muted">no mobility</em>'
           : t.total === 0 ? '<em class="muted">no signal</em>'
@@ -538,8 +546,13 @@ async function paintGrid(k) {
   const [imLo, imHi] = g.mobilityRange;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
 
-  g.tiles.forEach((t) => {
-    const cv = wrap.querySelector(`canvas[data-tile="${cssEscape(t.label)}"]`);
+  // Positional, not by label. Two fragments can share a label — same series,
+  // ordinal and charge at different m/z — and a label selector would then paint
+  // both into the first canvas and leave the second tile blank. Position also
+  // removes any need to escape a label into a selector.
+  const canvases = wrap.querySelectorAll("canvas");
+  g.tiles.forEach((t, ti) => {
+    const cv = canvases[ti];
     if (!cv) return;
     const W = cv.clientWidth || 150, H = 96;
     cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
@@ -581,10 +594,6 @@ async function paintGrid(k) {
   });
 }
 
-/** Attribute-selector escaping; fragment labels carry +, ^ and similar. */
-function cssEscape(s) {
-  return String(s).replace(/["\\]/g, "\\$&");
-}
 
 /**
  * Draws the mobility heat map, its mobilogram, and the apex spectrum.
@@ -909,15 +918,80 @@ function chart(x) {
       stroke-linejoin="round" opacity=".92"/>`;
   }).join("");
 
+  const s = sampling(x);
+  // A rug of the actual cycles. DIA samples a precursor once per cycle, so the
+  // smooth line above is an interpolation between these ticks and nothing else;
+  // drawn without them, five points and fifty look equally confident.
+  const rug = x.rt.map((r) => {
+    const gx = px(r).toFixed(1);
+    return `<line x1="${gx}" y1="${H - B}" x2="${gx}" y2="${H - B + 4}"
+      stroke="var(--muted)" stroke-width="1" opacity=".7"/>`;
+  }).join("");
+  // Markers on the strongest trace only. On every trace they collide into a
+  // smear at twelve fragments and stop reading as discrete samples.
+  const dots = s.strongest >= 0 ? x.traces[s.strongest].map((v, j) =>
+    `<circle cx="${px(x.rt[j]).toFixed(1)}" cy="${py(v).toFixed(1)}" r="1.6"
+      fill="${ionColour(s.strongest, x.series)}" opacity=".95"/>`).join("") : "";
+
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img"
-      aria-label="Fragment ion chromatograms">
+      aria-label="Fragment ion chromatograms with the DIA cycles that sampled them">
     ${grid}
     <line x1="${L}" y1="${H - B}" x2="${W - R}" y2="${H - B}" stroke="var(--line)"/>
     <text x="2" y="${T + 8}" fill="var(--muted)" font-size="8.5"
       font-family="ui-monospace,Menlo,monospace">${max.toExponential(0)}</text>
     <text x="${W - R}" y="${H - 6}" fill="var(--muted)" font-size="8.5" text-anchor="end"
       font-family="ui-monospace,Menlo,monospace">min</text>
-    ${paths}</svg>`;
+    ${rug}${paths}${dots}
+    <text x="${L + 2}" y="${T + 8}" font-size="8.5" text-anchor="start"
+      fill="var(--muted)"
+      font-family="ui-monospace,Menlo,monospace">${s.label}</text>
+  </svg>`;
+}
+
+/**
+ * How the chromatographic peak was sampled, in cycles.
+ *
+ * DIA visits each precursor once per cycle, so points across the peak is the
+ * resolution the quantification actually had, and the smooth line is an
+ * interpolation between them.
+ *
+ * **This is a descriptive count, no threshold attached.** An earlier version
+ * coloured anything under six cycles as a warning; on the real corpus that
+ * fired on every peptide — a ~1.35 s cycle against narrow peaks genuinely
+ * yields two to four points — so the flag carried no information and only
+ * taught the reader to ignore it. What counts as too few depends on the
+ * gradient, the cycle time and what the number is being used for, none of
+ * which this knows. Report it and let the reader judge, as `coelution()` does
+ * with its own uncalibrated counts. Half-maximum is a descriptive width, not a
+ * fitted FWHM.
+ */
+function sampling(x) {
+  const n = x.rt.length;
+  let strongest = -1, best = 0;
+  x.traces.forEach((t, i) => {
+    for (const v of t) if (v > best) { best = v; strongest = i; }
+  });
+  if (strongest < 0 || best <= 0) {
+    return { strongest: -1, acrossPeak: 0, label: `${n} cycles · no peak` };
+  }
+  const t = x.traces[strongest];
+  let apex = 0;
+  for (let i = 0; i < t.length; i++) if (t[i] === best) { apex = i; break; }
+  // Contiguous around the apex, not "anywhere above half-max". Counting every
+  // sample over the threshold turns flat background into a wide peak — [5,5,5,5]
+  // would read as four points across a peak that does not exist — and merges two
+  // separate peaks into one count.
+  let across = 1;
+  for (let i = apex - 1; i >= 0 && t[i] >= best / 2; i--) across++;
+  for (let i = apex + 1; i < t.length && t[i] >= best / 2; i++) across++;
+  // A trace that never drops below half its own maximum has no resolved peak in
+  // this window; reporting a width for it would be inventing one.
+  const flat = across === t.length;
+  return {
+    strongest,
+    acrossPeak: flat ? 0 : across,
+    label: flat ? `${n} cycles · no resolved peak` : `${n} cycles · ${across} across peak`,
+  };
 }
 
 // ── events ───────────────────────────────────────────────────────────────────

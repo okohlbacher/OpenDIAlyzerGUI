@@ -256,10 +256,10 @@ footer .omslogo{width:74px; color:var(--muted); opacity:.85}
 }
 .tilegrid .tile {
   margin: 0;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--line);
   border-radius: 3px;
   overflow: hidden;
-  background: var(--plot-bg, #0d1017);
+  background: var(--sunk);
 }
 .tilegrid .tile canvas {
   display: block;
@@ -272,8 +272,8 @@ footer .omslogo{width:74px; color:var(--muted); opacity:.85}
   gap: 6px;
   padding: 3px 6px;
   font-size: 11px;
-  border-top: 1px solid var(--rule);
-  background: var(--panel, transparent);
+  border-top: 1px solid var(--line);
+  background: var(--panel-2);
 }
 .tilegrid figcaption em {
   font-style: normal;

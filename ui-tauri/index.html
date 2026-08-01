@@ -106,10 +106,26 @@
         ? '<span class="ok">✓ Phase-0 gate PASS</span> — Rust reproduces the TypeScript ground truth.'
         : '<span class="bad">✗ gate mismatch</span> — different dataset, or a port regression.';
 
-      $("targetOptions").innerHTML =
-        targets.slice(0, 2000).map((t) => `<option value="${t}">`).join("");
-      $("sample").innerHTML = "sample: <code>" +
-        targets.slice(0, 12).join("</code>, <code>") + "</code>, …";
+      // Target names come from the report file, so they are untrusted input.
+      // Built as nodes rather than interpolated markup: a Protein.Group of
+      // `</code><img src=x onerror=…>` would otherwise execute, and this page
+      // holds a privileged Tauri bridge.
+      const dl = $("targetOptions");
+      dl.textContent = "";
+      for (const t of targets.slice(0, 2000)) {
+        const o = document.createElement("option");
+        o.value = t;
+        dl.appendChild(o);
+      }
+      const sample = $("sample");
+      sample.textContent = "sample: ";
+      targets.slice(0, 12).forEach((t, i) => {
+        if (i) sample.appendChild(document.createTextNode(", "));
+        const code = document.createElement("code");
+        code.textContent = t;
+        sample.appendChild(code);
+      });
+      sample.appendChild(document.createTextNode(", …"));
 
       $("results").hidden = false;
       status("Done.");

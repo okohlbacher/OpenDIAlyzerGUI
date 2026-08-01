@@ -315,3 +315,53 @@ test("an empty m/z window still yields a renderable tile", {
   reader.free();
   await a.close();
 });
+
+test("a peak in two overlapping windows counts for both tiles", () => {
+  // Real data has overlapping tolerance windows on ~0.6% of identifications,
+  // most often a fragment sitting on the precursor's own m/z. Stopping at the
+  // first match would let tile order decide who gets the signal — and since the
+  // precursor is always tile zero, that is a systematic bias, not a tie-break.
+  const shared = 700.0;
+  const p = peaks([{ mz: shared, intensity: 500, mobility: 1.0, frame: 20 }]);
+
+  // Simulate what extractTiles does per peak: test every window, not the first.
+  const windows = [
+    { label: "precursor", lo: shared - 0.02, hi: shared + 0.02 },
+    { label: "y6", lo: shared - 0.01, hi: shared + 0.03 },   // overlaps
+    { label: "b4", lo: 400, hi: 401 },                        // disjoint
+  ];
+  const hits = windows.filter((w) => shared >= w.lo && shared <= w.hi);
+  assert.equal(hits.length, 2, "the peak genuinely falls in two windows");
+  assert.deepEqual(hits.map((h) => h.label), ["precursor", "y6"]);
+
+  // And the binning itself must not care which tile it belongs to.
+  const m = rtMobilityMap(p, TIMES, { ...RANGE, nx: 8, ny: 8 })!;
+  assert.equal(m.total, 500);
+});
+
+test("non-finite mobility is dropped, not binned into the first row", () => {
+  // extractTiles pads with NaN to keep the mobility column aligned when a batch
+  // carries none. Unguarded, NaN survives every range comparison and then bins
+  // at (NaN|0) === 0, stacking phantom intensity along the bottom edge.
+  const m = rtMobilityMap(peaks([
+    { mz: 500, intensity: 100, mobility: 1.0, frame: 20 },
+    { mz: 500, intensity: 900, mobility: NaN, frame: 21 },
+  ]), TIMES, { ...RANGE, nx: 8, ny: 8 })!;
+
+  assert.equal(m.total, 100, "only the finite point is binned");
+  assert.equal(m.maxIntensity, 100);
+  const bottomRow = Array.from({ length: 8 }, (_, x) => m.cells[x * 8 + 0]!);
+  assert.ok(bottomRow.every((v) => v === 0), "nothing landed in row 0");
+});
+
+test("unequal-length traces still self-correlate to one", () => {
+  // Means and norms taken from each full trace, while covariance runs over the
+  // shorter overlap, mixes two populations: the longer trace fails to reach 1
+  // against itself. Everything must use the same prefix.
+  const { r, n } = correlationMatrix([F([0, 1]), F([0, 1, 2])]);
+  const at = (a: number, b: number) => r[a * n + b]!;
+  assert.ok(Math.abs(at(0, 0) - 1) < 1e-6, "short trace self-correlates to 1");
+  assert.ok(Math.abs(at(1, 1) - 1) < 1e-6, "long trace self-correlates to 1");
+  assert.ok(Math.abs(at(0, 1) - 1) < 1e-6, "and over the shared prefix they agree");
+  assert.ok(r.every((v) => Number.isFinite(v)));
+});

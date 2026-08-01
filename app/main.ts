@@ -15,7 +15,8 @@ import os from "node:os";
 import { loadReport, filterRows, seekKey, reportedFragments, CANONICAL,
   type ReportTable, type FilterSpec } from "../src/report.ts";
 import { MzPeakArchive } from "../src/archive.ts";
-import { buildMetadataIndex, framesCovering, type MetadataIndex } from "../src/spectra.ts";
+import { buildMetadataIndex, framesCovering, spectraInRtWindow,
+  type MetadataIndex } from "../src/spectra.ts";
 import { PeakReader, extractXic, coelution, fragmentsFor, extractFramePeaks,
   heatmap, spectrum, extractTiles } from "../src/peaks.ts";
 import { scanArchives, searchRoots, type Registry } from "../src/registry.ts";
@@ -1306,12 +1307,20 @@ ipcMain.handle("evidence:grid", async (
   const key = seekKey(session.report, row);
   if (!key) return null;
 
+  // A report missing both RT and Predicted.RT yields a NaN centre. Every
+  // comparison against NaN is false, so an unguarded one rejects no frame and
+  // the "mandatory" RT bound silently becomes a whole-run decode.
+  if (!Number.isFinite(key.rt)) return { reason: "no-retention-time" };
+
   const src = await archiveFor(key.run).catch(() => null);
   if (!src) return { reason: "no-archive-for-run" };
 
   // Wide enough that the peak is not the whole picture — a tile cropped to the
-  // expectation can only ever agree with it.
-  const rtPad = rtHalf ?? Math.max(0.25, (key.rtStop - key.rtStart) * 1.5);
+  // expectation can only ever agree with it. Clamped because this arrives over
+  // IPC, where a bad value is a whole-file decode rather than a bad picture.
+  const requested = Number.isFinite(rtHalf!) ? rtHalf! : undefined;
+  const rtPad = Math.min(5, Math.max(0.02,
+    requested ?? Math.max(0.25, (key.rtStop - key.rtStart) * 1.5)));
   const rtRange: [number, number] = [key.rt - rtPad, key.rt + rtPad];
   // ±0.05 1/K0 is roughly a full diaPASEF mobility peak, so half that on each
   // side of the claim still shows the neighbourhood the claim sits in.
@@ -1323,10 +1332,7 @@ ipcMain.handle("evidence:grid", async (
   if (!frames.length) return { reason: "no-frames-in-window" };
 
   const frags = reportedFragments(session.report, row) ?? [];
-  const requests = [
-    { label: "precursor", mz: key.precursorMz },
-    ...frags.slice(0, 11).map((f) => ({ label: f.label, mz: f.mz })),
-  ];
+  const requests = frags.slice(0, 11).map((f) => ({ label: f.label, mz: f.mz }));
 
   const box = {
     rtMin: key.rtStart, rtMax: key.rtStop,
@@ -1336,16 +1342,33 @@ ipcMain.handle("evidence:grid", async (
 
   const t0 = performance.now();
   try {
+    const shape = { rtRange, mobilityRange, nx: 96, ny: 64, box };
     const g = await extractTiles(src.archive, src.meta, src.peaks, frames, requests, {
-      rtRange, mobilityRange, nx: 96, ny: 64, box,
+      ...shape,
       // The run's own measured MS2 accuracy, as everywhere else — a fixed
       // window would either clip real fragments or admit neighbours.
       ppm: fragmentTolerancePpm(
         await measuredMs2Ppm(dirname(session.reportPath), key.run)),
     });
+
+    // The precursor comes from MS1, and it needs its own read.
+    //
+    // `framesCovering` resolves *isolation windows*, so every frame it returns
+    // is MS2. Tracing the precursor m/z through those frames would show intact
+    // precursor that survived fragmentation — a real signal, but not the MS1
+    // feature, and it can be near-empty for a perfectly good identification.
+    // Reading it as the precursor is how a viewer talks itself into believing
+    // an MS1 peak was missing when it was never looked at.
+    const ms1 = spectraInRtWindow(src.meta.spectra, rtRange[0], rtRange[1], 1);
+    const pg = ms1.length
+      ? await extractTiles(src.archive, src.meta, src.peaks, ms1,
+          [{ label: "precursor (MS1)", mz: key.precursorMz }], { ...shape, ppm: 15 })
+      : null;
+
     return {
       reason: null,
       ms: performance.now() - t0,
+      ms1Frames: ms1.length,
       sequence: key.sequence,
       charge: key.charge,
       rtRange, mobilityRange, box,
@@ -1356,7 +1379,8 @@ ipcMain.handle("evidence:grid", async (
       peaksKept: g.peaksKept,
       // Null `cells` means the archive carries no mobility — a different fact
       // from an all-zero tile, and the UI has to say so differently.
-      tiles: g.tiles.map((t) => ({
+      // The MS1 precursor leads, then the fragments it should have produced.
+      tiles: [...(pg?.tiles ?? []), ...g.tiles].map((t) => ({
         label: t.label,
         mz: t.mz,
         cells: t.map ? Array.from(t.map.cells) : null,
