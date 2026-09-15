@@ -8,18 +8,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { existsSync } from "node:fs";
 import {
   rtMobilityMap, correlationMatrix, extractTiles,
   PeakReader, type FramePeaks, type RtImBox,
 } from "../src/peaks.ts";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, framesCovering } from "../src/spectra.ts";
+import { DIAPASEF, have } from "./data.ts";
 
 /** A real diaPASEF archive: 17,448 spectra, 1/K0 0.619–1.401. */
-const DIAPASEF = process.env.ODIA_TEST_DIAPASEF ??
-  "/path/to/mzpeak-example-data/diann/agxt-2026/" +
-  "run-01.mzpeak";
+// Located through test/data.ts; the tests below skip when it is not configured.
 
 /** A FramePeaks holding hand-placed points, with mobility unless suppressed. */
 function peaks(
@@ -225,7 +223,7 @@ test("coefficients never escape [-1,1]", () => {
 // groups. This pins the single-pass property, which is the difference between
 // one decode and thirteen.
 test("a whole grid costs one decode, not one per tile", {
-  skip: !existsSync(DIAPASEF),
+  skip: !have(DIAPASEF),
 }, async () => {
   const a = await MzPeakArchive.open(DIAPASEF);
   const meta = await buildMetadataIndex(a);
@@ -290,7 +288,7 @@ test("a whole grid costs one decode, not one per tile", {
 });
 
 test("an empty m/z window still yields a renderable tile", {
-  skip: !existsSync(DIAPASEF),
+  skip: !have(DIAPASEF),
 }, async () => {
   // The absence case, end to end. A fragment m/z where nothing exists must
   // produce a valid all-zero grid — not null, not a throw — because an empty

@@ -3,6 +3,7 @@ name = "opendialyzer"
 version = "0.1.0"
 edition = "2021"
 description = "OpenDIAlyzer — Tauri port"
+license = "BSD-3-Clause"
 default-run = "opendialyzer"
 
 # The data layer is a plain library so it can be unit-tested and reused by the

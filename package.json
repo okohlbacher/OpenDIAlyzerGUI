@@ -1,9 +1,9 @@
 {
   "name": "opendialyzer-gui",
   "version": "0.0.1",
+  "license": "BSD-3-Clause",
   "private": true,
   "type": "module",
-  "license": "BSD-3-Clause",
   "engines": {
     "node": ">=22.18"
   },

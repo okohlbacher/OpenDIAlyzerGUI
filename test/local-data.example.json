@@ -1,0 +1,7 @@
+{
+  "HUPO_DIR": "/path/to/hupo-mzpeak",
+  "BIG": "/path/to/MSV000099123/20240812_NW-NBSD-kgg_30min-Veh-A_rep1_S3-A1_1_8225.mzpeak",
+  "REPORT": "/path/to/cohort/qvalue50/report.parquet",
+  "REPORT_FULL": "/path/to/cohort/report.parquet",
+  "DIAPASEF": "/path/to/cohort/run-01.mzpeak"
+}

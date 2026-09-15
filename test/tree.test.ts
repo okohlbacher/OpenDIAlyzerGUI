@@ -1,14 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { REPORT, have as present } from "./data.ts";
 import {
   loadReport, filterRows, CANONICAL, type ColumnData, type ReportTable,
 } from "../src/report.ts";
 import { buildTree, flatten, idsAtLevel, pathTo, chargeLabel } from "../src/tree.ts";
 
-const REPORT = process.env.ODIA_TEST_REPORT ??
-  "/path/to/mzpeak-example-data/diann/agxt-2026/qvalue50/report.parquet";
-const have = existsSync(REPORT);
+const have = present(REPORT);
 let cached: Awaited<ReturnType<typeof loadReport>> | null = null;
 const report = async () => (cached ??= await loadReport(REPORT));
 

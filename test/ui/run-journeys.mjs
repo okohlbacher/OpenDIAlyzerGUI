@@ -8,12 +8,18 @@
  * changes; the committed baseline is what makes it a regression test.
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync, mkdtempSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+// Same lookup as test/data.ts: ODIA_TEST_REPORT, else test/local-data.json.
+const LOCAL = new URL("../local-data.json", import.meta.url);
 const REPORT = process.env.ODIA_TEST_REPORT ??
-  "/path/to/mzpeak-example-data/diann/agxt-2026/qvalue50/report.parquet";
+  (existsSync(LOCAL) ? JSON.parse(readFileSync(LOCAL, "utf8")).REPORT : undefined);
+if (!REPORT || !existsSync(REPORT)) {
+  console.error("set ODIA_TEST_REPORT or REPORT in test/local-data.json to a DIA-NN report.parquet");
+  process.exit(2);
+}
 const OUT = process.argv[2] ?? "test/ui/trace.json";
 
 const script = readFileSync("test/ui/journeys.json", "utf8").replaceAll("REPORT", REPORT);

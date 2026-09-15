@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { MzPeakArchive } from "../src/archive.ts";
 import { buildMetadataIndex, framesCovering } from "../src/spectra.ts";
 import { PeakReader, extractXic, coelution, fragmentsFor, spectrum } from "../src/peaks.ts";
-import { BIG, SMALL, have } from "./data.ts";
+import { BIG, SMALL, DIAPASEF, have } from "./data.ts";
 
 test("spectrum reports the centroided peak count before truncation", () => {
   const sp = spectrum({
@@ -161,9 +161,7 @@ test("bulk tier handles a Thermo-style archive with a direct m/z column", {
 // archive came back as 801,746,959 bytes — and the truncated slice surfaced as
 // "corrupt footer" from inside WASM rather than as a size error. RangeBlob
 // exists because of this, so it needs a test that would have caught it.
-const HUGE = process.env.ODIA_TEST_HUGE_ARCHIVE ??
-  "/path/to/mzpeak-example-data/diann/agxt-2026/" +
-  "run-01.mzpeak";
+const HUGE = process.env.ODIA_TEST_HUGE_ARCHIVE ?? DIAPASEF;
 
 test("reads a peak facet larger than 4 GB", { skip: !have(HUGE) }, async () => {
   const a = await MzPeakArchive.open(HUGE);

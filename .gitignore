@@ -7,3 +7,6 @@ app/logo.svg.html
 build/icon.svg
 build/*.iconset/
 dist/
+
+# local test-data paths — may name unpublished studies; never commit
+test/local-data.json

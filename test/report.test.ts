@@ -1,14 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { REPORT_FULL as REPORT, have as present } from "./data.ts";
 import { loadReport, filterRows, seekKey, reportedFragments, CANONICAL } from "../src/report.ts";
 
 // Real DIA-NN 2.6.1 Academia output from a six-run liver diaPASEF cohort — not
 // a synthetic fixture. The data is unpublished and lives outside the repo, so
 // these tests skip cleanly when it is absent.
-const REPORT = process.env.ODIA_TEST_REPORT ??
-  "/path/to/mzpeak-example-data/diann/agxt-2026/report.parquet";
-const have = existsSync(REPORT);
+const have = present(REPORT);
 
 let cached: Awaited<ReturnType<typeof loadReport>> | null = null;
 const report = async () => (cached ??= await loadReport(REPORT));

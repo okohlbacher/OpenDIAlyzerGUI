@@ -86,9 +86,9 @@ async function openSession(reportPath, archivePath) {
 }
 
 /**
- * Run names here look like `run-01.d`.
- * The part that identifies the sample is the `S08` group near the front, so
- * elide from the middle rather than trimming both ends evenly.
+ * Instrument run names are long and front-loaded: the sample label comes first
+ * and the acquisition counter last, so elide from the middle rather than
+ * trimming both ends evenly.
  */
 const shortRun = (r) => {
   const base = r.split(/[\\/]/).pop().replace(/\.d$/, "");

@@ -10,11 +10,15 @@ use std::process::exit;
 use opendialyzer_core::report::Report;
 
 fn main() {
-    let path = std::env::args().nth(1).map(PathBuf::from).unwrap_or_else(|| {
-        PathBuf::from(
-            "/path/to/mzpeak-example-data/diann/agxt-2026/qvalue50/report.parquet",
-        )
-    });
+    // The dataset is unpublished and lives outside the repository.
+    let Some(path) = std::env::args()
+        .nth(1)
+        .or_else(|| std::env::var("ODIA_TEST_REPORT").ok())
+        .map(PathBuf::from)
+    else {
+        eprintln!("usage: verify <report.parquet>   (or set ODIA_TEST_REPORT)");
+        exit(2);
+    };
 
     let report = match Report::load(&path) {
         Ok(r) => r,

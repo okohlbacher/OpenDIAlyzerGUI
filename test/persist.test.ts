@@ -13,8 +13,10 @@ import { join } from "node:path";
  * the window closes. This launches Electron twice — the second time touching
  * nothing — and asserts the second run finds what the first typed.
  */
-const RAW = "/path/to/raw-data";
-const canRun = existsSync(RAW) && existsSync("app/main.mjs");
+// The project only records these paths; nothing reads the files, so any
+// directory will do and the names need not exist.
+const RAW = mkdtempSync(join(tmpdir(), "odia-persist-raw-"));
+const canRun = existsSync("app/main.mjs");
 
 const drive = (steps: unknown[], out: string) => {
   const dir = mkdtempSync(join(tmpdir(), "odia-persist-"));

@@ -115,6 +115,15 @@ attacking is the raw evidence layer underneath.
   from the OpenMS logo's own spectral gradient; see
   [docs/UI-DESIGN.md](docs/UI-DESIGN.md). BSD-3.
 
+## Tests
+
+`npm test` runs everything. Tests that need real mass-spectrometry data skip
+unless you point them at it: copy `test/local-data.example.json` to
+`test/local-data.json` and fill in the paths, or set `ODIA_TEST_<KEY>`
+environment variables with the same keys. `test/local-data.json` is ignored by
+git on purpose — data file names can identify unpublished studies and their
+samples, so they are never committed.
+
 ## Licence
 
-BSD-3-Clause, matching OpenDIAlyzer.
+BSD-3-Clause, matching OpenDIAlyzer. See [LICENSE](LICENSE).
